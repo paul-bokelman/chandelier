@@ -3,10 +3,11 @@
 
 import time
 import math
-import smbus
+from smbus2 import SMBus
 import RPi.GPIO as GPIO
 import CC
 from subprocess import call
+# from adafruit_pca9685 import PCA9685 #  Adafruit PCA9685 library
 
 EnCounts = [0] * 16                 #Global variable for motor encoder count - Initialize to 0
 SlowSpeedDown = [0] * 16            #Global variable for minimum motor speed in down direction - Initialize to 0
@@ -42,7 +43,7 @@ class PCA9685:
   __ALLLED_OFF_H       = 0xFD
 
   def __init__(self, address=0x40, debug=False):
-    self.bus = smbus.SMBus(1)
+    self.bus = SMBus(1)
     self.address = address
     self.debug = debug
     if (self.debug):

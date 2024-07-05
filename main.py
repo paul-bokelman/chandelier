@@ -1,4 +1,5 @@
 from MC import *
+from PCA9685 import PCA9685
 
 pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)

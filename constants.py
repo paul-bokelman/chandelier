@@ -1,4 +1,3 @@
-#CC.py Chandelier Constants
 MEGM = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
 WSI = [23,24,25,8] #Wall Switch Input
 PS = [16,20] # Power Switch

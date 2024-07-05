@@ -1,11 +1,8 @@
-#MC.py Motor Control for Chandelier Project 
-#!/usr/bin/python
-
 import time
 import math
 from smbus2 import SMBus
 import RPi.GPIO as GPIO
-import CC
+import constants
 from subprocess import call
 # from adafruit_pca9685 import PCA9685 #  Adafruit PCA9685 library
 
@@ -240,7 +237,7 @@ def stop_all_motors(Num_Mtrs):
 
 def mtr_speed(Percent_Speed)->int:
   #Convert motor speed and direction into Servo pulse
-  if CC.Up_Dir_CCW:
+  if constants.Up_Dir_CCW:
     return -8*(Percent_Speed-187.5) 
   else:
     return 8*(Percent_Speed+187.5) 
@@ -347,7 +344,7 @@ def move_motors_counts(tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
 
   while True: 
     for i in range(0,len(tar_pos)):
-      if i not in motors_stopped and GPIO.input(CC.MEGM[i]) == False: #Encoder triggered
+      if i not in motors_stopped and GPIO.input(constants.MEGM[i]) == False: #Encoder triggered
         if EnCounts[i] == old_enc_counts[i]:
           if EnCounts[i] < tar_pos[i]:
             EnCounts[i] += 1
@@ -382,7 +379,7 @@ def move_motors_counts(tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
       break
     continue
    
-  stop_all_motors(CC.Num_Motors)
+  stop_all_motors(constants.Num_Motors)
   print("Final encoder counts",EnCounts)
   print("Motors",motors_successful,"reached their encoder targets.")
   for i in range(0,len(tar_pos)):
@@ -395,7 +392,7 @@ def move_motors_home():
   
   return_val = []
   #cmd_speeds = [0] * CC.Num_Motors    #Initialize
-  home_counts = [0] * CC.Num_Motors    #Set all 0's as target home position
+  home_counts = [0] * constants.Num_Motors    #Set all 0's as target home position
   if Debug: print("Returing all motors home.")
   return_val = move_motors_counts(home_counts,"s")
   if len(return_val) == 0:
@@ -412,11 +409,11 @@ def home_motors():
   return_val = []
   motors_stalled = []
   motors_timed_out = []
-  tar_positions = [0] * CC.Num_Motors
+  tar_positions = [0] * constants.Num_Motors
   start_time = time.time()
   
-  while len(motors_stalled) != CC.Num_Motors:
-    for i in range(0,CC.Num_Motors):
+  while len(motors_stalled) != constants.Num_Motors:
+    for i in range(0,constants.Num_Motors):
       EnCounts[i] = 0
       if not i in motors_stalled:
         tar_positions[i] = move_inc
@@ -430,7 +427,7 @@ def home_motors():
         EnCounts[k] = 0
     if Debug: print("Stalled motors:",motors_stalled)
     if time.time() - start_time > time_out: 
-      for j in range(0,CC.Num_Motors):
+      for j in range(0,constants.Num_Motors):
         if j not in motors_stalled: motors_timed_out.append(j)
       timed_out = True
       break
@@ -445,7 +442,7 @@ def motor_calibration_sequence(servo_num, speed, enc_counts, time_out):
   #Motor move sequence that reports back time between counts
   global Encounts
   el_time_list = []
-  encoder_num = CC.MEGM[servo_num]
+  encoder_num = constants.MEGM[servo_num]
   if speed > 0:
     enc_inc = 1
   else:
@@ -504,15 +501,15 @@ def encoder_speed_calibration():
   min_speed_margin = 1
   time_between_counts_margin = 1.05
 
-  for i in range(0,CC.Num_Motors):
+  for i in range(0,constants.Num_Motors):
     tar_pos_list[i] = initial_offset
-    speed_list[i] = CC.Max_Speed
+    speed_list[i] = constants.Max_Speed
   #if Debug: print("Tar_Pos:",tar_pos_list,"Speed:",speed_list)
   move_motors_counts(tar_pos_list,"",speed_list)
 
-  for servo_num in range(0,CC.Num_Motors):
+  for servo_num in range(0,constants.Num_Motors):
     #find minimum speed
-    speed = CC.Max_Speed
+    speed = constants.Max_Speed
     found_min_down = False
     found_min_up = False
     
@@ -532,10 +529,10 @@ def encoder_speed_calibration():
       if found_min_down and found_min_up:
         SlowSpeedDown[servo_num] += min_speed_margin
         SlowSpeedUp[servo_num] -= min_speed_margin
-        MedSpeedDown[servo_num] = SlowSpeedDown[servo_num] + CC.Delta_Slow_Med_Speed
-        MedSpeedUp[servo_num] = SlowSpeedUp[servo_num] - CC.Delta_Slow_Med_Speed
-        FastSpeedDown[servo_num] = SlowSpeedDown[servo_num] + CC.Delta_Slow_Fast_Speed
-        FastSpeedUp[servo_num] = SlowSpeedUp[servo_num] - CC.Delta_Slow_Fast_Speed
+        MedSpeedDown[servo_num] = SlowSpeedDown[servo_num] + constants.Delta_Slow_Med_Speed
+        MedSpeedUp[servo_num] = SlowSpeedUp[servo_num] - constants.Delta_Slow_Med_Speed
+        FastSpeedDown[servo_num] = SlowSpeedDown[servo_num] + constants.Delta_Slow_Fast_Speed
+        FastSpeedUp[servo_num] = SlowSpeedUp[servo_num] - constants.Delta_Slow_Fast_Speed
         print("Min speed down, Servo",servo_num,"= ",SlowSpeedDown[servo_num])
         print("Min speed up Servo",servo_num,"= ",SlowSpeedUp[servo_num])
         break
@@ -587,31 +584,31 @@ def encoder_speed_calibration():
   
   print("Encoder counts",EnCounts)  
   #move_motors_home()
-  stop_all_motors(CC.Num_Motors)
+  stop_all_motors(constants.Num_Motors)
   
    
-if __name__=='__main__':
+# if __name__=='__main__':
  
-  pwm = PCA9685(0x40, debug=False)
-  pwm.setPWMFreq(50)
-  GPIO.setmode(GPIO.BCM)
-  GPIO.setup(CC.MEGM, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#   pwm = PCA9685(0x40, debug=False)
+#   pwm.setPWMFreq(50)
+#   GPIO.setmode(GPIO.BCM)
+#   GPIO.setup(CC.MEGM, GPIO.IN, pull_up_down=GPIO.PUD_UP)
   
-  return_val = []
+#   return_val = []
   
-  #data_output(1,EnCounts)
-  #move_motors_home(30)
-  #move_motor_time(0,20,2)
-  #move_motors_home(30)
-  #encoder_speed_calibration()  
-  initialize()
-  home_motors()
-  motor_speeds = [20,0,0,0]
-  tar_positions = [5,0,0,0]
-  #move_motors_counts(tar_positions,"",motor_speeds)
-  return_val = move_motors_counts(tar_positions,"s")
-  move_motors_home()
-  stop_all_motors(CC.Num_Motors)
+#   #data_output(1,EnCounts)
+#   #move_motors_home(30)
+#   #move_motor_time(0,20,2)
+#   #move_motors_home(30)
+#   #encoder_speed_calibration()  
+#   initialize()
+#   home_motors()
+#   motor_speeds = [20,0,0,0]
+#   tar_positions = [5,0,0,0]
+#   #move_motors_counts(tar_positions,"",motor_speeds)
+#   return_val = move_motors_counts(tar_positions,"s")
+#   move_motors_home()
+#   stop_all_motors(CC.Num_Motors)
 
 
 

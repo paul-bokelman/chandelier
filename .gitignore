@@ -1,2 +1,4 @@
 env
 .vscode
+r-run.sh
+sync.sh

@@ -1,9 +1,6 @@
 from MC import GPIO, initialize, home_motors, move_motors_counts, stop_all_motors, move_motors_home
 import constants
-from PCA9685 import PCA9685
 
-pwm = PCA9685(0x40, debug=False)
-pwm.setPWMFreq(50)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(constants.MEGM, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 

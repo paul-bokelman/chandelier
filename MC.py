@@ -2,7 +2,12 @@ import time
 import RPi.GPIO as GPIO
 import constants
 from subprocess import call
-from main import pwm
+from PCA9685 import PCA9685
+
+
+pwm = PCA9685(0x40, debug=False)
+pwm.setPWMFreq(50)
+
 # from adafruit_pca9685 import PCA9685 #  Adafruit PCA9685 library
 
 EnCounts = [0] * 16                 #Global variable for motor encoder count - Initialize to 0

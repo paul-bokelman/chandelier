@@ -45,23 +45,31 @@ class MotorController:
       GPIO.setup(GPIO_List[i], GPIO.OUT)
 
   def stop_motor(self, mtr_num):
-    #Stop specific motor
-    pwm.setServoPulse(mtr_num,1500) 
+    """
+    Stop a specific motor given the motor number
+    """
+    pwm.setServoPulse(mtr_num, 1500) 
 
   def stop_all_motors(self, Num_Mtrs):
-    #Stop all motors
+    """
+    Stop all motors by calling stop_motor for each motor
+    """
     for i in range(0,Num_Mtrs):
       self.stop_motor(i)
 
-  def mtr_speed(self, Percent_Speed)->int:
-    #Convert motor speed and direction into Servo pulse
+  def mtr_speed(self, percent_speed)->int:
+    """
+    Convert motor speed and direction into Servo pulse
+    """
     if constants.Up_Dir_CCW:
-      return -8*(Percent_Speed-187.5) 
+      return -8*(percent_speed-187.5) 
     else:
-      return 8*(Percent_Speed+187.5) 
+      return 8*(percent_speed+187.5) 
       
   def move_motor_time(self, servo_num,speed,move_time):
-    #Move the servo motor at the input speed for set time
+    """
+    Move the servo motor at the input speed for set time
+    """
     mtr_pulse = self.mtr_speed(speed)
     pwm.setServoPulse(servo_num,mtr_pulse)
     print("Setting Servo Motor",servo_num,"to",speed,"for",move_time,"seconds")
@@ -69,7 +77,9 @@ class MotorController:
     pwm.setServoPulse(servo_num,1500)
 
   def move_motor_enc(self, servo_num,encoder_num,speed,enc_counts,time_out):
-    #Move the servo motor at the input speed for set number of counts
+    """
+    Move the servo motor at the input speed for set number of counts
+    """
     mtr_pulse = self.mtr_speed(speed)
     start = time.time()
     if speed > 0:
@@ -96,8 +106,10 @@ class MotorController:
     pwm.setServoPulse(servo_num,1500)
     
   def move_motors_counts(self, tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
-    #Move list of motors a set number of counts at given speeds
-    #Returns a list of the motors that failed to reach their targets either from stalling or timeout
+    """
+    Move list of motors a set number of counts at given speeds\n
+    Returns a list of the motors that failed to reach their targets either from stalling or timeout
+    """
   
     start = time.time()
     time_out = 40
@@ -257,7 +269,9 @@ class MotorController:
     return motors_timed_out
       
   def motor_calibration_sequence(self, servo_num, speed, enc_counts, time_out):
-    #Motor move sequence that reports back time between counts
+    """
+    Motor move sequence that reports back time between counts
+    """
     el_time_list = []
     encoder_num = constants.MEGM[servo_num]
     if speed > 0:
@@ -306,8 +320,9 @@ class MotorController:
       return(0)
 
   def encoder_speed_calibration(self):
-    #builds lists of motor move constants such as minimum speed up and down
-    #and max enocder timing by speed up and down 
+    """
+    builds lists of motor move constants such as minimum speed up and down and max encoder timing by speed up and down 
+    """
     tar_pos_list = [0] * 16
     speed_list = [0] * 16
     initial_offset = 10

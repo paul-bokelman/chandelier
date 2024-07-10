@@ -1,5 +1,6 @@
 from controller import GPIO, MotorController
 import constants
+from time import sleep
 
 def main():
     GPIO.setmode(GPIO.BCM)
@@ -9,8 +10,13 @@ def main():
 
     mc = MotorController(debug=True)
 
+    mc.set_motor(0, 2)
+    sleep(1)
+    mc.stop_motor(0)
+
+
     # move each motor up and down with utils to test
-    mc.home_motors()
+    # mc.home_motors()
 
     # todo: infinite loop when running without values in calibration data files
 

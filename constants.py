@@ -11,7 +11,7 @@ stop_pulse = 1500
 # motor configuration
 to_home_speed = -5 # speed to move to home
 to_home_timeout = 60 # max timeout for trying to move home
-to_home_max_interval = 1 # seconds between encoder readings (should be relative to speed...)
+to_home_max_interval = 2.5 # seconds between encoder readings (should be relative to speed...)
 
 calibration_dir = "./data"
 

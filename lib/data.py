@@ -58,7 +58,7 @@ class CalibrationData:
 
     with open(os.path.join(calibration_dir, mode.name), "r") as f:
       data = f.readlines()
-      data = [float(item.replace("\n", "")) for item in data]
+      data = [float(item) for item in data]
       f.close()
       return data
   def exists(self, mode: CalibrationMode) -> bool:

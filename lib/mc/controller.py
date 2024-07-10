@@ -12,6 +12,7 @@ class MotorController:
   def __init__(self, debug = False) -> None:
     self.debug = debug
     self.store = CalibrationData()
+    self.motors = [Motor(i) for i in range(constants.n_motors)]
 
     self.enc_counts = self.store.get(CalibrationMode.ENC_COUNTS) # motor encoder count - Initialize to 0
     self.slow_speed_down = self.store.get(CalibrationMode.SLOW_SPEED_DOWN)# minimum motor speed in down direction - Initialize to 0
@@ -176,17 +177,33 @@ class MotorController:
   #   else:
   #     if self.debug: print("Motors",return_val,"failed to return home")
 
-  def _calibrate_abs_enc_positions(self):
+  def move_all_home(self):
     """
-    Calibrate absolute encoder positions for all motors
+    Move all motors to home position
     """
 
-    # move all motors to home position
+    speed = -5 # speed to move motors
+    time_out = 3 # timeout limit (seconds)
 
-    time_out = 10 # timeout limit (seconds)
-    stalled = [] # list of stalled motors 
-    for id in range(constants.n_motors):
-      pass
+    def _encoder_callback(channel):
+      """
+      Callback function for encoder
+      """
+      print("Encoder triggered")
+      print(GPIO.input(constants.encoder_pins[0]))
+
+    GPIO.add_event_detect(constants.encoder_pins[0], GPIO.FALLING, callback=_encoder_callback, bouncetime=2)
+    
+    # # set speed for all motors
+    # for motor in self.motors:
+    #   motor.set(speed)
+
+    # # constantly check for stalled motors
+    # while True:
+    #   # for each motor that isn't home -> check if it's home
+    #   for motor in [m for m in self.motors if not m.is_home()]:
+    #     GPIO.
+          
 
 
     # move_inc = -5

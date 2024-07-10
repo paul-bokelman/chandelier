@@ -20,7 +20,7 @@ def main():
 
     motor.stop()
 
-    # mc._calibrate_abs_enc_positions()
+    mc.move_all_home()
 
 
     # move each motor up and down with utils to test

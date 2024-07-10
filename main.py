@@ -8,7 +8,10 @@ def main():
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     mc = MotorController(debug=True)
+    mc.set_all_motors(20)
+    time.sleep(4)
 
+    mc.set_all_motors(0)
     mc.move_all_home()
 
     # motor = Motor(1)

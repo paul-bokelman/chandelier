@@ -9,7 +9,7 @@ class Motor:
     def __init__(self, pin: int, is_home: bool = False) -> None:
         self.pin = pin
         self.home = is_home
-        self.last_count_time = None
+        self.last_read_time = None
         self.encoder_count = 0
         self.encoder_pin = constants.encoder_pins[self.pin]
         self.prev_encoder_reading: Optional[int] = None
@@ -22,16 +22,8 @@ class Motor:
         Callback function for encoder
         """
         self.encoder_count += 1 # increment encoder count
-        current_time = time.time()
-        time_diff = current_time - self.last_count_time if self.last_count_time is not None else 0 # calculate time difference since last reading
-        self.last_count_time = current_time
-
-        print(f"Motor {self.pin} encoder count: {self.encoder_count}, time diff: {time_diff}")
-        
-        # if time difference is greater than the max interval, motor has stalled and is at home
-        if time_diff > constants.to_home_max_interval:
-            print(f"Motor {self.pin} is at home")
-            self.home = True
+        self.last_read_time = time.time()
+        print(f"Motor {self.pin} encoder count: {self.encoder_count}, time: {self.last_read_time}")
 
     def set(self, speed: float):
         """
@@ -49,8 +41,11 @@ class Motor:
         self.set(constants.to_home_speed)
         start_time = time.time()
         while True:
-            # check if the motor is at home
-            if self.is_home():
+            # check if the motor has reached home
+            if self.last_read_time is not None and time.time() - self.last_read_time > constants.to_home_max_interval:
+                print(f"Motor {self.pin} has reached home")
+                self.last_read_time = None
+                self.home = True
                 break
             # if the motor has timed out, stop the motor
             if time.time() - start_time > constants.to_home_timeout:

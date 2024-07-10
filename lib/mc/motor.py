@@ -9,7 +9,7 @@ class Motor:
     def __init__(self, pin: int, is_home: bool = False) -> None:
         self.pin = pin
         self.home = is_home
-        self.last_count_time = 0
+        self.last_count_time = None
         self.encoder_count = 0
         self.encoder_pin = constants.encoder_pins[self.pin]
         self.prev_encoder_reading: Optional[int] = None
@@ -23,7 +23,7 @@ class Motor:
         """
         self.encoder_count += 1 # increment encoder count
         current_time = time.time()
-        time_diff = current_time - self.last_count_time # calculate time difference since last reading
+        time_diff = current_time - self.last_count_time if self.last_count_time is not None else 0 # calculate time difference since last reading
         self.last_count_time = current_time
 
         print(f"Motor {self.pin} encoder count: {self.encoder_count}, time diff: {time_diff}")
@@ -49,9 +49,13 @@ class Motor:
         self.set(constants.to_home_speed)
         start_time = time.time()
         while True:
+            # check if the motor is at home
             if self.is_home():
                 break
+            # if the motor has timed out, stop the motor
             if time.time() - start_time > constants.to_home_timeout:
+                print(f"Motor {self.pin} timed out")
+                self.home = True 
                 break
 
         self.stop()

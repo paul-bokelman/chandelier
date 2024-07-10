@@ -10,9 +10,11 @@ mc = MotorController(debug=True)
 
 mc.home_motors()
 
+# todo: infinite loop when running without values in calibration data files
+
 motor_speeds = [20,0,0,0]
 tar_positions = [5,0,0,0]
-mc.encoder_speed_calibration()
+# mc.encoder_speed_calibration()
 #move_motors_counts(tar_positions,"",motor_speeds)
 return_val = mc.move_motors_counts(tar_positions,"s")
 mc.move_motors_home()

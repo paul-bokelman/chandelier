@@ -25,7 +25,7 @@ class MotorController:
     self.med_speed_down = [0] * 16             # medium motor speed in down direction - Initialize to 0
     self.med_speed_up = [0] * 16               # medium motor speed in up direction - Initialize to 0
     self.fast_speed_down = [0] * 16            # fast motor speed in down direction - Initialize to 0
-    self.fast_speed_up = [0] * 16              # fast motor speed in up direction - Initialize to 0
+    self.fast_speed_up = [0] * 16 # fast motor speed in up direction - Initialize to 0
     self.enc_time_bet_counts_slow_down = [0] * 16 # max time between encoder counts for slow speed in down direction - Initialize to 0
     self.enc_time_bet_counts_slow_up = [0] * 16   # max time between encoder counts for slow speed in up direction - Initialize to 0
     self.enc_time_bet_counts_med_down = [0] * 16  # max time between encoder counts for medium speed in down direction - Initialize to 0
@@ -46,6 +46,8 @@ class MotorController:
     self.enc_time_bet_counts_med_up = get_calibration(11)
     self.enc_time_bet_counts_fast_down = get_calibration(12)
     self.enc_time_bet_counts_fast_up = get_calibration(13)
+
+    print(len(self.enc_counts))
 
   def set_GPIO_as_input(self, GPIO_List):
     #Sets the passed in list of GPIO pins as input

@@ -120,7 +120,3 @@ def get_calibration(open_mode) -> list[int]:
       return tmp_enc
     except FileNotFoundError as e:
       print("File mode",open_mode,"failed. File not found.")
-      return []
-      
-
-  return []

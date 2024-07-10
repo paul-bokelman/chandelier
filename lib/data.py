@@ -29,7 +29,7 @@ class CalibrationData:
     if not os.path.exists(calibration_dir):
       info(f"Creating calibration directory: {calibration_dir}")
       os.makedirs(calibration_dir)
-  def save(self, mode: CalibrationMode, data: list[int]) -> None:
+  def save(self, mode: CalibrationMode, data: list[float]) -> None:
     info(f"Saving calibration data to {mode.name}")
     """
     Save calibration data to a text file
@@ -43,7 +43,7 @@ class CalibrationData:
       f.close()
 
     pass
-  def get(self, mode: CalibrationMode) -> list[int]:
+  def get(self, mode: CalibrationMode) -> list[float]:
     info(f"Getting calibration data from {mode.name}")
     """
     Get calibration data from a text file
@@ -58,7 +58,7 @@ class CalibrationData:
 
     with open(os.path.join(calibration_dir, mode.name), "r") as f:
       data = f.readlines()
-      data = [int(item.replace("\n", "")) for item in data]
+      data = [float(item.replace("\n", "")) for item in data]
       f.close()
       return data
   def exists(self, mode: CalibrationMode) -> bool:

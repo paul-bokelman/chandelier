@@ -113,7 +113,7 @@ class MotorController:
   
     start = time.time()
     time_out = 40
-    old_enc_counts = [0] * 16     #Initialize old count list to 0
+    old_enc_counts: list[float] = [0] * 16     #Initialize old count list to 0
     motors_stopped = []           #Initialize a blank list of stopped motors
     motors_stalled = []           #Initialize a blank list of stalled motors
     motors_successful = []        #Initialize a blank list of successful motors

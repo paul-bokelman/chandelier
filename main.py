@@ -10,9 +10,14 @@ def main():
 
     mc = MotorController(debug=True)
 
-    mc.set_motor(0, 2)
-    sleep(1)
-    mc.stop_motor(0)
+    
+    # move each motor up and down with utils to test
+    for i in range(constants.n_motors):
+        mc.set_motor(i, 5)
+        sleep(1)
+        mc.set_motor(i, 0)
+
+    mc.stop_all_motors(constants.n_motors)
 
 
     # move each motor up and down with utils to test

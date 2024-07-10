@@ -46,18 +46,18 @@ class MotorController:
     """
     pwm.setServoPulse(mtr_num, 1500) 
 
-  def stop_all_motors(self, Num_Mtrs):
+  def stop_all_motors(self, n_motors):
     """
     Stop all motors by calling stop_motor for each motor
     """
-    for i in range(0,Num_Mtrs):
+    for i in range(0,n_motors):
       self.stop_motor(i)
 
   def set_all_motors(self, speed):
     """
     Set all motors to a specific speed
     """
-    for i in range(0,constants.Num_Motors):
+    for i in range(0,constants.n_motors):
       self.set_motor(i,speed)
 
   def to_pulse(self, percent_speed)->int:
@@ -183,7 +183,7 @@ class MotorController:
         break
       continue
     
-    self.stop_all_motors(constants.Num_Motors)
+    self.stop_all_motors(constants.n_motors)
     print("Final encoder counts",self.enc_counts)
     print("Motors",motors_successful,"reached their encoder targets.")
     for i in range(0,len(tar_pos)):
@@ -195,8 +195,8 @@ class MotorController:
     #Move all motors home (0 encoder)
     
     return_val = []
-    #cmd_speeds = [0] * CC.Num_Motors    # Initialize
-    home_counts = [0] * constants.Num_Motors    # Set all 0's as target home position
+    #cmd_speeds = [0] * CC.n_motors    # Initialize
+    home_counts = [0] * constants.n_motors    # Set all 0's as target home position
     if self.debug: print("Returing all motors home.")
     return_val = self.move_motors_counts(home_counts,"s")
     if len(return_val) == 0:
@@ -214,11 +214,11 @@ class MotorController:
     return_val = []
     motors_stalled = []
     motors_timed_out = []
-    tar_positions = [0] * constants.Num_Motors
+    tar_positions = [0] * constants.n_motors
     start_time = time.time()
     
-    while len(motors_stalled) != constants.Num_Motors:
-      for i in range(0,constants.Num_Motors):
+    while len(motors_stalled) != constants.n_motors:
+      for i in range(0,constants.n_motors):
         self.enc_counts[i] = 0
         if not i in motors_stalled:
           tar_positions[i] = move_inc
@@ -232,7 +232,7 @@ class MotorController:
           self.enc_counts[k] = 0
       if self.debug: print("Stalled motors:",motors_stalled)
       if time.time() - start_time > time_out: 
-        for j in range(0,constants.Num_Motors):
+        for j in range(0,constants.n_motors):
           if j not in motors_stalled: motors_timed_out.append(j)
         timed_out = True
         break
@@ -308,13 +308,13 @@ class MotorController:
     min_speed_margin = 1
     time_between_counts_margin = 1.05
 
-    for i in range(0,constants.Num_Motors):
+    for i in range(0,constants.n_motors):
       tar_pos_list[i] = initial_offset
       speed_list[i] = constants.Max_Speed
     #if self.debug: print("Tar_Pos:",tar_pos_list,"Speed:",speed_list)
     self.move_motors_counts(tar_pos_list,"",speed_list)
 
-    for servo_num in range(0,constants.Num_Motors):
+    for servo_num in range(0,constants.n_motors):
       #find minimum speed
       speed = constants.Max_Speed
       found_min_down = False
@@ -391,7 +391,7 @@ class MotorController:
 
       print("Encoder counts",self.enc_counts)  
       #move_motors_home()
-      self.stop_all_motors(constants.Num_Motors)
+      self.stop_all_motors(constants.n_motors)
     
 
 # ---------------------------------- UNUSED ---------------------------------- #

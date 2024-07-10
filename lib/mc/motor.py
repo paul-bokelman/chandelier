@@ -17,7 +17,7 @@ class Motor:
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
-    def _encoder_callback(self, channel):
+    def _encoder_callback(self, channel: int):
         """
         Callback function for encoder
         """
@@ -25,9 +25,12 @@ class Motor:
         current_time = time.time()
         time_diff = current_time - self.last_count_time # calculate time difference since last reading
         self.last_count_time = current_time
+
+        print(f"Motor {self.pin} encoder count: {self.encoder_count}, time diff: {time_diff}")
         
         # if time difference is greater than the max interval, motor has stalled and is at home
         if time_diff > constants.to_home_max_interval:
+            print(f"Motor {self.pin} is at home")
             self.home = True
 
     def set(self, speed: float):

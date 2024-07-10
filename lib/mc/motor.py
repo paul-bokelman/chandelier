@@ -39,6 +39,7 @@ class Motor:
         Move the motor to the home position
         """
         self.set(constants.to_home_speed)
+        self.last_read_time = None
         start_time = time.time()
         while True:
             # check if the motor has reached home

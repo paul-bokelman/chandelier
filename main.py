@@ -1,22 +1,22 @@
-from controller import GPIO, MotorController
+import time
 import constants
-from time import sleep
+from controller import GPIO, MotorController
 
 def main():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    return_val = []
-
     mc = MotorController(debug=True)
 
     
     # move each motor up and down with utils to test
-    mc.set_all_motors(10) # pos -> down, neg -> up
+    mc.set_motor(1, -20) # pos -> down, neg -> up
 
-    for i in range(4):
-        print(GPIO.input(constants.encoder_pins[i]))
-    sleep(4)
+    t_end = time.time() + 3
+    while time.time() < t_end:
+    # do whatever you do
+        print(GPIO.input(constants.encoder_pins[0]))
+
     mc.stop_all_motors()
 
 

@@ -32,35 +32,35 @@ class MotorController:
     self.enc_time_bet_counts_fast_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_DOWN)# max time between encoder counts for fast speed in down direction - Initialize to 0
     self.enc_time_bet_counts_fast_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP)# max time between encoder counts for fast speed in up direction - Initialize to 0
 
-  def set_motor(self, mtr_num, speed):
+  def set_motor(self, id: int, speed: float):
     """
     Set a specific motor to a specific speed
     """
     mtr_pulse = self.to_pulse(speed)
-    pwm.setServoPulse(mtr_num, mtr_pulse)
-    print("Setting Servo Motor",mtr_num,"to",speed)
+    pwm.setServoPulse(id, mtr_pulse)
+    print("Setting Servo Motor",id,"to",speed)
 
-  def stop_motor(self, mtr_num):
+  def stop_motor(self, id: int):
     """
     Stop a specific motor given the motor number
     """
-    pwm.setServoPulse(mtr_num, 1500) 
+    pwm.setServoPulse(id, 1500) 
 
-  def stop_all_motors(self, n_motors):
+  def stop_all_motors(self):
     """
     Stop all motors by calling stop_motor for each motor
     """
-    for i in range(0,n_motors):
+    for i in range(constants.n_motors):
       self.stop_motor(i)
 
-  def set_all_motors(self, speed):
+  def set_all_motors(self, speed: float):
     """
     Set all motors to a specific speed
     """
-    for i in range(0,constants.n_motors):
+    for i in range(constants.n_motors):
       self.set_motor(i,speed)
 
-  def to_pulse(self, percent_speed)->int:
+  def to_pulse(self, percent_speed: float)->float:
     """
     Convert motor speed and direction into Servo pulse
     """
@@ -183,7 +183,7 @@ class MotorController:
         break
       continue
     
-    self.stop_all_motors(constants.n_motors)
+    self.stop_all_motors()
     print("Final encoder counts",self.enc_counts)
     print("Motors",motors_successful,"reached their encoder targets.")
     for i in range(0,len(tar_pos)):
@@ -391,7 +391,7 @@ class MotorController:
 
       print("Encoder counts",self.enc_counts)  
       #move_motors_home()
-      self.stop_all_motors(constants.n_motors)
+      self.stop_all_motors()
     
 
 # ---------------------------------- UNUSED ---------------------------------- #

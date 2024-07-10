@@ -4,7 +4,7 @@ from time import sleep
 
 def main():
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(constants.MEGM, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     return_val = []
 
@@ -12,8 +12,10 @@ def main():
 
     
     # move each motor up and down with utils to test
-    mc.set_all_motors(-20)
+    mc.set_all_motors(10) # pos -> down, neg -> up
 
+    for i in range(4):
+        print(GPIO.input(constants.encoder_pins[i]))
     sleep(4)
     mc.stop_all_motors()
 

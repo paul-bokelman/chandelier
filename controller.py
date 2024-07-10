@@ -148,7 +148,7 @@ class MotorController:
     # loop through motors and check for encoder counts
     while True: 
       for i in range(0,len(tar_pos)):
-        if i not in motors_stopped and GPIO.input(constants.MEGM[i]) == False: #Encoder triggered
+        if i not in motors_stopped and GPIO.input(constants.encoder_pins[i]) == False: #Encoder triggered
           if self.enc_counts[i] == old_enc_counts[i]:
             if self.enc_counts[i] < tar_pos[i]:
               self.enc_counts[i] += 1
@@ -248,7 +248,7 @@ class MotorController:
     Motor move sequence that reports back time between counts
     """
     el_time_list = []
-    encoder_num = constants.MEGM[servo_num]
+    encoder_num = constants.encoder_pins[servo_num]
     if speed > 0:
       enc_inc = 1
     else:

@@ -12,7 +12,7 @@ def main():
 
     
     # move each motor up and down with utils to test
-    mc.set_all_motors(20)
+    mc.set_all_motors(-20)
 
     sleep(4)
     mc.stop_all_motors()

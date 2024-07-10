@@ -1,6 +1,7 @@
 import time
 import constants
-from controller import GPIO, MotorController
+from lib.mc.controller import GPIO, MotorController
+from lib.mc.motor import Motor
 
 def main():
     GPIO.setmode(GPIO.BCM)
@@ -8,16 +9,18 @@ def main():
 
     mc = MotorController(debug=True)
 
-    
+    motor = Motor(1)
+
     # move each motor up and down with utils to test
-    mc.set_motor(1, -20) # pos -> down, neg -> up
+    motor.set(-20) # pos -> down, neg -> up
 
     t_end = time.time() + 3
     while time.time() < t_end:
-    # do whatever you do
-        print(GPIO.input(constants.encoder_pins[0]))
+        print(GPIO.input(constants.encoder_pins[1]))
 
-    mc.stop_all_motors()
+    motor.stop()
+
+    # mc._calibrate_abs_enc_positions()
 
 
     # move each motor up and down with utils to test

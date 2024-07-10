@@ -6,5 +6,7 @@ Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
 Max_Speed = 20
 Up_Dir_CCW = False
+stop_pulse = 1500
 
 calibration_dir = "./data"
+

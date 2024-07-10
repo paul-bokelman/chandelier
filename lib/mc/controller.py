@@ -181,30 +181,8 @@ class MotorController:
     """
     Move all motors to home position
     """
-
-    speed = -5 # speed to move motors
-    time_out = 3 # timeout limit (seconds)
-
-    def _encoder_callback(channel):
-      """
-      Callback function for encoder
-      """
-      print("Encoder triggered")
-      print(GPIO.input(constants.encoder_pins[0]))
-
-    GPIO.add_event_detect(constants.encoder_pins[0], GPIO.FALLING, callback=_encoder_callback, bouncetime=2)
-    
-    # # set speed for all motors
-    # for motor in self.motors:
-    #   motor.set(speed)
-
-    # # constantly check for stalled motors
-    # while True:
-    #   # for each motor that isn't home -> check if it's home
-    #   for motor in [m for m in self.motors if not m.is_home()]:
-    #     GPIO.
-          
-
+    for motor in self.motors:
+      motor.to_home()
 
     # move_inc = -5
     # time_out = 60

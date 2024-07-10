@@ -32,15 +32,15 @@ class MotorController:
     """
     Stop all motors by calling stop_motor for each motor
     """
-    for i in range(constants.n_motors):
-      Motor(i).stop()
+    for motor in self.motors:
+      motor.stop()
 
   def set_all_motors(self, speed: float):
     """
     Set all motors to a specific speed
     """
-    for i in range(constants.n_motors):
-      Motor(i).set(speed)
+    for motor in self.motors:
+      motor.set(speed)
     
   # def move_motors_counts(self, tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
   #   """

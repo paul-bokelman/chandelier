@@ -10,8 +10,8 @@ def main():
     mc = MotorController(debug=True)
     mc.set_all_motors(20)
     time.sleep(4)
+    mc.stop_all_motors()
 
-    mc.set_all_motors(0)
     mc.move_all_home()
 
     # motor = Motor(1)

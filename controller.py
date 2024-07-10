@@ -9,7 +9,7 @@ pwm.setPWMFreq(50)
 
 class MotorController:
   """
-  Main motor controller class for calibrating, saving, and moving motors/servo positions
+  Main motor controller class for calibrating, saving, and manipulating servos
   """
   def __init__(self, debug = False) -> None:
     self.debug = debug
@@ -32,17 +32,13 @@ class MotorController:
     self.enc_time_bet_counts_fast_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_DOWN)# max time between encoder counts for fast speed in down direction - Initialize to 0
     self.enc_time_bet_counts_fast_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP)# max time between encoder counts for fast speed in up direction - Initialize to 0
 
-  def set_GPIO_as_input(self, GPIO_List):
-    #Sets the passed in list of GPIO pins as input
-    for i in range(0,len(GPIO_List)):
-      print("Setting GPIO pin",i,"as input")
-      GPIO.setup(GPIO_List[i], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-  
-  def set_GPIO_as_output(self, GPIO_List):
-    #Sets the passed in list of GPIO pins as output
-    for i in range(0,len(GPIO_List)):
-      print("Setting GPIO pin",i,"as output")
-      GPIO.setup(GPIO_List[i], GPIO.OUT)
+  def set_motor(self, mtr_num, speed):
+    """
+    Set a specific motor to a specific speed
+    """
+    mtr_pulse = self.to_pulse(speed)
+    pwm.setServoPulse(mtr_num, mtr_pulse)
+    print("Setting Servo Motor",mtr_num,"to",speed)
 
   def stop_motor(self, mtr_num):
     """
@@ -57,7 +53,14 @@ class MotorController:
     for i in range(0,Num_Mtrs):
       self.stop_motor(i)
 
-  def mtr_speed(self, percent_speed)->int:
+  def set_all_motors(self, speed):
+    """
+    Set all motors to a specific speed
+    """
+    for i in range(0,constants.Num_Motors):
+      self.set_motor(i,speed)
+
+  def to_pulse(self, percent_speed)->int:
     """
     Convert motor speed and direction into Servo pulse
     """
@@ -65,45 +68,6 @@ class MotorController:
       return -8*(percent_speed-187.5) 
     else:
       return 8*(percent_speed+187.5) 
-      
-  def move_motor_time(self, servo_num,speed,move_time):
-    """
-    Move the servo motor at the input speed for set time
-    """
-    mtr_pulse = self.mtr_speed(speed)
-    pwm.setServoPulse(servo_num,mtr_pulse)
-    print("Setting Servo Motor",servo_num,"to",speed,"for",move_time,"seconds")
-    time.sleep(move_time)
-    pwm.setServoPulse(servo_num,1500)
-
-  def move_motor_enc(self, servo_num,encoder_num,speed,enc_counts,time_out):
-    """
-    Move the servo motor at the input speed for set number of counts
-    """
-    mtr_pulse = self.mtr_speed(speed)
-    start = time.time()
-    if speed > 0:
-      enc_inc = 1
-    else:
-      enc_inc = -1
-    encoder_counter = 0
-    if GPIO.input(encoder_num) == False: #Encoder already triggered
-      encoder_counter = encoder_counter - enc_inc
-    pwm.setServoPulse(servo_num,mtr_pulse)
-    print("Setting Servo Motor",servo_num,"to",speed,"for",enc_counts,"revolutions")
-    while True: 
-      if GPIO.input(encoder_num) == False: #Encoder triggered
-        encoder_counter = encoder_counter + enc_inc
-        print("Encoder counts",encoder_counter)
-        if abs(encoder_counter) == abs(enc_counts):
-          break
-        while GPIO.input(encoder_num) == False: #Encoder still triggered
-          continue
-        if time.time()-start > time_out:
-          print("Motor",servo_num,"timed out at encoder count",encoder_counter,"without reaching count",enc_counts)
-          break
-      continue
-    pwm.setServoPulse(servo_num,1500)
     
   def move_motors_counts(self, tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
     """
@@ -112,65 +76,76 @@ class MotorController:
     """
   
     start = time.time()
-    time_out = 40
-    old_enc_counts: list[float] = [0] * 16     #Initialize old count list to 0
-    motors_stopped = []           #Initialize a blank list of stopped motors
-    motors_stalled = []           #Initialize a blank list of stalled motors
-    motors_successful = []        #Initialize a blank list of successful motors
-    motors_unsuccessful = []      #Initialize a blank list of unsuccessful motors
-    last_count_time = [0.0] * 16  #Initialize a list for last time there was an encoder count
-    last_count_limit = [0.0] * 16 #Initialize a list for encoder time outs
-    total_move = [0] * 16         #Initial a list of total move distances
-    startup_time_factor = 1.5     #Correction factor for first encoder count
-    stall_detect = True
-  
+    time_out = 40 # how long to wait for encoder counts before timing out
+    old_enc_counts: list[float] = [0] * 16 # old encoder counts
+    motors_stopped = [] # stopped motors
+    motors_stalled = [] # stalled motors
+    motors_successful = [] # successful motors
+    motors_unsuccessful = [] # unsuccessful motors
+    last_count_time = [0.0] * 16 # last time there was an encoder count
+    last_count_limit = [0.0] * 16 # last time limit between encoder counts
+    total_move = [0] * 16 # total move distances
+    startup_time_factor = 1.5 # correction factor for first encoder count
+    stall_detect = True # stall detection flag
+    
+    # set speeds and last count limits
     for i in range(0,len(tar_pos)):
-      total_move.append(abs(self.enc_counts[i]-tar_pos[i]))
-      if tar_pos[i] > self.enc_counts[i]:  #Go down
-        if mode == "s": #Slow
-          speed[i] = self.slow_speed_down[i]
-          last_count_limit[i] = self.enc_time_bet_counts_slow_down[i]
-        elif mode == "m": #Medium
+      total_move.append(abs(self.enc_counts[i]-tar_pos[i])) # append total move distance (in counts)
+
+      # target position greater than current position -> go down
+      if tar_pos[i] > self.enc_counts[i]:
+        if mode == "s": # slow mode
+          speed[i] = self.slow_speed_down[i] # set speed to slow speed down 
+          last_count_limit[i] = self.enc_time_bet_counts_slow_down[i]  # set last count limit to slow speed down
+        elif mode == "m": # medium mode
           speed[i] = self.med_speed_down[i]
           last_count_limit[i] = self.enc_time_bet_counts_med_down[i]
-        elif mode == "f": #Fast
+        elif mode == "f": # fast mode
           speed[i] = self.fast_speed_down[i]
           last_count_limit[i] = self.enc_time_bet_counts_fast_down[i]
         else:
           stall_detect = False
-      elif tar_pos[i] < self.enc_counts[i]:  #Go up
-        if mode == "s": #Slow
+
+      # target position less than current position -> go up
+      elif tar_pos[i] < self.enc_counts[i]:
+        if mode == "s": # slow mode
           speed[i] = self.slow_speed_up[i]
           last_count_limit[i] = self.enc_time_bet_counts_slow_up[i]
-        elif mode == "m": #Medium
+        elif mode == "m": # medium mode
           speed[i] = self.med_speed_up[i]
           last_count_limit[i] = self.enc_time_bet_counts_med_up[i]
-        elif mode == "f": #Fast
+        elif mode == "f": # fast mode
           speed[i] = self.fast_speed_up[i]
           last_count_limit[i] = self.enc_time_bet_counts_fast_up[i]
         else:
           if speed[i] > 0: speed[i] = -speed[i]
           stall_detect = False
-      else: #at target position
+      # already at target position -> stop motor (speed 0)
+      else:
         speed[i] = 0
       if self.debug: print(i,":Speed =",speed[i],"  Last_count_limit =",last_count_limit[i])
+
+    # set time out based on max encoder counts and max total move
     if stall_detect: time_out = max(last_count_limit) * max(total_move)
-  
+
+    # set speeds and start motors for motors that need to move
     for i in range(0,len(tar_pos)):
       if tar_pos[i] != self.enc_counts[i] and speed[i] != 0:
-        pwm.setServoPulse(i,self.mtr_speed(speed[i]))
+        pwm.setServoPulse(i,self.to_pulse(speed[i]))
         print("Motor",i,"set at speed",speed[i])
       else:
         motors_stopped.append(i)
         motors_successful.append(i)
         print("Motor",i,"already at target position")
     
+    # set old encoder counts and last count time
     for i in range(0,16):
       old_enc_counts[i] = self.enc_counts[i]
       last_count_time[i] = time.time()
     
     print("Starting encoder counts",self.enc_counts)
 
+    # loop through motors and check for encoder counts
     while True: 
       for i in range(0,len(tar_pos)):
         if i not in motors_stopped and GPIO.input(constants.MEGM[i]) == False: #Encoder triggered
@@ -220,8 +195,8 @@ class MotorController:
     #Move all motors home (0 encoder)
     
     return_val = []
-    #cmd_speeds = [0] * CC.Num_Motors    #Initialize
-    home_counts = [0] * constants.Num_Motors    #Set all 0's as target home position
+    #cmd_speeds = [0] * CC.Num_Motors    # Initialize
+    home_counts = [0] * constants.Num_Motors    # Set all 0's as target home position
     if self.debug: print("Returing all motors home.")
     return_val = self.move_motors_counts(home_counts,"s")
     if len(return_val) == 0:
@@ -284,7 +259,7 @@ class MotorController:
       encoder_counter += 1 #encoder_counter + enc_inc
       self.enc_counts[servo_num] = self.enc_counts[servo_num] + enc_inc
       print("Encoder_counter:",encoder_counter,"  self.enc_counts:",self.enc_counts[servo_num])
-    pwm.setServoPulse(servo_num,self.mtr_speed(speed))
+    pwm.setServoPulse(servo_num,self.to_pulse(speed))
     start = time.time()
     time_since_last = start
     print("Setting Servo Motor",servo_num,"to",speed,"for",enc_counts,"counts")
@@ -419,6 +394,8 @@ class MotorController:
       self.stop_all_motors(constants.Num_Motors)
     
 
+# ---------------------------------- UNUSED ---------------------------------- #
+
 # def shutdown():
 #   #Try to save data and shutdown before power loss
 #   save_calibration(self.enc_counts)
@@ -428,3 +405,57 @@ class MotorController:
 #   #Try to save data and shutdown before power loss
 #   save_calibration(self.enc_counts)
 #   call("sudo nohup shutdown -r now", shell=True)
+
+
+# def set_GPIO_as_input(self, GPIO_List):
+#   #Sets the passed in list of GPIO pins as input
+#   for i in range(0,len(GPIO_List)):
+#     print("Setting GPIO pin",i,"as input")
+#     GPIO.setup(GPIO_List[i], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+# def set_GPIO_as_output(self, GPIO_List):
+#   #Sets the passed in list of GPIO pins as output
+#   for i in range(0,len(GPIO_List)):
+#     print("Setting GPIO pin",i,"as output")
+#     GPIO.setup(GPIO_List[i], GPIO.OUT)
+
+
+  # def move_motor_time(self, servo_num,speed,move_time):
+  #   """
+  #   Move the servo motor at the input speed for set time
+  #   """
+  #   mtr_pulse = self.to_pulse(speed)
+  #   pwm.setServoPulse(servo_num,mtr_pulse)
+  #   print("Setting Servo Motor",servo_num,"to",speed,"for",move_time,"seconds")
+  #   time.sleep(move_time)
+  #   pwm.setServoPulse(servo_num,1500)
+
+
+  # def move_motor_enc(self, servo_num,encoder_num,speed,enc_counts,time_out):
+  #   """
+  #   Move the servo motor at the input speed for set number of counts
+  #   """
+  #   mtr_pulse = self.to_pulse(speed)
+  #   start = time.time()
+  #   if speed > 0:
+  #     enc_inc = 1
+  #   else:
+  #     enc_inc = -1
+  #   encoder_counter = 0
+  #   if GPIO.input(encoder_num) == False: #Encoder already triggered
+  #     encoder_counter = encoder_counter - enc_inc
+  #   pwm.setServoPulse(servo_num,mtr_pulse)
+  #   print("Setting Servo Motor",servo_num,"to",speed,"for",enc_counts,"revolutions")
+  #   while True: 
+  #     if GPIO.input(encoder_num) == False: #Encoder triggered
+  #       encoder_counter = encoder_counter + enc_inc
+  #       print("Encoder counts",encoder_counter)
+  #       if abs(encoder_counter) == abs(enc_counts):
+  #         break
+  #       while GPIO.input(encoder_num) == False: #Encoder still triggered
+  #         continue
+  #       if time.time()-start > time_out:
+  #         print("Motor",servo_num,"timed out at encoder count",encoder_counter,"without reaching count",enc_counts)
+  #         break
+  #     continue
+  #   pwm.setServoPulse(servo_num,1500)

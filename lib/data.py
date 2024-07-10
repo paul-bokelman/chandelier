@@ -48,7 +48,6 @@ class CalibrationData:
     """
     Get calibration data from a text file
     """
-
     if mode not in CalibrationMode:
       raise ValueError("Invalid calibration mode")
     

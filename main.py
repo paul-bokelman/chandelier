@@ -12,7 +12,7 @@ def main():
     motor = Motor(1)
 
     # move each motor up and down with utils to test
-    motor.set(-20) # pos -> down, neg -> up
+    motor.set(20) # pos -> down, neg -> up
 
     t_end = time.time() + 3
     while time.time() < t_end:

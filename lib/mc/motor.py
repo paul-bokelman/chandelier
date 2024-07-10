@@ -15,7 +15,7 @@ class Motor:
         self.prev_encoder_reading: Optional[int] = None
 
         # detect when encoder is triggered (matches 0's)
-        GPIO.add_event_detect(constants.encoder_pins[self.encoder_pin], GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
+        GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
     def _encoder_callback(self, channel):
         """

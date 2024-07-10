@@ -1,9 +1,8 @@
-from typing import List
 import time
 import RPi.GPIO as GPIO
 import constants
 from PCA9685 import PCA9685
-from lib.data import save_calibration, get_calibration
+from lib.data import CalibrationMode, CalibrationData
 
 pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
@@ -14,40 +13,24 @@ class MotorController:
   """
   def __init__(self, debug = False) -> None:
     self.debug = debug
+    self.store = CalibrationData()
 
     self.pwm = PCA9685(0x40, debug=False)
     self.pwm.setPWMFreq(50)
 
-    # Initialize all motor encoder counts with saved data
-    self.enc_counts = [0] * 16                 # motor encoder count - Initialize to 0
-    self.slow_speed_down = [0] * 16            # minimum motor speed in down direction - Initialize to 0
-    self.slow_speed_up = [0] * 16              # minimum motor speed in up direction - Initialize to 0
-    self.med_speed_down = [0] * 16             # medium motor speed in down direction - Initialize to 0
-    self.med_speed_up = [0] * 16               # medium motor speed in up direction - Initialize to 0
-    self.fast_speed_down = [0] * 16            # fast motor speed in down direction - Initialize to 0
-    self.fast_speed_up = [0] * 16 # fast motor speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_slow_down = [0] * 16 # max time between encoder counts for slow speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_slow_up = [0] * 16   # max time between encoder counts for slow speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_med_down = [0] * 16  # max time between encoder counts for medium speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_med_up = [0] * 16    # max time between encoder counts for medium speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_fast_down = [0] * 16 # max time between encoder counts for fast speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_fast_up = [0] * 16   # max time between encoder counts for fast speed in up direction - Initialize to 0
-
-    self.enc_counts = get_calibration(1)
-    self.slow_speed_down = get_calibration(2)
-    self.slow_speed_up = get_calibration(3)
-    self.med_speed_down = get_calibration(4)
-    self.med_speed_up = get_calibration(5)
-    self.fast_speed_down = get_calibration(6)
-    self.fast_speed_up = get_calibration(7)
-    self.enc_time_bet_counts_slow_down = get_calibration(8)
-    self.enc_time_bet_counts_slow_up = get_calibration(9)
-    self.enc_time_bet_counts_med_down = get_calibration(10)
-    self.enc_time_bet_counts_med_up = get_calibration(11)
-    self.enc_time_bet_counts_fast_down = get_calibration(12)
-    self.enc_time_bet_counts_fast_up = get_calibration(13)
-
-    print(len(self.enc_counts))
+    self.enc_counts = self.store.get(CalibrationMode.ENC_COUNTS) # motor encoder count - Initialize to 0
+    self.slow_speed_down = self.store.get(CalibrationMode.SLOW_SPEED_DOWN)# minimum motor speed in down direction - Initialize to 0
+    self.slow_speed_up = self.store.get(CalibrationMode.SLOW_SPEED_UP)# minimum motor speed in up direction - Initialize to 0
+    self.med_speed_down = self.store.get(CalibrationMode.MED_SPEED_DOWN)# medium motor speed in down direction - Initialize to 0
+    self.med_speed_up = self.store.get(CalibrationMode.MED_SPEED_UP)# medium motor speed in up direction - Initialize to 0
+    self.fast_speed_down = self.store.get(CalibrationMode.FAST_SPEED_DOWN)# fast motor speed in down direction - Initialize to 0
+    self.fast_speed_up = self.store.get(CalibrationMode.FAST_SPEED_UP)# fast motor speed in up direction - Initialize to 0
+    self.enc_time_bet_counts_slow_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_DOWN) # max time between encoder counts for slow speed in down direction - Initialize to 0
+    self.enc_time_bet_counts_slow_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_UP)# max time between encoder counts for slow speed in up direction - Initialize to 0
+    self.enc_time_bet_counts_med_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_MED_DOWN)# max time between encoder counts for medium speed in down direction - Initialize to 0
+    self.enc_time_bet_counts_med_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_MED_UP)# max time between encoder counts for medium speed in up direction - Initialize to 0
+    self.enc_time_bet_counts_fast_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_DOWN)# max time between encoder counts for fast speed in down direction - Initialize to 0
+    self.enc_time_bet_counts_fast_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP)# max time between encoder counts for fast speed in up direction - Initialize to 0
 
   def set_GPIO_as_input(self, GPIO_List):
     #Sets the passed in list of GPIO pins as input
@@ -403,18 +386,18 @@ class MotorController:
         self.enc_time_bet_counts_fast_up[servo_num] = round(time_bet_counts * time_between_counts_margin,3)
       print("Time between counts for Servo",servo_num,"at fast speed up:",self.enc_time_bet_counts_fast_up[servo_num])    
     
-      save_calibration(2,self.slow_speed_down)
-      save_calibration(3,self.slow_speed_up)
-      save_calibration(4,self.med_speed_down)
-      save_calibration(5,self.med_speed_up)
-      save_calibration(6,self.fast_speed_down)
-      save_calibration(7,self.fast_speed_up)
-      save_calibration(8,self.enc_time_bet_counts_slow_down)
-      save_calibration(9,self.enc_time_bet_counts_slow_up)
-      save_calibration(10,self.enc_time_bet_counts_med_down)
-      save_calibration(11,self.enc_time_bet_counts_med_up)
-      save_calibration(12,self.enc_time_bet_counts_fast_down)
-      save_calibration(13,self.enc_time_bet_counts_fast_up)
+      self.store.save(CalibrationMode.SLOW_SPEED_DOWN,self.slow_speed_down)
+      self.store.save(CalibrationMode.SLOW_SPEED_UP,self.slow_speed_up)
+      self.store.save(CalibrationMode.MED_SPEED_DOWN,self.med_speed_down)
+      self.store.save(CalibrationMode.MED_SPEED_UP,self.med_speed_up)
+      self.store.save(CalibrationMode.FAST_SPEED_DOWN,self.fast_speed_down)
+      self.store.save(CalibrationMode.FAST_SPEED_UP,self.fast_speed_up)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_DOWN,self.enc_time_bet_counts_slow_down)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_UP,self.enc_time_bet_counts_slow_up)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_MED_DOWN,self.enc_time_bet_counts_med_down)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_MED_UP,self.enc_time_bet_counts_med_up)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_DOWN,self.enc_time_bet_counts_fast_down)
+      self.store.save(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP,self.enc_time_bet_counts_fast_up)
 
       print("Encoder counts",self.enc_counts)  
       #move_motors_home()

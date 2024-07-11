@@ -11,7 +11,7 @@ def main():
     # mc.stop_all_motors()
 
     mc.move_all_home() # ensure all motors are at home position before moving
-    mc.move_all([0.1, 0.2, 0.06, 0.1], 3) # move all motors to a specific position
+    mc.move_all([0.1, 0.2, 0.06, 0.1], 6) # move all motors to a specific position
     mc.stop_all_motors()
 
 

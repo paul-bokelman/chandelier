@@ -25,9 +25,9 @@ class Motor:
 
     def _encoder_callback(self, channel: int):
         """Callback function for encoder"""
-        if self.count_position < 0:
-            self._error(f"Motor {self.pin} encoder count is negative, disabling...")
-            return
+        # if self.count_position < 0:
+        #     self._error(f"Motor {self.pin} encoder count is negative, disabling...")
+        #     return
 
         self.count_position += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()

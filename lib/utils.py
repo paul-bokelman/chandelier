@@ -1,26 +1,29 @@
 from termcolor import colored
 import constants
 
-def info(msg):
-    print(colored(msg, 'grey'))
+class Logger:
+    def __init__(self):
+        pass
 
-def success(msg):
-    print(colored(msg, 'green'))
+    def info(self, msg):
+        print(colored(msg, 'grey'))
 
-def error(msg):
-    print(colored(msg, 'red'))
+    def success(self, msg):
+        print(colored(msg, 'green'))
 
-def warning(msg):
-    print(colored(msg, 'yellow'))
+    def error(self, msg):
+        print(colored(msg, 'red'))
 
-def debug(msg):
-    print(colored(msg, 'blue'))
+    def warning(self, msg):
+        print(colored(msg, 'yellow'))
+
+    def debug(self, msg):
+        print(colored(msg, 'blue'))
+
+log = Logger()
 
 def to_pulse(percent_speed: float)->float:
     """
     Convert motor speed and direction into Servo pulse
     """
-    if constants.Up_Dir_CCW:
-      return -8*(percent_speed-187.5) 
-    else:
-      return 8*(percent_speed+187.5) 
+    return 8*(percent_speed+187.5) 

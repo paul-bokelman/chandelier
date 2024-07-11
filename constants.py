@@ -4,8 +4,7 @@ PS = [16,20] # Power Switch
 n_motors = 4
 Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
-Max_Speed = 20
-Up_Dir_CCW = False
+max_speed = 20
 stop_pulse = 1500
 
 # static
@@ -16,11 +15,14 @@ medium_speed = 0.5
 slow_speed = 0.25
 
 # motor configuration
-to_home_speed = -5 # speed to move to home
+to_home_speed = 5 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 6 # initial timeout for trying to move home
 to_home_max_interval = 2.5 # seconds between encoder readings (should be relative to speed...)
 to_position_timeout = 60 # max timeout for trying to move to a position
+calibration_counts = 20 # distance to move for calibration (in counts)
+calibration_speed = 3 # speed to move for calibration
+calibration_timeout = 30 # max timeout for calibration
 
 calibration_dir = "./data"
 

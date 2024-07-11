@@ -108,6 +108,10 @@ class Motor:
         else:
             self.direction = constants.up
 
+        if self.count_position == target_counts:
+            log.success(f"Motor {self.pin} already at target position")
+            return
+
         self.set(self.direction * speed) # set the motor in the correct direction
 
         start_time = time.time()

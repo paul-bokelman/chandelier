@@ -21,8 +21,12 @@ class Logger:
 
 log = Logger()
 
-def to_pulse(percent_speed: float)->float:
-    """
-    Convert motor speed and direction into Servo pulse
-    """
-    return 8*(percent_speed+187.5) 
+def to_pulse(speed: float)->float:
+    """Convert motor speed and direction into Servo pulse, speed is a value between -1 and 1"""
+    if speed < -1 or speed > 1:
+        raise ValueError("Invalid speed value") 
+
+    p = lambda x: 8 * (x+187.5) # convert speed to pulse
+
+    if speed < 0: return -p(speed) # reverse direction
+    return p(speed) # forward direction

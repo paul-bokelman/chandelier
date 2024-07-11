@@ -72,7 +72,7 @@ class Motor:
         if target_counts > self.count_position:
             self.direction = constants.down
 
-        self.set(-5)
+        self.set(5)
 
         start_time = time.time()
         while True:

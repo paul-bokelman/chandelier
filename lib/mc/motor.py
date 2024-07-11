@@ -67,6 +67,8 @@ class Motor:
 
         target_counts = (target / 1 ) * (self.max_counts)
 
+        print(f'Moving motor {self.pin} from {self.count_position} to target position {target_counts}')
+
         if target_counts > self.count_position:
             self.direction = constants.down
 

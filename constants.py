@@ -4,7 +4,7 @@ PS = [16,20] # Power Switch
 n_motors = 4
 Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
-max_speed = 20
+max_speed = 0.2
 stop_pulse = 1500
 
 # static
@@ -15,7 +15,7 @@ medium_speed = 0.5
 slow_speed = 0.25
 
 # motor configuration
-to_home_speed = 0.11 # speed to move to home
+to_home_speed = 0.15 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 6 # initial timeout for trying to move home
 to_home_max_interval = 2.5 # seconds between encoder readings (should be relative to speed...)

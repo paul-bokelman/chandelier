@@ -28,5 +28,7 @@ def to_pulse(speed: float)->float:
 
     p = lambda x: 8 * ((abs(x) * 100)+187.5) # convert speed to pulse
 
-    if speed < 0: return -p(speed) # reverse direction
-    return p(speed) # forward direction
+    if speed < 0: 
+        return -p(speed) # reverse direction
+    else:
+        return p(speed) # forward direction

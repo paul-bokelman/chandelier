@@ -59,8 +59,8 @@ class Motor:
         """Stop the motor"""
         pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
-    def to_home(self, speed: float = constants.to_home_speed):
-        """Move the motor to the home position"""
+    def to_home(self, abs_speed: float = constants.to_home_speed):
+        """Move the motor to the home position (0 count)"""
         if self.home: 
             log.success(f"Motor {self.pin} already at home")
             return
@@ -69,7 +69,7 @@ class Motor:
             return
 
         self.direction = constants.up
-        self.set(self.direction * speed)
+        self.set(self.direction * abs_speed)
         self.last_read_time = None # reset last read time
         start_time = time.time()
         log.info(f"Moving motor {self.pin} to home")

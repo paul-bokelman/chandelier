@@ -59,7 +59,7 @@ class Motor:
         self.count_position = 0 #? should decrement in encoder callback...
         self.stop() # stop the motor
 
-    def to(self, target: float, speed: float = 5): # value between 0 and 1
+    def to(self, target: float, speed: float): # value between 0 and 1
         """Move the motor to a specific position in counts"""
 
         if target < 0 or target > 1:

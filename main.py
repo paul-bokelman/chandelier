@@ -14,7 +14,7 @@ def main():
 
     mc.move_all([0.5, 0, 0, 0], 0)
 
-    mc.move_all_home()
+    # mc.move_all_home()
 
     # motor = Motor(1)
 

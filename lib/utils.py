@@ -1,4 +1,5 @@
 from termcolor import colored
+import constants
 
 class Logger:
     def __init__(self):
@@ -21,14 +22,12 @@ class Logger:
 
 log = Logger()
 
-def to_pulse(speed: float)->float:
-    """Convert motor speed and direction into Servo pulse, speed is a value between -1 and 1"""
-    if speed < -1 or speed > 1:
+def to_pulse(speed: float, direction)->float:
+    """Convert motor speed and direction into Servo pulse, speed is a value between 0 and 1"""
+    if speed < 0 or speed > 1:
         raise ValueError("Invalid speed value") 
-
-    p = lambda x: 8 * ((abs(x) * 100)+187.5) # convert speed to pulse
-
-    if speed < 0: 
-        return -p(speed) # reverse direction
+    
+    if direction == constants.up:
+      return -8*(speed-187.5) 
     else:
-        return p(speed) # forward direction
+      return 8*(speed+187.5) 

@@ -31,11 +31,6 @@ class MotorController:
     for motor in self.motors:
       motor.stop()
 
-  def set_all_motors(self, speed: float):
-    """Set all motors to a specific speed"""
-    for motor in self.motors:
-      motor.set(speed)
-
   def move_all_home(self):
     """Move all motors to home position"""
     for motor in self.motors:

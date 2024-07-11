@@ -1,4 +1,3 @@
-from typing import Optional
 import time
 import RPi.GPIO as GPIO
 from PCA9685 import pwm
@@ -51,25 +50,25 @@ class Motor:
         """Save the current state of the motor"""
         pass
 
-    def set(self, speed: float):
+    def set(self, speed: float, direction: int = constants.down):
         """Set a specific motor to a specific speed, speed is a value between -1 and 1"""
-        pwm.setServoPulse(self.pin, to_pulse(speed))
+        pwm.setServoPulse(self.pin, to_pulse(speed, direction))
 
     def stop(self):
         """Stop the motor"""
         pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
-    def to_home(self, abs_speed: float = constants.to_home_speed):
+    def to_home(self, speed: float = constants.to_home_speed):
         """Move the motor to the home position (0 count)"""
         if self.home: 
-            log.success(f"Motor {self.pin} already at home")
+            log.success(f"Motor {self.pin} at home")
             return
         if self.disabled: 
             self._error(f"Motor {self.pin} is disabled, cannot move to home")
             return
 
         self.direction = constants.up
-        self.set(self.direction * abs_speed)
+        self.set(speed, self.direction)
         self.last_read_time = None # reset last read time
         start_time = time.time()
         log.info(f"Moving motor {self.pin} to home")
@@ -92,7 +91,7 @@ class Motor:
         
         self.stop() # stop the motor
 
-    def to(self, target: float, abs_speed: float):
+    def to(self, target: float, speed: float):
         """Move the motor to a specific position in counts, target is a percentage of the max counts"""
 
         if target < 0 or target > 1:
@@ -100,7 +99,7 @@ class Motor:
 
         target_counts = int((target / 1 ) * (self.max_counts))
 
-        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {abs_speed}')
+        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {speed}')
 
         # change direction based on target position
         if target_counts > self.count_position:
@@ -112,7 +111,7 @@ class Motor:
             log.success(f"Motor {self.pin} already at target position")
             return
 
-        self.set(self.direction * abs_speed) # set the motor in the correct direction
+        self.set(speed, self.direction) # set the motor in the correct direction
 
         start_time = time.time()
         while True:
@@ -140,7 +139,7 @@ class Motor:
         
         # measure slowest speed down
         self.direction = constants.down
-        self.set(self.direction * constants.calibration_speed) # set the motor to the calibration speed
+        self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
 
         # measure slowest speed up

@@ -139,13 +139,12 @@ class Motor:
             self._error(f"Motor {self.pin} is disabled, cannot calibrate")
             return
         
-        # measure slowest speed down
-        self.direction = constants.down
-        self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
-
+        log.info(f"Calibrating M{self.pin}")
+        log.info(f"Calculating M{self.pin} down cps")
+        
         # measure down counts
         self.direction = constants.down 
-        self.set(self.direction * constants.calibration_speed) # set the motor to the calibration speed
+        self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
         start = time.time()
         # move the motor to the calibration position
@@ -159,16 +158,18 @@ class Motor:
         
         down_time = time.time() - start # time taken to move to calibration position
         down_cps = constants.calibration_counts / down_time # time per count
+
+        log.info(f"Calculating M{self.pin} up cps")
         
         # measure up counts
         self.direction = constants.up
-        self.set(self.direction * constants.calibration_speed)
+        self.set(constants.calibration_speed, self.direction)
         start = time.time()
         # move the motor to the calibration position
         while self.counts != 0:
             # motor has timed out -> error
             if time.time() - start > constants.calibration_timeout:
-                self._error(f"Motor {self.pin} timed out calibrating, disabling...")
+                self._error(f"M{self.pin} timed out calibrating, disabling...")
                 return
             
         self.stop()
@@ -177,7 +178,7 @@ class Motor:
         up_cps = constants.calibration_counts / up_time
 
         # calculate max counts
-        print(f"Motor {self.pin} | up_cps: {up_cps} | down_cps: {down_cps}")
+        log.success(f"M{self.pin} | up_cps: {up_cps} | down_cps: {down_cps}")
         
         self.stop()
 

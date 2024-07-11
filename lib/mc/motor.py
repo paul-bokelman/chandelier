@@ -11,7 +11,7 @@ class Motor:
         self.pin = pin
         self.last_read_time = None
         self.disabled = False
-        self.encoder_feedback_disabled = True # get feedback from encoder
+        self.encoder_feedback_disabled = False # get feedback from encoder
         self.counts = -1 # todo: initialize to calibration data
         self.direction = constants.down # direction of motor
         self.max_counts = 30
@@ -33,13 +33,14 @@ class Motor:
 
     def _at_home(self):
         """Set motor home state"""
+        self.encoder_feedback_disabled = True
         self.last_read_time = None
         self.direction = constants.down
         self.counts = 0
-        self.encoder_feedback_disabled = True
 
     def _error(self, message: str):
         """Set motor error state"""
+        self.encoder_feedback_disabled = True
         self.counts = 0
         self.disabled = True
         log.error(message)
@@ -123,7 +124,8 @@ class Motor:
             if time.time() - start_time > constants.to_position_timeout:
                 self._error(f"Motor {self.pin} timed out moving to target position, disabling...")
                 break
-
+        
+        self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
 
     def calibrate(self):

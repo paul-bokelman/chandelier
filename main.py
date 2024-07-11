@@ -12,9 +12,9 @@ def main():
 
     mc.move_all_home()
     # mc.calibrate()
-    mc.move_all([0.1, 0.1, 0.1, 0.1], 0.2)
-    mc.move_all_home() 
-    mc.stop_all_motors()
+    # mc.move_all([0.1, 0.1, 0.1, 0.1], 0.2)
+    # mc.move_all_home() 
+    # mc.stop_all_motors()
 
 
     # todo: infinite loop when running without values in calibration data files

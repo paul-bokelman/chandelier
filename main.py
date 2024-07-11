@@ -12,7 +12,7 @@ def main():
     # time.sleep(4)
     # mc.stop_all_motors()
 
-    mc.move_all([0.5, 0, 0, 0], 0)
+    mc.move_all([0.5, 0, 0, 0], 5)
 
     # mc.move_all_home()
 

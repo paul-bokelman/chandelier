@@ -44,14 +44,19 @@ class Motor:
         self.last_read_time = None # reset last read time
         start_time = time.time()
         while True:
+            current_time = time.time()
+            # initial count position has not changed -> already home or jammed
+            if current_time - start_time > constants.to_position_timeout and self.last_read_time is None:
+                print(f"Motor {self.pin} already at home or jammed")
+                break
             # check if the motor has reached home
-            if self.last_read_time is not None and time.time() - self.last_read_time > constants.to_home_max_interval:
+            if self.last_read_time is not None and current_time - self.last_read_time > constants.to_home_max_interval:
                 print(f"Motor {self.pin} has reached home")
                 self.last_read_time = None
                 self.home = True
                 break
             # if the motor has timed out, stop the motor
-            if time.time() - start_time > constants.to_home_timeout:
+            if current_time - start_time > constants.to_home_timeout:
                 print(f"Motor {self.pin} timed out")
                 self.home = True 
                 break
@@ -69,18 +74,21 @@ class Motor:
 
         print(f'Moving motor {self.pin} from {self.count_position} to target position {target_counts}')
 
+        # change direction based on target position
         if target_counts > self.count_position:
             self.direction = constants.down
         else:
             self.direction = constants.up
 
-        self.set(self.direction * speed)
+        self.set(self.direction * speed) # set the motor in the correct direction
 
         start_time = time.time()
         while True:
+            # check if the motor has reached the target position
             if self.count_position == target_counts:
                 print(f"Motor {self.pin} has reached target position")
                 break
+            # motor has timed out -> stop the motor
             if time.time() - start_time > constants.to_position_timeout:
                 print(f"Motor {self.pin} timed out moving to target position")
                 break

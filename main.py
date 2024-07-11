@@ -15,17 +15,6 @@ def main():
     mc.move_all([0, 0, 0, 0], 20) # move all motors to a specific position
 
 
-    # motor = Motor(1)
-
-    # # move each motor up and down with utils to test
-    # motor.set(20) # pos -> down, neg -> up
-
-    # time.sleep(3)
-    # motor.stop()
-
-    # move each motor up and down with utils to test
-    # mc.home_motors()
-
     # todo: infinite loop when running without values in calibration data files
 
     # motor_speeds = [20,0,0,0]

@@ -96,7 +96,7 @@ class Motor:
 
         target_counts = int((target / 1 ) * (self.max_counts))
 
-        log.info(f'Moving motor {self.pin} from {self.count_position} to target position {target_counts}')
+        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {speed}')
 
         # change direction based on target position
         if target_counts > self.count_position:
@@ -131,7 +131,6 @@ class Motor:
             return
         
         # measure slowest speed down
-
         self.direction = constants.down
         self.set(self.direction * constants.calibration_speed) # set the motor to the calibration speed
 

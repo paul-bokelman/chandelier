@@ -175,16 +175,6 @@ class MotorController:
     
   # def move_motors_home(self):
   #   #Move all motors home (0 encoder)
-    
-  #   return_val = []
-  #   #cmd_speeds = [0] * CC.n_motors    # Initialize
-  #   home_counts = [0] * constants.n_motors    # Set all 0's as target home position
-  #   if self.debug: print("Returing all motors home.")
-  #   return_val = self.move_motors_counts(home_counts,"s")
-  #   if len(return_val) == 0:
-  #     if self.debug: print("All motors home.")
-  #   else:
-  #     if self.debug: print("Motors",return_val,"failed to return home")
 
       
   # def motor_calibration_sequence(self, servo_num, speed, enc_counts, time_out):

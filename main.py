@@ -12,9 +12,11 @@ def main():
     # time.sleep(4)
     # mc.stop_all_motors()
 
-    mc.move_all([0.5, 0.25, 0.66, 0.1], 20)
+    mc.move_all_home() # ensure all motors are at home position before moving
+    mc.move_all([0.5, 0.25, 0.66, 0.1], 20) # move all motors to a specific position
+    mc.move_all([0.2, 0.1, 0.23, 0.3], 20) # move all motors to a specific position
+    mc.move_all([0.5, 0.25, 0.66, 0.1], 20) 
 
-    # mc.move_all_home()
 
     # motor = Motor(1)
 

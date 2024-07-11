@@ -133,7 +133,7 @@ class Motor:
         # ensure motor is at home 
         if not self.is_home():
             self.to_home()
-            
+
         if self.disabled:
             self._error(f"Motor {self.pin} is disabled, cannot calibrate")
             return
@@ -163,17 +163,8 @@ class Motor:
         log.info(f"Calculating M{self.pin} up cps")
         
         # measure up counts
-        self.direction = constants.up
-        self.set(constants.calibration_speed, self.direction)
         start = time.time()
-        # move the motor to the calibration position
-        while self.counts != 0:
-            # motor has timed out -> error
-            if time.time() - start > constants.calibration_timeout:
-                self._error(f"M{self.pin} timed out calibrating, disabling...")
-                return
-            
-        self.stop()
+        self.to_home(speed=constants.calibration_speed)
             
         up_time = time.time() - start
         up_cps = constants.calibration_counts / up_time

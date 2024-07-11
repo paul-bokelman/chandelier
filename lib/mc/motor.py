@@ -59,13 +59,13 @@ class Motor:
         self.count_position = 0 #? should decrement in encoder callback...
         self.stop() # stop the motor
 
-    def to(self, target: float, speed: float = 10): # value between 0 and 1
+    def to(self, target: float, speed: float = 5): # value between 0 and 1
         """Move the motor to a specific position in counts"""
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
 
-        target_counts = (target / 1 ) * (self.max_counts)
+        target_counts = int((target / 1 ) * (self.max_counts))
 
         print(f'Moving motor {self.pin} from {self.count_position} to target position {target_counts}')
 

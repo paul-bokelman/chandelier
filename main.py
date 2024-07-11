@@ -12,7 +12,7 @@ def main():
 
     mc.move_all_home()
     # mc.calibrate()
-    mc.move_all([0.1, 0.1, 0.1, 0.1], 0.2)
+    mc.move_all([0.5, 0.3, 0.25, 0], 0.2)
     mc.move_all_home() 
     # mc.stop_all_motors()
 

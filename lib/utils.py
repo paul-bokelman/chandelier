@@ -26,7 +26,7 @@ def to_pulse(speed: float)->float:
     if speed < -1 or speed > 1:
         raise ValueError("Invalid speed value") 
 
-    p = lambda x: 8 * ((x * 100)+187.5) # convert speed to pulse
+    p = lambda x: 8 * ((abs(x) * 100)+187.5) # convert speed to pulse
 
-    if speed < 0: return -p(abs(speed)) # reverse direction
-    return p(abs(speed)) # forward direction
+    if speed < 0: return -p(speed) # reverse direction
+    return p(speed) # forward direction

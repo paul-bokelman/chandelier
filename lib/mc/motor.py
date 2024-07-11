@@ -130,8 +130,8 @@ class Motor:
 
     def calibrate(self):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
+        self.encoder_feedback_disabled = False
         # ensure motor is at home 
-
         if not self.is_home():
             self.to_home()
 
@@ -143,26 +143,45 @@ class Motor:
         self.direction = constants.down
         self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
+        # measure down counts
+        self.direction = constants.down 
+        self.set(self.direction * constants.calibration_speed) # set the motor to the calibration speed
 
-        # measure slowest speed up
+        start = time.time()
+        # move the motor to the calibration position
+        while self.counts != constants.calibration_counts:
+            # motor has timed out -> error
+            if time.time() - start > constants.calibration_timeout:
+                self._error(f"Motor {self.pin} timed out calibrating, disabling...")
+                return
+            
+        self.stop()
         
-        # # measure down counts
-        # self.direction = constants.down 
-        # self.set(self.direction * constants.calibration_speed) # set the motor to the calibration speed
+        down_time = time.time() - start # time taken to move to calibration position
+        down_cps = constants.calibration_counts / down_time # time per count
+        
+        # measure up counts
+        self.direction = constants.up
+        self.set(self.direction * constants.calibration_speed)
+        start = time.time()
+        # move the motor to the calibration position
+        while self.counts != 0:
+            # motor has timed out -> error
+            if time.time() - start > constants.calibration_timeout:
+                self._error(f"Motor {self.pin} timed out calibrating, disabling...")
+                return
+            
+        self.stop()
+            
+        up_time = time.time() - start
+        up_cps = constants.calibration_counts / up_time
 
-        # start = time.time()
-        # # move the motor to the calibration position
-        # while self.counts != constants.calibration_counts:
-        #     # motor has timed out -> error
-        #     if time.time() - start > constants.calibration_timeout:
-        #         self._error(f"Motor {self.pin} timed out calibrating, disabling...")
-        #         return
+        # calculate max counts
+        print(f"Motor {self.pin} | up_cps: {up_cps} | down_cps: {down_cps}")
         
-        # down_time = time.time() - start # time taken to move to calibration position
-        # cps = constants.calibration_counts / down_time # time per count
-        
+        self.stop()
 
-        # self.stop() # stop the motor
+        self.encoder_feedback_disabled = True
 
     def is_home(self) -> bool:
         """Check if the motor is at the home position"""

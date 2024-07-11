@@ -6,9 +6,7 @@ from lib.mc.motor import Motor
 from PCA9685 import pwm
 
 class MotorController:
-  """
-  Main motor controller class for calibrating, saving, and manipulating servos
-  """
+  """Main motor controller class for calibrating, saving, and manipulating servos"""
   def __init__(self, debug = False) -> None:
     self.debug = debug
     self.store = CalibrationData()
@@ -29,19 +27,31 @@ class MotorController:
     self.enc_time_bet_counts_fast_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP)# max time between encoder counts for fast speed in up direction - Initialize to 0
 
   def stop_all_motors(self):
-    """
-    Stop all motors by calling stop_motor for each motor
-    """
+    """Stop all motors by calling stop_motor for each motor"""
     for motor in self.motors:
       motor.stop()
 
   def set_all_motors(self, speed: float):
-    """
-    Set all motors to a specific speed
-    """
+    """Set all motors to a specific speed"""
     for motor in self.motors:
       motor.set(speed)
-    
+
+  def move_all_home(self):
+    """Move all motors to home position"""
+    for motor in self.motors:
+      motor.to_home()
+
+  def calibrate(self):
+    """Find minimum speed and time between encoder counts for each motor"""
+    for motor in self.motors:
+      motor.calibrate()
+
+  def move_all(self, positions: list[float], speed: float = 8):
+    """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""
+
+    for i, motor in enumerate(self.motors):
+      motor.to(positions[i], speed)
+
   # def move_motors_counts(self, tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
   #   """
   #   Move list of motors a set number of counts at given speeds\n
@@ -177,47 +187,6 @@ class MotorController:
   #   else:
   #     if self.debug: print("Motors",return_val,"failed to return home")
 
-  def move_all_home(self):
-    """
-    Move all motors to home position
-    """
-    for motor in self.motors:
-      motor.to_home()
-
-    # move_inc = -5
-    # time_out = 60
-    # timed_out = False
-    # return_val = []
-    # motors_stalled = []
-    # motors_timed_out = []
-    # tar_positions = [0] * constants.n_motors
-    # start_time = time.time()
-    
-    # while len(motors_stalled) != constants.n_motors:
-    #   for i in range(0,constants.n_motors):
-    #     self.enc_counts[i] = 0
-    #     if not i in motors_stalled:
-    #       tar_positions[i] = move_inc
-    #     else:
-    #       tar_positions[i] = 0
-    #   return_val = self.move_motors_counts(tar_positions,"s")
-    #   if self.debug: print("Return_val:",return_val)
-    #   for k in range(0,len(return_val)):
-    #     if not return_val[k] in motors_stalled:
-    #       motors_stalled.append(return_val[k])
-    #       self.enc_counts[k] = 0
-    #   if self.debug: print("Stalled motors:",motors_stalled)
-    #   if time.time() - start_time > time_out: 
-    #     for j in range(0,constants.n_motors):
-    #       if j not in motors_stalled: motors_timed_out.append(j)
-    #     timed_out = True
-    #     break
-    # if self.debug:
-    #   if timed_out:
-    #     print("Motors homed:",motors_stalled,"Motors timed out:",motors_timed_out)
-    #   else:  
-    #     print("All motors homed:",self.enc_counts)
-    # return motors_timed_out
       
   # def motor_calibration_sequence(self, servo_num, speed, enc_counts, time_out):
   #   """

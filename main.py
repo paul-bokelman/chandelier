@@ -12,6 +12,8 @@ def main():
     # time.sleep(4)
     # mc.stop_all_motors()
 
+    mc.move_all([0.5, 0, 0, 0], 0)
+
     mc.move_all_home()
 
     # motor = Motor(1)
@@ -21,8 +23,6 @@ def main():
 
     # time.sleep(3)
     # motor.stop()
-
-
 
     # move each motor up and down with utils to test
     # mc.home_motors()

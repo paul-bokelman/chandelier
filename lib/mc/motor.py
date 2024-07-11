@@ -130,15 +130,16 @@ class Motor:
 
     def calibrate(self):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
-        self.encoder_feedback_disabled = False
         # ensure motor is at home 
         if not self.is_home():
             self.to_home()
-
+            
         if self.disabled:
             self._error(f"Motor {self.pin} is disabled, cannot calibrate")
             return
         
+        self.encoder_feedback_disabled = False # start incrementing encoder counts
+
         log.info(f"Calibrating M{self.pin}")
         log.info(f"Calculating M{self.pin} down cps")
         

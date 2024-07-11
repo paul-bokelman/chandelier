@@ -1,7 +1,7 @@
 from enum import Enum
 import os
 from constants import calibration_dir
-from lib.utils import info
+from lib.utils import log
 
 class CalibrationMode(Enum):
   """
@@ -27,10 +27,10 @@ class CalibrationData:
   """
   def __init__(self) -> None:
     if not os.path.exists(calibration_dir):
-      info(f"Creating calibration directory: {calibration_dir}")
+      log.info(f"Creating calibration directory: {calibration_dir}")
       os.makedirs(calibration_dir)
   def save(self, mode: CalibrationMode, data: list[float]) -> None:
-    info(f"Saving calibration data to {mode.name}")
+    log.info(f"Saving calibration data to {mode.name}")
     """
     Save calibration data to a text file
     """
@@ -44,7 +44,7 @@ class CalibrationData:
 
     pass
   def get(self, mode: CalibrationMode) -> list[float]:
-    info(f"Getting calibration data from {mode.name}")
+    log.info(f"Getting calibration data from {mode.name}")
     """
     Get calibration data from a text file
     """

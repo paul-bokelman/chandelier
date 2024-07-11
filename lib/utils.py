@@ -1,5 +1,4 @@
 from termcolor import colored
-import constants
 
 class Logger:
     def __init__(self):

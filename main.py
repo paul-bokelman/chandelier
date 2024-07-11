@@ -1,7 +1,5 @@
-import time
 import constants
 from lib.mc.controller import GPIO, MotorController
-from lib.mc.motor import Motor
 
 def main():
     GPIO.setmode(GPIO.BCM)
@@ -14,8 +12,7 @@ def main():
 
     mc.move_all_home() # ensure all motors are at home position before moving
     mc.move_all([0.5, 0.25, 0.66, 0.1], 20) # move all motors to a specific position
-    mc.move_all([0.2, 0.1, 0.23, 0.3], 20) # move all motors to a specific position
-    mc.move_all([0.5, 0.25, 0.66, 0.1], 20) 
+    mc.move_all([0, 0, 0, 0], 20) # move all motors to a specific position
 
 
     # motor = Motor(1)

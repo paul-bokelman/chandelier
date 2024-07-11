@@ -16,7 +16,6 @@ class Motor:
         self.direction = constants.down # direction of motor
         self.max_counts = 30
         self.encoder_pin = constants.encoder_pins[self.pin]
-        self.prev_encoder_reading: Optional[int] = None
 
         # todo: pull all calibration data for this motor
 
@@ -31,23 +30,26 @@ class Motor:
 
         self.count_position += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()
-        log.info(f"Motor {self.pin} encoder count: {self.count_position}, time: {self.last_read_time}")
+        log.info(f"M{self.pin} | count: {self.count_position} | direction: {'down' if self.direction == constants.down else 'up'}")
 
     def _at_home(self):
         """Set motor home state"""
         self.home = True
-        self.prev_encoder_reading = None
+        self.last_read_time = None
         self.direction = constants.down
         self.count_position = 0
 
     def _error(self, message: str):
         """Set motor error state"""
         self.home = False
-        self.prev_encoder_reading = None
         self.count_position = 0
         self.disabled = True
         log.error(message)
         self.stop()
+
+    def _save_current_state(self):
+        """Save the current state of the motor"""
+        pass
 
     def set(self, speed: float):
         """Set a specific motor to a specific speed"""
@@ -59,7 +61,9 @@ class Motor:
 
     def to_home(self, speed: float = constants.to_home_speed):
         """Move the motor to the home position"""
-        if self.home: return
+        if self.home: 
+            log.success(f"Motor {self.pin} already at home")
+            return
         if self.disabled: 
             self._error(f"Motor {self.pin} is disabled, cannot move to home")
             return
@@ -88,8 +92,8 @@ class Motor:
         
         self.stop() # stop the motor
 
-    def to(self, target: float, speed: float): # value between 0 and 1
-        """Move the motor to a specific position in counts"""
+    def to(self, target: float, speed: float):
+        """Move the motor to a specific position in counts, target is a percentage of the max counts"""
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")

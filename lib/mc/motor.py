@@ -8,10 +8,10 @@ class Motor:
     """Motor class to control a single motor"""
     def __init__(self, pin: int, is_home: bool = False) -> None:
         self.pin = pin
-        self.home = is_home
         self.last_read_time = None
         self.disabled = False
-        self.count_position = 0
+        self.is_home = is_home
+        self.counts = 0
         self.direction = constants.down # direction of motor
         self.max_counts = 30
         self.encoder_pin = constants.encoder_pins[self.pin]
@@ -23,25 +23,24 @@ class Motor:
 
     def _encoder_callback(self, channel: int):
         """Callback function for encoder"""
-        # if self.count_position < 0:
+        # if self.counts < 0:
         #     self._error(f"Motor {self.pin} encoder count is negative, disabling...")
         #     return
 
-        self.count_position += self.direction * 1 # increment encoder count
+        self.counts += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()
-        log.info(f"M{self.pin} | count: {self.count_position} | direction: {'down' if self.direction == constants.down else 'up'}")
+        log.info(f"M{self.pin} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
 
     def _at_home(self):
         """Set motor home state"""
-        self.home = True
         self.last_read_time = None
         self.direction = constants.down
-        self.count_position = 0
+        self.counts = 0
 
     def _error(self, message: str):
         """Set motor error state"""
         self.home = False
-        self.count_position = 0
+        self.counts = 0
         self.disabled = True
         log.error(message)
         self.stop()
@@ -96,18 +95,22 @@ class Motor:
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
+        
+        # if the motor is at home, reset the counts (fix recoil issue)
+        if self.is_home:
+            self.counts = 0
 
         target_counts = int((target / 1 ) * (self.max_counts))
 
-        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {speed}')
+        log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
 
         # change direction based on target position
-        if target_counts > self.count_position:
+        if target_counts > self.counts:
             self.direction = constants.down
         else:
             self.direction = constants.up
 
-        if self.count_position == target_counts:
+        if self.counts == target_counts:
             log.success(f"Motor {self.pin} already at target position")
             return
 
@@ -116,7 +119,7 @@ class Motor:
         start_time = time.time()
         while True:
             # check if the motor has reached the target position
-            if self.count_position == target_counts:
+            if self.counts == target_counts:
                 log.success(f"Motor {self.pin} has reached target position")
                 break
             # motor has timed out -> stop the motor
@@ -150,7 +153,7 @@ class Motor:
 
         # start = time.time()
         # # move the motor to the calibration position
-        # while self.count_position != constants.calibration_counts:
+        # while self.counts != constants.calibration_counts:
         #     # motor has timed out -> error
         #     if time.time() - start > constants.calibration_timeout:
         #         self._error(f"Motor {self.pin} timed out calibrating, disabling...")
@@ -161,9 +164,3 @@ class Motor:
         
 
         # self.stop() # stop the motor
-            
-
-    def is_home(self):
-        """Returns whether the motor is at home or not"""
-        return self.home
-        

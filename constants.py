@@ -15,7 +15,7 @@ medium_speed = 0.5
 slow_speed = 0.25
 
 # motor configuration
-to_home_speed = 0.05 # speed to move to home
+to_home_speed = 0.02 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 6 # initial timeout for trying to move home
 to_home_max_interval = 2.5 # seconds between encoder readings (should be relative to speed...)

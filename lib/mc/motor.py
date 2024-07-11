@@ -38,13 +38,11 @@ class Motor:
         """Set motor home state"""
         self.last_read_time = None
         self.direction = constants.down
-        self.is_home = True
         self.counts = 0
         self.encoder_feedback_disabled = True
 
     def _error(self, message: str):
         """Set motor error state"""
-        self.is_home = False
         self.counts = 0
         self.disabled = True
         log.error(message)
@@ -65,7 +63,7 @@ class Motor:
     def to_home(self, speed: float = constants.to_home_speed):
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
-        if self.is_home: 
+        if self.is_home(): 
             log.success(f"Motor {self.pin} at home")
             return
         if self.disabled: 
@@ -135,7 +133,7 @@ class Motor:
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         # ensure motor is at home 
 
-        if not self.is_home:
+        if not self.is_home():
             self.to_home()
 
         if self.disabled:
@@ -166,3 +164,7 @@ class Motor:
         
 
         # self.stop() # stop the motor
+
+    def is_home(self) -> bool:
+        """Check if the motor is at the home position"""
+        return self.counts == 0

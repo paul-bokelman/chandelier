@@ -1,3 +1,4 @@
+from typing import Optional
 import time
 import RPi.GPIO as GPIO
 from PCA9685 import pwm
@@ -10,8 +11,8 @@ class Motor:
         self.pin = pin
         self.last_read_time = None
         self.disabled = False
-        self.encoder_feedback_disabled = False # get feedback from encoder
-        self.counts = 0
+        self.encoder_feedback_disabled = True # get feedback from encoder
+        self.counts = -1 # todo: initialize to calibration data
         self.direction = constants.down # direction of motor
         self.max_counts = 30
         self.encoder_pin = constants.encoder_pins[self.pin]
@@ -25,10 +26,6 @@ class Motor:
         """Callback function for encoder"""
         if self.encoder_feedback_disabled:
             return
-
-        # if self.counts < 0:
-        #     self._error(f"Motor {self.pin} encoder count is negative, disabling...")
-        #     return
 
         self.counts += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()

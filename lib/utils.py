@@ -5,7 +5,7 @@ class Logger:
         pass
 
     def info(self, msg):
-        print(colored(msg, 'grey'))
+        print(msg)
 
     def success(self, msg):
         print(colored(msg, 'green'))

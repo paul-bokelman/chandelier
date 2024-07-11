@@ -9,8 +9,8 @@ Up_Dir_CCW = False
 stop_pulse = 1500
 
 # static
-up = -1
-down = 1
+up = 1
+down = -1
 fast_speed = 1
 medium_speed = 0.5
 slow_speed = 0.25

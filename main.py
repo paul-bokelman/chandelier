@@ -12,7 +12,7 @@ def main():
 
     mc.move_all_home() # ensure all motors are at home position before moving
     # mc.calibrate()
-    mc.move_all([0.1, 0.1, 0.1, 0.1], 20) # move all motors to a specific position
+    mc.move_all([0.1, 0.1, 0.1, 0.1], 0.2) # move all motors to a specific position
     mc.stop_all_motors()
 
 

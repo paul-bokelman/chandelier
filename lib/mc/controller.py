@@ -46,10 +46,10 @@ class MotorController:
     for motor in self.motors:
       motor.calibrate()
 
-  def move_all(self, positions: list[float], speed: float = 5):
+  def move_all(self, positions: list[float], abs_speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""
     for i, motor in enumerate(self.motors):
-      motor.to(positions[i], speed)
+      motor.to(positions[i], abs(abs_speed))
 
   # def move_motors_counts(self, tar_pos,mode,speed=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]):
   #   """

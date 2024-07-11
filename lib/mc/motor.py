@@ -52,7 +52,7 @@ class Motor:
         pass
 
     def set(self, speed: float):
-        """Set a specific motor to a specific speed"""
+        """Set a specific motor to a specific speed, speed is a value between -1 and 1"""
         pwm.setServoPulse(self.pin, to_pulse(speed))
 
     def stop(self):
@@ -92,7 +92,7 @@ class Motor:
         
         self.stop() # stop the motor
 
-    def to(self, target: float, speed: float):
+    def to(self, target: float, abs_speed: float):
         """Move the motor to a specific position in counts, target is a percentage of the max counts"""
 
         if target < 0 or target > 1:
@@ -100,7 +100,7 @@ class Motor:
 
         target_counts = int((target / 1 ) * (self.max_counts))
 
-        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {speed}')
+        log.info(f'Moving: M{self.pin} ({self.count_position} -> {target_counts}) at speed {abs_speed}')
 
         # change direction based on target position
         if target_counts > self.count_position:
@@ -112,7 +112,7 @@ class Motor:
             log.success(f"Motor {self.pin} already at target position")
             return
 
-        self.set(self.direction * speed) # set the motor in the correct direction
+        self.set(self.direction * abs_speed) # set the motor in the correct direction
 
         start_time = time.time()
         while True:

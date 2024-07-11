@@ -28,6 +28,6 @@ def to_pulse(speed: float, direction)->float:
         raise ValueError("Invalid speed value") 
     
     if direction == constants.up:
-      return -8*(speed-187.5) 
+      return -8*((speed * 100)-187.5) 
     else:
-      return 8*(speed+187.5) 
+      return 8*((speed * 100)+187.5) 

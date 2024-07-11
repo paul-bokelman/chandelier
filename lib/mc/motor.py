@@ -71,6 +71,8 @@ class Motor:
 
         if target_counts > self.count_position:
             self.direction = constants.down
+        else:
+            self.direction = constants.up
 
         self.set(self.direction * speed)
 

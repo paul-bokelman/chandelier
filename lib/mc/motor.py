@@ -10,7 +10,7 @@ class Motor:
         self.pin = pin
         self.last_read_time = None
         self.disabled = False
-        self.is_home = is_home
+        self.encoder_feedback_disabled = False # get feedback from encoder
         self.counts = 0
         self.direction = constants.down # direction of motor
         self.max_counts = 30
@@ -23,6 +23,9 @@ class Motor:
 
     def _encoder_callback(self, channel: int):
         """Callback function for encoder"""
+        if self.encoder_feedback_disabled:
+            return
+
         # if self.counts < 0:
         #     self._error(f"Motor {self.pin} encoder count is negative, disabling...")
         #     return
@@ -35,7 +38,9 @@ class Motor:
         """Set motor home state"""
         self.last_read_time = None
         self.direction = constants.down
+        self.is_home = True
         self.counts = 0
+        self.encoder_feedback_disabled = True
 
     def _error(self, message: str):
         """Set motor error state"""
@@ -59,6 +64,7 @@ class Motor:
 
     def to_home(self, speed: float = constants.to_home_speed):
         """Move the motor to the home position (0 count)"""
+        self.encoder_feedback_disabled = False # start incrementing encoder counts
         if self.home: 
             log.success(f"Motor {self.pin} at home")
             return
@@ -92,14 +98,9 @@ class Motor:
 
     def to(self, target: float, speed: float):
         """Move the motor to a specific position in counts, target is a percentage of the max counts"""
-
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
-        # if the motor is at home, reset the counts (fix recoil issue)
-        if self.is_home:
-            self.counts = 0
-
         target_counts = int((target / 1 ) * (self.max_counts))
 
         log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
@@ -113,7 +114,8 @@ class Motor:
         if self.counts == target_counts:
             log.success(f"Motor {self.pin} already at target position")
             return
-
+        
+        self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.set(speed, self.direction) # set the motor in the correct direction
 
         start_time = time.time()

@@ -2,6 +2,7 @@ import asyncio
 import constants
 from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
+from lib.utils import calculate_relative_boosts
 
 class MotorController:
   """Main motor controller class for calibrating, saving, and manipulating servos"""
@@ -24,10 +25,16 @@ class MotorController:
     if reset: self.store.reset()
     data = self.store.load()
 
+    # calibrate each motor simultaneously
     await asyncio.gather(*[motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]]) for motor in self.motors])
-    
-    # for motor in self.motors:
-    #   motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
+
+    # calculate and assign relative speeds
+    up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])
+    down_boosts = calculate_relative_boosts([motor.cps_down for motor in self.motors])
+
+    for (motor, up_boost, down_boost) in zip(self.motors, up_boosts, down_boosts):
+      motor.up_boost = up_boost
+      motor.down_boost = down_boost
 
   async def move_all(self, positions: list[float], speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""
@@ -35,9 +42,8 @@ class MotorController:
     if speed < 0 or speed > 1:
       raise ValueError("Speed must be between 0 and 1")
 
+    # move each motor to its target position simultaneously
     await asyncio.gather(*[motor.to(position, speed) for motor, position in zip(self.motors, positions)])
-    # for i, motor in enumerate(self.motors):
-    #   motor.to(positions[i], speed)
 
   def save_calibration(self):
     """Save calibration data with store"""

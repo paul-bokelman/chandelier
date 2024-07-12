@@ -21,8 +21,10 @@ class Motor:
         # calibrated data
         # todo: counts should be none unless calibrated (position unknown)
         self.counts = -1  # current count position, -1 indicates that the motor has not been calibrated
-        self.cps_down = None # counts per second moving down, -1 indicates that the motor has not been calibrated
-        self.cps_up = None # counts per second moving up, -1 indicates that the motor has not been calibrated
+        self.cps_down: Optional[float] = None # counts per second moving down, -1 indicates that the motor has not been calibrated
+        self.cps_up: Optional[float] = None # counts per second moving up, -1 indicates that the motor has not been calibrated
+        self.up_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
+        self.down_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
 
         # todo: pull all calibration data for this motor
 
@@ -53,13 +55,14 @@ class Motor:
         log.error(message)
         self.stop()
 
-    def _save_current_state(self):
-        """Save the current state of the motor"""
-        pass
-
     def set(self, speed: float, direction: int = constants.down):
         """Set a specific motor to a specific speed, speed is a value between -1 and 1"""
-        pwm.setServoPulse(self.pin, to_pulse(speed, direction))
+        assert -1 <= speed <= 1, "Speed must be between -1 and 1"
+        assert direction in [constants.up, constants.down], "Direction must be up or down"
+        assert not self.disabled, "Motor is disabled"
+        assert self.up_boost is not None and self.down_boost is not None, "Motor is not calibrated"
+
+        pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))
 
     def stop(self):
         """Stop the motor"""
@@ -140,6 +143,7 @@ class Motor:
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None]):
         """Find counts per second up and down for the motor"""
+        calibration_speed = 0.5 # half way between min and max speed
 
         # check if motor is already calibrated
         if data[DataMode.cps_down.value] is not None and data[DataMode.cps_up.value] is not None:
@@ -170,7 +174,7 @@ class Motor:
         else: # calculate cps down otherwise
             log.info(f"Calculating M{self.pin} cps down")
             self.direction = constants.down 
-            self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
+            self.set(calibration_speed, self.direction) # set the motor to the calibration speed
 
             start = time.time()
             # move the motor to the calibration position
@@ -195,7 +199,7 @@ class Motor:
             log.info(f"Calculating M{self.pin} up cps")
 
             start = time.time()
-            await self.to_home(speed=constants.calibration_speed)
+            await self.to_home(speed=calibration_speed)
             
             up_time = time.time() - start
             self.cps_up = constants.calibration_counts / up_time

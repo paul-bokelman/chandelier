@@ -214,6 +214,7 @@ class Motor:
         """Find the minimum speed of the motor"""
         speed_step = 0.05
         min_speed = 0.5
+        total_steps = 12 # (0.55-0)
 
         # ensure motor is at home before calibrating
         if not self.is_home():
@@ -231,7 +232,7 @@ class Motor:
         self.direction = constants.down 
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
-        for current_speed in reversed([round(x * speed_step, 2) for x in range(0, 6)]):
+        for current_speed in reversed([round(x * speed_step, 2) for x in range(0, total_steps)]):
             log.info(f"Testing speed: {current_speed}")
             _, timed_out = await self.to(0.2, current_speed)
 

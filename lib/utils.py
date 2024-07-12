@@ -33,6 +33,8 @@ def to_pulse(speed: float, direction, up_boost: float, down_boost: float)->float
     
     # calculate relative speed with boost depending on direction
     relative_speed = (speed + speed * up_boost) if direction == constants.up else (speed - speed * down_boost)
+
+    print(f"speed: {speed}, direction: {direction}, up_boost: {up_boost}, down_boost: {down_boost}, relative_speed: {relative_speed}")
     
     if direction == constants.up:
       return -8*(relative_speed-187.5) 

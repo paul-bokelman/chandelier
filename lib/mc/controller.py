@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 import constants
-from lib.data import CalibrationMode, CalibrationData
+from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
 from PCA9685 import pwm
 
@@ -9,22 +9,8 @@ class MotorController:
   """Main motor controller class for calibrating, saving, and manipulating servos"""
   def __init__(self, debug = False) -> None:
     self.debug = debug
-    self.store = CalibrationData()
+    self.store = Store()
     self.motors = [Motor(i) for i in range(constants.n_motors)]
-
-    self.enc_counts = self.store.get(CalibrationMode.ENC_COUNTS) # motor encoder count - Initialize to 0
-    self.slow_speed_down = self.store.get(CalibrationMode.SLOW_SPEED_DOWN)# minimum motor speed in down direction - Initialize to 0
-    self.slow_speed_up = self.store.get(CalibrationMode.SLOW_SPEED_UP)# minimum motor speed in up direction - Initialize to 0
-    self.med_speed_down = self.store.get(CalibrationMode.MED_SPEED_DOWN)# medium motor speed in down direction - Initialize to 0
-    self.med_speed_up = self.store.get(CalibrationMode.MED_SPEED_UP)# medium motor speed in up direction - Initialize to 0
-    self.fast_speed_down = self.store.get(CalibrationMode.FAST_SPEED_DOWN)# fast motor speed in down direction - Initialize to 0
-    self.fast_speed_up = self.store.get(CalibrationMode.FAST_SPEED_UP)# fast motor speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_slow_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_DOWN) # max time between encoder counts for slow speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_slow_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_SLOW_UP)# max time between encoder counts for slow speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_med_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_MED_DOWN)# max time between encoder counts for medium speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_med_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_MED_UP)# max time between encoder counts for medium speed in up direction - Initialize to 0
-    self.enc_time_bet_counts_fast_down = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_DOWN)# max time between encoder counts for fast speed in down direction - Initialize to 0
-    self.enc_time_bet_counts_fast_up = self.store.get(CalibrationMode.ENC_TIME_BET_COUNTS_FAST_UP)# max time between encoder counts for fast speed in up direction - Initialize to 0
 
   def stop_all_motors(self):
     """Stop all motors by calling stop_motor for each motor"""
@@ -36,15 +22,27 @@ class MotorController:
     for motor in self.motors:
       motor.to_home()
 
-  def calibrate(self):
+  def calibrate(self, reset = False):
     """Find minimum speed and time between encoder counts for each motor"""
+    if reset: self.store.reset()
+    data = self.store.load()
+    
     for motor in self.motors:
-      motor.calibrate()
+      motor.calibrate([data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
 
   def move_all(self, positions: list[float], abs_speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""
     for i, motor in enumerate(self.motors):
       motor.to(positions[i], abs(abs_speed))
+
+  def save_calibration(self):
+    """Save calibration data with store"""
+    data = CalibrationData(
+      counts=[motor.counts for motor in self.motors],
+      cps_down=[motor.cps_down for motor in self.motors],
+      cps_up=[motor.cps_up for motor in self.motors]
+    )
+    self.store.save(data)
     
   # def motor_calibration_sequence(self, servo_num, speed, enc_counts, time_out):
   #   """Motor move sequence that reports back time between counts"""

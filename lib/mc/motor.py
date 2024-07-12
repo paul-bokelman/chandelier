@@ -2,6 +2,7 @@ from typing import Optional
 import time
 import RPi.GPIO as GPIO
 from PCA9685 import pwm
+from lib.store import DataMode
 from lib.utils import log, to_pulse
 import constants
 
@@ -12,10 +13,14 @@ class Motor:
         self.last_read_time = None
         self.disabled = False
         self.encoder_feedback_disabled = False # get feedback from encoder
-        self.counts = -1 # todo: initialize to calibration data
         self.direction = constants.down # direction of motor
         self.max_counts = 30
         self.encoder_pin = constants.encoder_pins[self.pin]
+
+        # calibrated data
+        self.counts = -1  # current count position, -1 indicates that the motor has not been calibrated
+        self.cps_down = -1 # counts per second moving down, -1 indicates that the motor has not been calibrated
+        self.cps_up = -1 # counts per second moving up, -1 indicates that the motor has not been calibrated
 
         # todo: pull all calibration data for this motor
 
@@ -128,7 +133,7 @@ class Motor:
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
 
-    def calibrate(self):
+    def calibrate(self, data: list[Optional[float]] = [None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         # ensure motor is at home 
         if not self.is_home():
@@ -141,39 +146,45 @@ class Motor:
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 
         log.info(f"Calibrating M{self.pin}")
-        log.info(f"Calculating M{self.pin} down cps")
-        
-        # measure down counts
-        self.direction = constants.down 
-        self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
-        start = time.time()
-        # move the motor to the calibration position
-        while self.counts != constants.calibration_counts:
-            # motor has timed out -> error
-            if time.time() - start > constants.calibration_timeout:
-                self._error(f"Motor {self.pin} timed out calibrating, disabling...")
-                return
+        # get cps down from data if available
+        if data[DataMode.cps_down.value] is not None:
+            self.cps_down = data[DataMode.cps_down.value]
+            log.info(f"Using provided cps down: {self.cps_down}")
+        else: # calculate cps down otherwise
+            log.info(f"Calculating M{self.pin} cps down")
+            self.direction = constants.down 
+            self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
+
+            start = time.time()
+            # move the motor to the calibration position
+            while self.counts != constants.calibration_counts:
+                # motor has timed out -> error
+                if time.time() - start > constants.calibration_timeout:
+                    self._error(f"Motor {self.pin} timed out calibrating, disabling...")
+                    return
+                
+            self.stop()
             
-        self.stop()
-        
-        down_time = time.time() - start # time taken to move to calibration position
-        down_cps = constants.calibration_counts / down_time # time per count
+            down_time = time.time() - start # time taken to move to calibration position
+            self.cps_down = constants.calibration_counts / down_time # time per count
 
-        log.info(f"Calculating M{self.pin} up cps")
-        
-        # measure up counts
-        start = time.time()
-        self.to_home(speed=constants.calibration_speed)
+        # get cps up from data if available
+        if data[DataMode.cps_up.value] is not None:
+            self.cps_up = data[DataMode.cps_up.value]
+            log.info(f"Using provided cps up: {self.cps_up}")
+        else:
+            log.info(f"Calculating M{self.pin} up cps")
             
-        up_time = time.time() - start
-        up_cps = constants.calibration_counts / up_time
+            # measure up counts
+            start = time.time()
+            self.to_home(speed=constants.calibration_speed)
+            
+            up_time = time.time() - start
+            self.cps_up = constants.calibration_counts / up_time
 
-        # calculate max counts
-        log.success(f"M{self.pin} | up_cps: {up_cps} | down_cps: {down_cps}")
+        log.success(f"M{self.pin} | cps up: {self.cps_up} | cps down: {self.cps_down}")
         
-        self.stop()
-
         self.encoder_feedback_disabled = True
 
     def is_home(self) -> bool:

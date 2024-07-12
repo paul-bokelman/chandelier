@@ -27,9 +27,9 @@ class Store:
     if not os.path.exists(constants.calibrations_file_path):
       log.info(f"Creating calibration file: {constants.calibrations_file_path}")
       self.save({
-        "counts": [0.0] * constants.n_motors,
-        "cps_down": [0.0] * constants.n_motors,
-        "cps_up": [0.0] * constants.n_motors
+        "counts": [None] * constants.n_motors,
+        "cps_down": [None] * constants.n_motors,
+        "cps_up": [None] * constants.n_motors
       })
 
     # read data from file
@@ -42,9 +42,9 @@ class Store:
     """Reset calibration data"""
     log.info(f"Resetting calibration data")
     self.save({
-      "counts": [0.0] * constants.n_motors,
-      "cps_down": [0.0] * constants.n_motors,
-      "cps_up": [0.0] * constants.n_motors
+      "counts": [None] * constants.n_motors,
+      "cps_down": [None] * constants.n_motors,
+      "cps_up": [None] * constants.n_motors
     })
 
   def save(self, data: CalibrationData) -> None:

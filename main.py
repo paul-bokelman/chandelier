@@ -9,7 +9,7 @@ def main():
     mc = MotorController(debug=True)
 
     mc.save_calibration()
-    mc.calibrate()
+    mc.calibrate(reset=True)
 
     GPIO.cleanup() # clean up for next session
 

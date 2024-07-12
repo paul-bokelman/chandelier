@@ -28,3 +28,4 @@ calibrations_file_path = "calibrations.json"
 # (max_speed + min_speed) / 2 = calibration_speed
 max_speed = 20 # relative to calibration speed
 min_speed = 6 # relative to calibration speed 
+base_cps = 1 # target cps for calibration

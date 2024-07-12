@@ -130,6 +130,8 @@ class Motor:
             if time.time() - start_time > constants.to_position_timeout:
                 self._error(f"Motor {self.pin} timed out moving to target position, disabling...")
                 break
+
+            await asyncio.sleep(0.01) # yield control back to event
         
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()

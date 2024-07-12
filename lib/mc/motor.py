@@ -124,7 +124,7 @@ class Motor:
         
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.set(speed, self.direction) # set the motor in the correct direction
-
+        
         start_time = time.time()
         while True:
             # check if the motor has reached the target position

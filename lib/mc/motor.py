@@ -234,7 +234,7 @@ class Motor:
         # move the motor to the calibration position at different speeds and look for timeout
         for current_speed in [x * speed_step for x in range(starting_speed, 0, -1)]:
             log.info(f"Testing speed: {current_speed}")
-            _, timed_out = await self.to(constants.calibration_counts, current_speed)
+            _, timed_out = await self.to(0.3, current_speed)
             min_speed = current_speed
             if timed_out:
                 break

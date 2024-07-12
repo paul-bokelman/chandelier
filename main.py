@@ -3,7 +3,6 @@ import constants
 import RPi.GPIO as GPIO
 from lib.mc.controller import MotorController
 from lib.sequences import Sequences
-from constants import n_motors
 
 async def main():
     # setup GPIO
@@ -14,12 +13,9 @@ async def main():
     await mc.calibrate(reset=False)
     await mc.move_all_home()
 
-    for i in range(10):
-        await mc.move_all([i / 2 for c in range(n_motors)], i / 2)
-
-
+    await mc.move_all([0.7, 0.7, 0.7, 0.7], 0.8)
+    
     mc.stop_all_motors()
-    # mc.sequence(Sequences.WAVE)
 
     mc.save_calibration()
 

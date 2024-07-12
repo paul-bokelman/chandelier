@@ -21,7 +21,7 @@ class MotorController:
       motor.to_home()
 
   def calibrate(self, reset = False):
-    """Find minimum speed and time between encoder counts for each motor"""
+    """Find cps down and up for each motor"""
     if reset: self.store.reset()
     data = self.store.load()
     

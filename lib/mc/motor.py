@@ -1,5 +1,6 @@
 from typing import Optional
 import time
+import asyncio
 import RPi.GPIO as GPIO
 from PCA9685 import pwm
 from lib.store import DataMode
@@ -18,6 +19,7 @@ class Motor:
         self.encoder_pin = constants.encoder_pins[self.pin]
 
         # calibrated data
+        # todo: counts should be none unless calibrated (position unknown)
         self.counts = -1  # current count position, -1 indicates that the motor has not been calibrated
         self.cps_down = None # counts per second moving down, -1 indicates that the motor has not been calibrated
         self.cps_up = None # counts per second moving up, -1 indicates that the motor has not been calibrated
@@ -103,7 +105,6 @@ class Motor:
             raise ValueError("Position must be between 0 and 1")
         
         target_counts = int((target / 1 ) * (self.max_counts))
-
         log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
 
         # change direction based on target position
@@ -134,7 +135,7 @@ class Motor:
         self.stop()
 
     def calibrate(self, data: list[Optional[float]] = [None, None, None]):
-        """Calibrate the motor to determine lower and upper bounds of motor speed"""
+        """Find counts per second up and down for the motor"""
 
         # check if motor is already calibrated
         if data[DataMode.cps_down.value] is not None and data[DataMode.cps_up.value] is not None:

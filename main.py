@@ -2,7 +2,7 @@ import asyncio
 import constants
 import RPi.GPIO as GPIO
 from lib.mc.controller import MotorController
-from lib.sequences import Sequences
+import math
 
 async def main():
     # setup GPIO
@@ -14,6 +14,16 @@ async def main():
     await mc.move_all_home()
 
     await mc.move_all([0.7, 0.7, 0.7, 0.7], 0.5)
+
+    # make sine wave sequence with 0.5 speed
+
+    offset= 0.1
+
+    pos = lambda t, offset_m: math.sin(t) * 0.75 + offset * offset_m
+
+    for i in range(20):
+        await mc.move_all([pos(i, 0), pos(i, 1), pos(i, 1), pos(i, 2)], 0.5)
+
     
     mc.stop_all_motors()
 

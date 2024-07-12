@@ -28,7 +28,7 @@ class MotorController:
     data = self.store.load()
     
     for motor in self.motors:
-      motor.calibrate([data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
+      motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
 
   def move_all(self, positions: list[float], abs_speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""

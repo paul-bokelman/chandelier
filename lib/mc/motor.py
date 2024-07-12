@@ -15,8 +15,8 @@ class Motor:
         self.disabled = False
         self.encoder_feedback_disabled = False # get feedback from encoder
         self.direction = constants.down # direction of motor
-        self.max_counts = 30
         self.encoder_pin = constants.encoder_pins[self.pin]
+        self.min_speed: Optional[float] = None
 
         # calibrated data
         # todo: counts should be none unless calibrated (position unknown)
@@ -25,8 +25,6 @@ class Motor:
         self.cps_up: Optional[float] = None # counts per second moving up, -1 indicates that the motor has not been calibrated
         self.up_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
         self.down_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
-
-        # todo: pull all calibration data for this motor
 
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
@@ -104,12 +102,14 @@ class Motor:
         
         self.stop() # stop the motor
 
-    async def to(self, target: float, speed: float):
+    async def to(self, target: float, speed: float) -> tuple[int, bool]:
         """Move the motor to a specific position in counts, target is a percentage of the max counts"""
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
-        target_counts = int((target / 1 ) * (self.max_counts))
+        target_counts = int((target / 1 ) * (constants.max_counts))
+        timed_out = False 
+        
         log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
 
         # change direction based on target position
@@ -120,7 +120,7 @@ class Motor:
 
         if self.counts == target_counts:
             log.success(f"Motor {self.pin} already at target position")
-            return
+            return self.counts, timed_out
         
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.set(speed, self.direction) # set the motor in the correct direction
@@ -134,12 +134,14 @@ class Motor:
             # motor has timed out -> stop the motor
             if time.time() - start_time > constants.to_position_timeout:
                 self._error(f"Motor {self.pin} timed out moving to target position, disabling...")
+                timed_out = True
                 break
 
             await asyncio.sleep(0.01) # yield control back to event
         
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
+        return self.counts, timed_out
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None]):
         """Find counts per second up and down for the motor"""
@@ -207,6 +209,39 @@ class Motor:
         log.success(f"M{self.pin} | cps up: {self.cps_up} | cps down: {self.cps_down}")
         
         self.encoder_feedback_disabled = True
+
+    async def find_min(self):
+        """Find the minimum speed of the motor"""
+        starting_speed = 1 
+        speed_step = 0.1
+        min_speed = starting_speed
+
+        # ensure motor is at home before calibrating
+        if not self.is_home():
+            await self.to_home()
+
+        # disabled -> cannot calibrate
+        if self.disabled:
+            self._error(f"Motor {self.pin} is disabled, cannot find min")
+            return
+        
+        self.encoder_feedback_disabled = False # start incrementing encoder counts
+
+        log.info(f"Finding min speed for M{self.pin}")
+
+        self.direction = constants.down 
+
+        # move the motor to the calibration position at different speeds and look for timeout
+        for current_speed in [x * speed_step for x in range(starting_speed, 0, -1)]:
+            log.info(f"Testing speed: {current_speed}")
+            _, timed_out = await self.to(constants.calibration_counts, current_speed)
+            min_speed = current_speed
+            if timed_out:
+                break
+
+        log.success(f"M{self.pin} | min speed: {min_speed}")
+        self.encoder_feedback_disabled = True
+        return min_speed
 
     def is_home(self) -> bool:
         """Check if the motor is at the home position"""

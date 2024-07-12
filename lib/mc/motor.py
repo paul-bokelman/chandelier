@@ -135,6 +135,10 @@ class Motor:
 
     def calibrate(self, data: list[Optional[float]] = [None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
+        if data[DataMode.cps_down.value] is not None and data[DataMode.cps_up.value] is not None:
+            log.info(f"Motor {self.pin} already calibrated")
+            return
+
         # ensure motor is at home 
         if not self.is_home():
             self.to_home()

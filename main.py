@@ -19,7 +19,7 @@ async def main():
 
     offset= 0.1
 
-    pos = lambda t, offset_m: math.sin(t) * 0.75 + offset * offset_m
+    pos = lambda t, offset_m: math.sin(t + offset * offset_m) * 0.75
 
     for i in range(20):
         await mc.move_all([pos(i, 0), pos(i, 1), pos(i, 1), pos(i, 2)], 0.5)

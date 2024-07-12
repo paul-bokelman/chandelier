@@ -10,8 +10,8 @@ async def main():
 
     mc = MotorController(debug=True)
     await mc.calibrate(reset=False)
-    await mc.motors[1].find_min()
-    await mc.motors[1].to_home()
+
+    await mc.find_mins()
     # await mc.move_all([0.5, 0.5, 0.5, 0.5], 0.5)
     # await mc.move_all_home()
     

@@ -20,6 +20,10 @@ class MotorController:
     """Move all motors to home position"""
     await asyncio.gather(*[motor.to_home() for motor in self.motors])
 
+  async def find_mins(self):
+    """Find minimums for all motors"""
+    await asyncio.gather(*[motor.find_min() for motor in self.motors])
+
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
     if reset: self.store.reset()

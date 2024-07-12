@@ -1,5 +1,8 @@
+import asyncio
 import constants
-from lib.mc.controller import GPIO, MotorController
+import RPi.GPIO as GPIO
+from lib.mc.controller import MotorController
+from lib.sequences import Sequences
 
 def main():
     # setup GPIO
@@ -9,6 +12,11 @@ def main():
     mc = MotorController(debug=True)
 
     mc.calibrate(reset=False)
+
+    asyncio.run(mc.move_all([0.4, 0.4, 0.4, 0.4], 0.13))
+    mc.stop_all_motors()
+    # mc.sequence(Sequences.WAVE)
+
     mc.save_calibration()
 
     GPIO.cleanup() # clean up for next session

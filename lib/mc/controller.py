@@ -1,9 +1,7 @@
-import time
-import RPi.GPIO as GPIO
+import asyncio
 import constants
 from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
-from PCA9685 import pwm
 
 class MotorController:
   """Main motor controller class for calibrating, saving, and manipulating servos"""
@@ -30,10 +28,15 @@ class MotorController:
     for motor in self.motors:
       motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
 
-  def move_all(self, positions: list[float], abs_speed: float = 0.05):
+  async def move_all(self, positions: list[float], speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""
-    for i, motor in enumerate(self.motors):
-      motor.to(positions[i], abs(abs_speed))
+
+    if speed < 0 or speed > 1:
+      raise ValueError("Speed must be between 0 and 1")
+
+    await asyncio.gather(*[motor.to(position, speed) for motor, position in zip(self.motors, positions)])
+    # for i, motor in enumerate(self.motors):
+    #   motor.to(positions[i], speed)
 
   def save_calibration(self):
     """Save calibration data with store"""

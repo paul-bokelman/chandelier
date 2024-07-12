@@ -97,7 +97,7 @@ class Motor:
         
         self.stop() # stop the motor
 
-    def to(self, target: float, speed: float):
+    async def to(self, target: float, speed: float):
         """Move the motor to a specific position in counts, target is a percentage of the max counts"""
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")

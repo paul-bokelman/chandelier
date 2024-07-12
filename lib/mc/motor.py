@@ -19,8 +19,8 @@ class Motor:
 
         # calibrated data
         self.counts = -1  # current count position, -1 indicates that the motor has not been calibrated
-        self.cps_down = -1 # counts per second moving down, -1 indicates that the motor has not been calibrated
-        self.cps_up = -1 # counts per second moving up, -1 indicates that the motor has not been calibrated
+        self.cps_down = None # counts per second moving down, -1 indicates that the motor has not been calibrated
+        self.cps_up = None # counts per second moving up, -1 indicates that the motor has not been calibrated
 
         # todo: pull all calibration data for this motor
 

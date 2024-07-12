@@ -232,7 +232,7 @@ class Motor:
         self.direction = constants.down 
 
         # move the motor to the calibration position at different speeds and look for timeout
-        for current_speed in [x * speed_step for x in reversed(range(0, starting_speed))]:
+        for current_speed in reversed([x * speed_step for x in range(0, starting_speed)]):
             log.info(f"Testing speed: {current_speed}")
             _, timed_out = await self.to(0.3, current_speed)
             min_speed = current_speed

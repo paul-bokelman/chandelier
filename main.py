@@ -13,7 +13,7 @@ async def main():
     await mc.calibrate(reset=False)
     await mc.move_all_home()
 
-    await mc.move_all([0.7, 0.7, 0.7, 0.7], 0.8)
+    await mc.move_all([0.7, 0.7, 0.7, 0.7], 0.5)
     
     mc.stop_all_motors()
 

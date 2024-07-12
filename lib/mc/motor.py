@@ -231,13 +231,15 @@ class Motor:
 
         self.direction = constants.down 
 
-        # move the motor to the calibration position at different speeds and look for timeout
-        for current_speed in reversed([x * speed_step for x in range(0, starting_speed * 10)]):
+        # move the motor to the calibration position at different speeds and look for timeout (down)
+        for current_speed in reversed([round(x * speed_step) for x in range(0, starting_speed * 10)]):
             log.info(f"Testing speed: {current_speed}")
             _, timed_out = await self.to(0.3, current_speed)
             min_speed = current_speed
             if timed_out:
                 break
+
+            await self.to_home()
 
         log.success(f"M{self.pin} | min speed: {min_speed}")
         self.encoder_feedback_disabled = True

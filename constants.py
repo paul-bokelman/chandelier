@@ -24,5 +24,5 @@ calibration_counts = 20 # distance to move for calibration (in counts)
 calibration_speed = 0.13 # speed to move for calibration
 calibration_timeout = 30 # max timeout for calibration
 
-calibrations_file_path = "./data/calibrations.json"
+calibrations_file_path = "calibrations.json"
 

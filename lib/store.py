@@ -51,7 +51,7 @@ class Store:
     """Save calibration data to file"""
     log.info(f"Saving calibration data")
     
-    with open(os.path.join(constants.calibrations_file_path), "w") as f:
+    with open(constants.calibrations_file_path, "w") as f:
       f.write(json.dumps(data))
       f.close()
 

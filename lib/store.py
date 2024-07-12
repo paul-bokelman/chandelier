@@ -21,11 +21,8 @@ class Store:
   """Store and read calibration data"""
 
   def __init__(self) -> None:
-    # create calibration directory if it doesn't exist
-    if not os.path.exists(constants.calibrations_file_path):
-      log.info(f"Creating calibration directory: {constants.calibrations_file_path}")
-      os.makedirs(constants.calibrations_file_path)
-
+    """Read or create calibration file"""
+    
     # create calibration file if it doesn't exist
     if not os.path.exists(constants.calibrations_file_path):
       log.info(f"Creating calibration file: {constants.calibrations_file_path}")

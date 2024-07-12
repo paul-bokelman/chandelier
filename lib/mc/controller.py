@@ -15,18 +15,19 @@ class MotorController:
     for motor in self.motors:
       motor.stop()
 
-  def move_all_home(self):
+  async def move_all_home(self):
     """Move all motors to home position"""
-    for motor in self.motors:
-      motor.to_home()
+    await asyncio.gather(*[motor.to_home() for motor in self.motors])
 
-  def calibrate(self, reset = False):
+  async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
     if reset: self.store.reset()
     data = self.store.load()
+
+    await asyncio.gather(*[motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]]) for motor in self.motors])
     
-    for motor in self.motors:
-      motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
+    # for motor in self.motors:
+    #   motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]])
 
   async def move_all(self, positions: list[float], speed: float = 0.05):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max)"""

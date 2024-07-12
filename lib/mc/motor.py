@@ -65,7 +65,7 @@ class Motor:
         """Stop the motor"""
         pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
-    def to_home(self, speed: float = constants.to_home_speed):
+    async def to_home(self, speed: float = constants.to_home_speed):
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         if self.is_home(): 
@@ -96,6 +96,8 @@ class Motor:
             if current_time - start_time > constants.to_home_timeout:
                 self._error(f"Motor {self.pin} timed out")
                 return
+            
+            await asyncio.sleep(0.01) # yield control back to event
         
         self.stop() # stop the motor
 
@@ -136,7 +138,7 @@ class Motor:
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
 
-    def calibrate(self, data: list[Optional[float]] = [None, None, None]):
+    async def calibrate(self, data: list[Optional[float]] = [None, None, None]):
         """Find counts per second up and down for the motor"""
 
         # check if motor is already calibrated
@@ -150,7 +152,7 @@ class Motor:
 
         # ensure motor is at home before calibrating
         if not self.is_home():
-            self.to_home()
+            await self.to_home()
 
         # disabled -> cannot calibrate
         if self.disabled:
@@ -178,6 +180,8 @@ class Motor:
                     self._error(f"Motor {self.pin} timed out calibrating, disabling...")
                     return
                 
+                await asyncio.sleep(0.01) # yield control back to event
+                
             self.stop()
             
             down_time = time.time() - start # time taken to move to calibration position
@@ -191,7 +195,7 @@ class Motor:
             log.info(f"Calculating M{self.pin} up cps")
 
             start = time.time()
-            self.to_home(speed=constants.calibration_speed)
+            await self.to_home(speed=constants.calibration_speed)
             
             up_time = time.time() - start
             self.cps_up = constants.calibration_counts / up_time

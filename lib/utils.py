@@ -31,21 +31,18 @@ def to_pulse(speed: float, direction, up_boost: float, down_boost: float)->float
     # normalize speed to range
     speed = (constants.max_speed-constants.min_speed) * (speed) + constants.min_speed
 
-    print(speed, constants.max_speed, constants.min_speed, speed)
-    
     # calculate relative speed with boost depending on direction
     relative_speed = (speed + speed * up_boost) if direction == constants.up else (speed + speed * down_boost)
 
-    print(f"speed: {speed}, direction: {direction}, up_boost: {up_boost}, down_boost: {down_boost}, relative_speed: {relative_speed}")
+    log.info(f"Speed: {speed} | Relative Speed: {relative_speed} | Direction: {direction} | Up Boost: {up_boost} | Down Boost: {down_boost}")
     
     if direction == constants.up:
       return -8*(relative_speed-187.5) 
     else:
       return 8*(relative_speed+187.5) 
-    
 
 def calculate_relative_boosts(all_cps: list[Optional[float]]) -> list[Optional[float]]:
-    """Calculate and scale relative speeds"""
+    """Calculate relative boosts for all motors based on cps data"""
 
     # if no cps data, return None for all motors
     if not all_cps:

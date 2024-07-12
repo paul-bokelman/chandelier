@@ -30,6 +30,8 @@ def to_pulse(speed: float, direction, up_boost: float, down_boost: float)->float
     
     # normalize speed to range
     speed = (constants.max_speed-constants.min_speed) * (speed) + constants.min_speed
+
+    print(speed, constants.max_speed, constants.min_speed, speed)
     
     # calculate relative speed with boost depending on direction
     relative_speed = (speed + speed * up_boost) if direction == constants.up else (speed + speed * down_boost)
@@ -51,7 +53,7 @@ def calculate_relative_boosts(all_cps: list[Optional[float]]) -> list[Optional[f
 
     max_r, min_r = 1, 0 # max and min range
     max_cps, min_cps = max([c for c in all_cps if c]), 0 # max and min cps
-    relative_speed = lambda cps: ((cps - min_cps) * ((max_r - min_r) / (max_cps) - min_cps) + min_r) if cps else None
+    relative_speed = lambda cps: 1 - ((cps - min_cps) * ((max_r - min_r) / (max_cps) - min_cps) + min_r) if cps else None
 
     return [relative_speed(cps) for cps in all_cps]
     

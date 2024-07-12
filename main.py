@@ -13,7 +13,7 @@ async def main():
     mc.move_all_home()
     mc.calibrate(reset=False)
 
-    move = asyncio.create_task(mc.move_all([0.4, 0.4, 0.4, 0.4], 0.13))
+    move = asyncio.create_task(mc.move_all([0.7, 0.7, 0.7, 0.7], 0.13))
     await move
     mc.stop_all_motors()
     # mc.sequence(Sequences.WAVE)

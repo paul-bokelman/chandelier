@@ -23,10 +23,16 @@ class Logger:
 
 log = Logger()
 
-def to_pulse(speed: float, direction, up_boost: float, down_boost: float)->float:
+def to_pulse(speed: float, direction, up_boost: Optional[float] = 0, down_boost: Optional[float] = 0)->float:
     """Convert motor speed and direction into Servo pulse, speed is a value between 0 and 1"""
     if speed < 0 or speed > 1:
         raise ValueError("Invalid speed value")
+    
+    # if no boost, set to 0 (no boost), should only be None if no cps data
+    if up_boost is None:
+        up_boost = 0
+    if down_boost is None:
+        down_boost = 0
     
     # normalize speed to range
     speed = (constants.max_speed-constants.min_speed) * (speed) + constants.min_speed

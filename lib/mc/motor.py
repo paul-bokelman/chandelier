@@ -59,7 +59,6 @@ class Motor:
         assert -1 <= speed <= 1, "Speed must be between -1 and 1"
         assert direction in [constants.up, constants.down], "Direction must be up or down"
         assert not self.disabled, "Motor is disabled"
-        assert self.up_boost is not None and self.down_boost is not None, "Motor is not calibrated"
 
         pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))
 

@@ -12,7 +12,6 @@ class Motor:
     def __init__(self, pin: int, is_home: bool = False) -> None:
         self.pin = pin
         self.last_read_time = None
-        self.disabled = False
         self.encoder_feedback_disabled = False # get feedback from encoder
         self.direction = constants.down # direction of motor
         self.encoder_pin = constants.encoder_pins[self.pin]
@@ -50,7 +49,6 @@ class Motor:
         """Set motor error state"""
         self.encoder_feedback_disabled = True
         self.counts = 0
-        self.disabled = True
         log.error(message)
         self.stop()
 
@@ -58,7 +56,6 @@ class Motor:
         """Set a specific motor to a specific speed, speed is a value between -1 and 1"""
         assert -1 <= speed <= 1, "Speed must be between -1 and 1"
         assert direction in [constants.up, constants.down], "Direction must be up or down"
-        assert not self.disabled, "Motor is disabled"
 
         pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))
 
@@ -72,9 +69,6 @@ class Motor:
         timed_out = False
         if self.is_home(): 
             log.success(f"Motor {self.pin} at home")
-            return self.counts, timed_out
-        if self.disabled: 
-            self._error(f"Motor {self.pin} is disabled, cannot move to home")
             return self.counts, timed_out
 
         self.direction = constants.up
@@ -248,11 +242,6 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
-        # disabled -> cannot calibrate
-        if self.disabled:
-            self._error(f"Motor {self.pin} is disabled, cannot calibrate")
-            return
-        
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 
         log.info(f"Calibrating M{self.pin}")

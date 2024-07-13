@@ -33,5 +33,5 @@ calibrations_file_path = "calibrations.json"
 # sequence configuration
 # (max_speed + min_speed) / 2 = calibration_speed
 max_speed = 20 # relative to calibration speed
-min_speed = 2 # relative to calibration speed 
+min_speed = 6 # relative to calibration speed 
 max_counts = 30 # max encoder counts

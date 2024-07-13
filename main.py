@@ -11,7 +11,6 @@ async def main():
     mc = MotorController(debug=True)
     await mc.calibrate(reset=False)
 
-    await mc.find_mins()
     # await mc.move_all([0.5, 0.5, 0.5, 0.5], 0.5)
     # await mc.move_all_home()
     

@@ -16,7 +16,8 @@ class Motor:
         self.encoder_feedback_disabled = False # get feedback from encoder
         self.direction = constants.down # direction of motor
         self.encoder_pin = constants.encoder_pins[self.pin]
-        self.min_speed: Optional[float] = None
+        self.min_down_speed:Optional[float] = None
+        self.min_up_speed: Optional[float] = None
 
         # calibrated data
         # todo: counts should be none unless calibrated (position unknown)
@@ -66,21 +67,24 @@ class Motor:
         """Stop the motor"""
         pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
-    async def to_home(self, speed: float = constants.to_home_speed):
+    async def to_home(self, speed: float = constants.to_home_speed) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
+        timed_out = False
         if self.is_home(): 
             log.success(f"Motor {self.pin} at home")
-            return
+            return self.counts, timed_out
         if self.disabled: 
             self._error(f"Motor {self.pin} is disabled, cannot move to home")
-            return
+            return self.counts, timed_out
 
         self.direction = constants.up
         self.set(speed, self.direction)
-        self.last_read_time = None # reset last read time
+        self.last_read_time = None 
         start_time = time.time()
         log.info(f"Moving motor {self.pin} to home")
+        
+        # move motor to home position and check for stalls
         while True:
             current_time = time.time()
             # initial count position has not changed -> already home or jammed
@@ -96,14 +100,17 @@ class Motor:
             # if the motor has timed out, stop the motor
             if current_time - start_time > constants.to_home_timeout:
                 self._error(f"Motor {self.pin} timed out")
-                return
+                timed_out = True
+                break
             
             await asyncio.sleep(0.01) # yield control back to event
-        
-        self.stop() # stop the motor
 
-    async def to(self, target: float, speed: float) -> tuple[int, bool]:
-        """Move the motor to a specific position in counts, target is a percentage of the max counts"""
+        self.stop()
+        return self.counts, timed_out
+        
+    async def to(self, target: float, speed: float = constants.mid_speed) -> tuple[int, bool]:
+        """Move the motor to a specific position relative to `max_counts` at a specific speed"""
+
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
@@ -142,41 +149,17 @@ class Motor:
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
         return self.counts, timed_out
+    
+    # -------------------------------- CALIBRATION ------------------------------- #
+    async def _find_cps(self):
+        """Find counts per second of the motor in both directions"""
+        log.info(f"Finding cps up and down for M{self.pin}")
 
-    async def calibrate(self, data: list[Optional[float]] = [None, None, None]):
-        """Find counts per second up and down for the motor"""
-        calibration_speed = 0.5 # half way between min and max speed
-
-        # check if motor is already calibrated
-        if data[DataMode.cps_down.value] is not None and data[DataMode.cps_up.value] is not None:
-            log.info(f"Motor {self.pin} already calibrated")
-            self.cps_down = data[DataMode.cps_down.value]
-            self.cps_up = data[DataMode.cps_up.value]
-
-            log.success(f"M{self.pin} | cps up: {self.cps_up} | cps down: {self.cps_down}")
-            return
-
-        # ensure motor is at home before calibrating
-        if not self.is_home():
-            await self.to_home()
-
-        # disabled -> cannot calibrate
-        if self.disabled:
-            self._error(f"Motor {self.pin} is disabled, cannot calibrate")
-            return
-        
-        self.encoder_feedback_disabled = False # start incrementing encoder counts
-
-        log.info(f"Calibrating M{self.pin}")
-
-        # get cps down from data if available
-        if data[DataMode.cps_down.value] is not None:
-            self.cps_down = data[DataMode.cps_down.value]
-            log.info(f"Using provided cps down: {self.cps_down}")
-        else: # calculate cps down otherwise
+         # ------------------------------- find cps down ------------------------------ #
+        if self.cps_down is None:
             log.info(f"Calculating M{self.pin} cps down")
             self.direction = constants.down 
-            self.set(calibration_speed, self.direction) # set the motor to the calibration speed
+            self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
             start = time.time()
             # move the motor to the calibration position
@@ -193,27 +176,74 @@ class Motor:
             down_time = time.time() - start # time taken to move to calibration position
             self.cps_down = constants.calibration_counts / down_time # time per count
 
-        # get cps up from data if available
-        if data[DataMode.cps_up.value] is not None:
-            self.cps_up = data[DataMode.cps_up.value]
-            log.info(f"Using provided cps up: {self.cps_up}")
-        else:
+        # -------------------------------- find cps up ------------------------------- #
+        if self.cps_up is None:
             log.info(f"Calculating M{self.pin} up cps")
 
             start = time.time()
-            await self.to_home(speed=calibration_speed)
+            await self.to_home(speed=constants.calibration_speed)
             
             up_time = time.time() - start
             self.cps_up = constants.calibration_counts / up_time
 
-        log.success(f"M{self.pin} | cps up: {self.cps_up} | cps down: {self.cps_down}")
+    async def _find_mins(self):
+        """Find the minimum speed of the motor in both directions"""
+        log.info(f"Finding min speeds for M{self.pin}")
         
+        # ---------------------------- find min down speed --------------------------- #
+        log.info(f"Finding min down speed for M{self.pin}")
+        self.direction = constants.down 
+
+        # move the motor to the calibration position at different speeds and look for timeout (down)
+        for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
+            log.info(f"Testing speed: {current_speed}")
+            _, timed_out = await self.to(0.2, current_speed)
+
+            # motor has timed out -> found slowest speed
+            if timed_out:
+                break
+
+            self.min_down_speed = current_speed
+            await self.to_home() # return home for next iteration
+
+        # ---------------------------- find min up speed --------------------------- #
+        log.info(f"Finding min up speed for M{self.pin}")
+        self.direction = constants.up
+
+        # move to calibration position -> try to move home at different speeds and look for timeout (up)
+        for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
+            log.info(f"Testing speed: {current_speed}")
+            await self.to(0.2) # move to calibration position
+            _, timed_out = await self.to_home(current_speed) # move home and check for timeouts
+
+            # motor has timed out -> found slowest speed
+            if timed_out:
+                break
+
+            self.min_up_speed = current_speed
+
+        log.success(f"M{self.pin} | min down speed: {self.min_down_speed} | min up speed: {self.min_up_speed}")
+
+        # cleanup
+        await self.to_home()
         self.encoder_feedback_disabled = True
 
-    async def find_min(self):
-        """Find the minimum speed of the motor"""
-        speed_step = 0.05
-        total_steps = 12 # (0.55-0)
+    async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
+        """Find counts per second up and down for the motor"""
+
+        # load calibration data if available
+        if data[DataMode.cps_down.value] is not None:
+            log.info(f"M{self.pin} | cps down already calibrated")
+            self.cps_down = data[DataMode.cps_down.value]
+        if data[DataMode.cps_up.value] is not None:
+            log.info(f"M{self.pin} | cps up already calibrated")
+            self.cps_up = data[DataMode.cps_up.value]
+        if data[DataMode.min_down_speed.value] is not None:
+            log.info(f"M{self.pin} | min down speed already calibrated")
+            self.min_down_speed = data[DataMode.min_down_speed.value]
+        if data[DataMode.min_up_speed.value] is not None:
+            log.info(f"M{self.pin} | min up speed already calibrated")
+            self.min_up_speed = data[DataMode.min_up_speed.value]
 
         # ensure motor is at home before calibrating
         if not self.is_home():
@@ -221,28 +251,21 @@ class Motor:
 
         # disabled -> cannot calibrate
         if self.disabled:
-            self._error(f"Motor {self.pin} is disabled, cannot find min")
+            self._error(f"Motor {self.pin} is disabled, cannot calibrate")
             return
         
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 
-        log.info(f"Finding min speed for M{self.pin}")
+        log.info(f"Calibrating M{self.pin}")
 
-        self.direction = constants.down 
-
-        # move the motor to the calibration position at different speeds and look for timeout (down)
-        for current_speed in reversed([round(x * speed_step, 2) for x in range(0, total_steps)]):
-            log.info(f"Testing speed: {current_speed}")
-            _, timed_out = await self.to(0.2, current_speed)
-
-            # motor has timed out -> stop the motor 
-            if timed_out:
-                break
-
-            self.min_speed = current_speed
-            await self.to_home() # return home for next iteration
-
-        log.success(f"M{self.pin} | min speed: {self.min_speed}")
+        # find up and down cps if either is not present
+        if self.cps_down is None or self.cps_up is None:
+            await self._find_cps()
+        
+        # find min speeds if either is not present
+        if self.min_down_speed is None or self.min_up_speed is None:
+            await self._find_mins()
+        
         self.encoder_feedback_disabled = True
 
     def is_home(self) -> bool:

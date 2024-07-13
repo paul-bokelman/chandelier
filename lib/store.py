@@ -10,26 +10,31 @@ class DataMode(Enum):
   counts = 0
   cps_down = 1
   cps_up = 2
+  min_down_speed = 3
+  min_up_speed = 4
 
 class CalibrationData(TypedDict):
   """Schema for calibration data"""
   counts: list[Optional[float]] # currently unused
   cps_down: list[Optional[float]]
   cps_up: list[Optional[float]]
+  min_down_speed: list[Optional[float]]
+  min_up_speed: list[Optional[float]]
 
 class Store:
   """Store and read calibration data"""
 
   def __init__(self) -> None:
     """Read or create calibration file"""
-    
     # create calibration file if it doesn't exist
     if not os.path.exists(constants.calibrations_file_path):
       log.info(f"Creating calibration file: {constants.calibrations_file_path}")
       self.save({
         "counts": [None] * constants.n_motors,
         "cps_down": [None] * constants.n_motors,
-        "cps_up": [None] * constants.n_motors
+        "cps_up": [None] * constants.n_motors,
+        "min_down_speed": [None] * constants.n_motors,
+        "min_up_speed": [None] * constants.n_motors
       })
 
     # read data from file
@@ -44,7 +49,9 @@ class Store:
     self.save({
       "counts": [None] * constants.n_motors,
       "cps_down": [None] * constants.n_motors,
-      "cps_up": [None] * constants.n_motors
+      "cps_up": [None] * constants.n_motors,
+      "min_down_speed": [None] * constants.n_motors,
+      "min_up_speed": [None] * constants.n_motors
     })
 
   def save(self, data: CalibrationData) -> None:
@@ -64,6 +71,20 @@ class Store:
       raise ValueError("Invalid calibration mode")
     
     return self.data[mode.name]
+  
+  def get_by_pin(self, pin: int) -> list[Optional[float]]:
+    """Get calibration data for a specific motor pin"""
+    log.info(f"Getting calibration data by pin")
+    if pin < 0 or pin >= constants.n_motors:
+      raise ValueError("Invalid motor pin")
+
+    return [
+      self.data["counts"][pin],
+      self.data["cps_down"][pin],
+      self.data["cps_up"][pin],
+      self.data["min_down_speed"][pin],
+      self.data["min_up_speed"][pin]
+    ]
   
   def load(self) -> CalibrationData:
     """Load calibration data from file"""

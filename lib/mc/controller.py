@@ -20,17 +20,11 @@ class MotorController:
     """Move all motors to home position"""
     await asyncio.gather(*[motor.to_home() for motor in self.motors])
 
-  async def find_mins(self):
-    """Find minimums for all motors"""
-    await asyncio.gather(*[motor.find_min() for motor in self.motors])
-
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
     if reset: self.store.reset()
-    data = self.store.load()
-
     # calibrate each motor simultaneously
-    await asyncio.gather(*[motor.calibrate([data['counts'][motor.pin], data["cps_down"][motor.pin], data["cps_up"][motor.pin]]) for motor in self.motors])
+    await asyncio.gather(*[motor.calibrate(self.store.get_by_pin(motor.pin)) for motor in self.motors])
 
     # calculate and assign relative speeds
     up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])
@@ -54,7 +48,9 @@ class MotorController:
     data = CalibrationData(
       counts=[motor.counts for motor in self.motors],
       cps_down=[motor.cps_down for motor in self.motors],
-      cps_up=[motor.cps_up for motor in self.motors]
+      cps_up=[motor.cps_up for motor in self.motors],
+      min_down_speed=[motor.min_down_speed for motor in self.motors],
+      min_up_speed=[motor.min_up_speed for motor in self.motors]
     )
     self.store.save(data)
     

@@ -10,7 +10,7 @@ stop_pulse = 1500
 up = -1
 down = 1
 fast_speed = 1
-medium_speed = 0.5
+mid_speed = 0.5
 slow_speed = 0.25
 
 # motor configuration
@@ -21,6 +21,9 @@ to_home_max_interval = 1.5 # seconds between encoder readings (should be relativ
 to_position_timeout = 60 # max timeout for trying to move to a position
 calibration_counts = 20 # distance to move for calibration (in counts)
 calibration_timeout = 30 # max timeout for calibration
+calibration_speed_step = 0.05 # speed step for min speed calibration
+calibration_total_steps = 12 # total steps for min speed calibration (0.55->0)
+calibration_speed = 0.5 # speed for calibration
 
 calibrations_file_path = "calibrations.json"
 
@@ -28,5 +31,4 @@ calibrations_file_path = "calibrations.json"
 # (max_speed + min_speed) / 2 = calibration_speed
 max_speed = 20 # relative to calibration speed
 min_speed = 6 # relative to calibration speed 
-base_cps = 1 # target cps for calibration
-max_counts = 30 # max counts for motor
+max_counts = 30 # max encoder counts

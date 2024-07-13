@@ -6,6 +6,9 @@ Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
 stop_pulse = 1500
 
+# debug mode
+debug = True
+
 # static
 up = -1
 down = 1

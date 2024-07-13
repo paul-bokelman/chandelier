@@ -75,7 +75,7 @@ class Motor:
         self.set(speed, self.direction)
         self.last_read_time = None 
         start_time = time.time()
-        log.info(f"Moving motor {self.pin} to home")
+        log.info(f"M{self.pin} -> Home | Speed: {speed}", override=True)
         
         # move motor to home position and check for stalls
         while True:
@@ -146,11 +146,11 @@ class Motor:
     # -------------------------------- CALIBRATION ------------------------------- #
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
-        log.info(f"Finding cps up and down for M{self.pin}")
+        log.info(f"Finding cps up and down for M{self.pin}", override=True)
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
-            log.info(f"Calculating M{self.pin} cps down")
+            log.info(f"Calculating M{self.pin} cps down", override=True)
             self.direction = constants.down 
             self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
@@ -171,7 +171,7 @@ class Motor:
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
-            log.info(f"Calculating M{self.pin} up cps")
+            log.info(f"Calculating M{self.pin} up cps", override=True)
 
             start = time.time()
             await self.to_home(speed=constants.calibration_speed)
@@ -184,28 +184,28 @@ class Motor:
         log.info(f"Finding min speeds for M{self.pin}")
         
         # ---------------------------- find min down speed --------------------------- #
-        log.info(f"Finding min down speed for M{self.pin}")
-        self.direction = constants.down 
+        # log.info(f"Finding min down speed for M{self.pin}", override=True)
+        # self.direction = constants.down 
 
-        # move the motor to the calibration position at different speeds and look for timeout (down)
-        for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
-            log.info(f"Testing speed: {current_speed}")
-            _, timed_out = await self.to(0.2, current_speed)
+        # # move the motor to the calibration position at different speeds and look for timeout (down)
+        # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
+        #     log.info(f"Testing speed: {current_speed}")
+        #     _, timed_out = await self.to(0.2, current_speed)
 
-            # motor has timed out -> found slowest speed
-            if timed_out:
-                break
+        #     # motor has timed out -> found slowest speed
+        #     if timed_out:
+        #         break
 
-            self.min_down_speed = current_speed
-            await self.to_home() # return home for next iteration
+        #     self.min_down_speed = current_speed
+        #     await self.to_home() # return home for next iteration
 
         # ---------------------------- find min up speed --------------------------- #
-        log.info(f"Finding min up speed for M{self.pin}")
+        log.info(f"Finding min up speed for M{self.pin}", override=True)
         self.direction = constants.up
 
         # move to calibration position -> try to move home at different speeds and look for timeout (up)
         for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
-            log.info(f"Testing speed: {current_speed}")
+            log.info(f"Testing speed: {current_speed}", override=True)
             await self.to(0.2) # move to calibration position
             _, timed_out = await self.to_home(current_speed) # move home and check for timeouts
 

@@ -7,8 +7,9 @@ class Logger:
     def __init__(self):
         pass
 
-    def info(self, msg):
-        print(msg)
+    def info(self, msg, override=False):
+        if constants.debug or override:
+            print(msg)
 
     def success(self, msg):
         print(colored(msg, 'green'))

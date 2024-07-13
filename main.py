@@ -9,7 +9,7 @@ async def main():
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     mc = MotorController(debug=True)
-    await mc.calibrate(reset=True)
+    await mc.motors[0].calibrate()
 
     # await mc.move_all([0.5, 0.5, 0.5, 0.5], 0.5)
     # await mc.move_all_home()

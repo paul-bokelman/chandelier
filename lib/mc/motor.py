@@ -213,7 +213,6 @@ class Motor:
     async def find_min(self):
         """Find the minimum speed of the motor"""
         speed_step = 0.05
-        min_speed = 0.5
         total_steps = 12 # (0.55-0)
 
         # ensure motor is at home before calibrating
@@ -238,15 +237,13 @@ class Motor:
 
             # motor has timed out -> stop the motor 
             if timed_out:
-                min_speed = current_speed + speed_step
                 break
-            
+
+            self.min_speed = current_speed
             await self.to_home() # return home for next iteration
 
-        
-        log.success(f"M{self.pin} | min speed: {min_speed}")
+        log.success(f"M{self.pin} | min speed: {self.min_speed}")
         self.encoder_feedback_disabled = True
-        return min_speed
 
     def is_home(self) -> bool:
         """Check if the motor is at the home position"""

@@ -63,7 +63,7 @@ class Motor:
         """Stop the motor"""
         pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
-    async def to_home(self, speed: float = constants.to_home_speed) -> tuple[int, bool]:
+    async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout: bool = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         timed_out = False
@@ -81,10 +81,11 @@ class Motor:
         while True:
             current_time = time.time()
             # initial count position has not changed -> already home or jammed
-            if current_time - start_time > constants.to_home_initial_timeout and self.last_read_time is None:
-                log.success(f"Motor {self.pin} already at home")
-                self._at_home()
-                break
+            if not override_initial_timeout:
+                if current_time - start_time > constants.to_home_initial_timeout and self.last_read_time is None:
+                    log.success(f"Motor {self.pin} already at home")
+                    self._at_home()
+                    break
             # check if the motor has reached home
             if self.last_read_time is not None and current_time - self.last_read_time > constants.to_home_max_interval:
                 log.success(f"Motor {self.pin} has reached home")
@@ -207,7 +208,7 @@ class Motor:
         for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
             log.info(f"Testing speed: {current_speed}", override=True)
             await self.to(0.2) # move to calibration position
-            _, timed_out = await self.to_home(current_speed) # move home and check for timeouts
+            _, timed_out = await self.to_home(current_speed, override_initial_timeout=True) # move home and check for timeouts
 
             # motor has timed out -> found slowest speed
             if timed_out:

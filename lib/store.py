@@ -21,6 +21,14 @@ class CalibrationData(TypedDict):
   min_down_speed: list[Optional[float]]
   min_up_speed: list[Optional[float]]
 
+default_calibration_data: CalibrationData = {
+  "counts": [None] * constants.n_motors,
+  "cps_down": [None] * constants.n_motors,
+  "cps_up": [None] * constants.n_motors,
+  "min_down_speed": [None] * constants.n_motors,
+  "min_up_speed": [None] * constants.n_motors
+}
+
 class Store:
   """Store and read calibration data"""
 
@@ -29,13 +37,7 @@ class Store:
     # create calibration file if it doesn't exist
     if not os.path.exists(constants.calibrations_file_path):
       log.info(f"Creating calibration file: {constants.calibrations_file_path}")
-      self.save({
-        "counts": [None] * constants.n_motors,
-        "cps_down": [None] * constants.n_motors,
-        "cps_up": [None] * constants.n_motors,
-        "min_down_speed": [None] * constants.n_motors,
-        "min_up_speed": [None] * constants.n_motors
-      })
+      self.save(default_calibration_data)
 
     # read data from file
     with open(constants.calibrations_file_path, "r") as f:
@@ -46,13 +48,7 @@ class Store:
   def reset(self):
     """Reset calibration data"""
     log.info(f"Resetting calibration data")
-    self.save({
-      "counts": [None] * constants.n_motors,
-      "cps_down": [None] * constants.n_motors,
-      "cps_up": [None] * constants.n_motors,
-      "min_down_speed": [None] * constants.n_motors,
-      "min_up_speed": [None] * constants.n_motors
-    })
+    self.save(default_calibration_data)
 
   def save(self, data: CalibrationData) -> None:
     """Save calibration data to file"""

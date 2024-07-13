@@ -9,7 +9,7 @@ import constants
 
 class Motor:
     """Motor class to control a single motor"""
-    def __init__(self, pin: int, is_home: bool = False) -> None:
+    def __init__(self, pin: int) -> None:
         self.pin = pin
         self.last_read_time = None
         self.encoder_feedback_disabled = False # get feedback from encoder
@@ -222,7 +222,7 @@ class Motor:
         self.encoder_feedback_disabled = True
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
-        """Find counts per second up and down for the motor"""
+        """Calibrate the motor to determine lower and upper bounds of motor speed"""
 
         # load calibration data if available
         if data[DataMode.cps_down.value] is not None:
@@ -247,8 +247,8 @@ class Motor:
         log.info(f"Calibrating M{self.pin}")
 
         # find up and down cps if either is not present
-        if self.cps_down is None or self.cps_up is None:
-            await self._find_cps()
+        # if self.cps_down is None or self.cps_up is None:
+        #     await self._find_cps()
         
         # find min speeds if either is not present
         if self.min_down_speed is None or self.min_up_speed is None:

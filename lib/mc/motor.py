@@ -53,8 +53,8 @@ class Motor:
         self.stop()
 
     def set(self, speed: float, direction: int = constants.down):
-        """Set a specific motor to a specific speed, speed is a value between -1 and 1"""
-        assert -1 <= speed <= 1, "Speed must be between -1 and 1"
+        """Set a specific motor to a specific speed, speed is a value between 0 and 1"""
+        assert speed >= 0 and speed <= 1, "Speed must be between 0 and 1"
         assert direction in [constants.up, constants.down], "Direction must be up or down"
 
         pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))

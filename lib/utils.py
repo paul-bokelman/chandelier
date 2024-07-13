@@ -28,7 +28,7 @@ log = Logger()
 def to_pulse(speed: float, direction, up_boost: Optional[float] = 0, down_boost: Optional[float] = 0)->float:
     """Convert motor speed and direction into Servo pulse, speed is a value between 0 and 1"""
     if speed < 0 or speed > 1:
-        raise ValueError("Invalid speed value")
+        raise ValueError("Invalid speed value, must be between 0 and 1")
     
     # if no boost, set to 0 (no boost), should only be None if no cps data
     if up_boost is None:
@@ -42,7 +42,7 @@ def to_pulse(speed: float, direction, up_boost: Optional[float] = 0, down_boost:
     # calculate relative speed with boost depending on direction
     relative_speed = (speed + speed * up_boost) if direction == constants.up else (speed + speed * down_boost)
 
-    log.info(f"Speed: {speed} | Relative Speed: {relative_speed} | Direction: {direction} | Up Boost: {up_boost} | Down Boost: {down_boost}")
+    log.info(f"Speed: {speed} | Relative Speed: {relative_speed} | Direction: {direction} | Up Boost: {up_boost} | Down Boost: {down_boost}", override=True)
     
     if direction == constants.up:
       return -8*(relative_speed-187.5) 

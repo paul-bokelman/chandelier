@@ -19,7 +19,7 @@ class Sequence:
     def wave(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
         """Generate a wave sequence for all motors"""
         for i in range(iterations):
-            positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation for j in range(constants.n_motors)]
+            positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_motors)]
             speeds = [rand.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
             yield (positions, speeds)
 

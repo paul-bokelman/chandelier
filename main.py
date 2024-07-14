@@ -21,8 +21,13 @@ async def main():
     await mc.move_all_home()
 
     # run random sequence
-    rs = RandomSequence(mc)
-    await rs.start(iterations=5)
+    # rs = RandomSequence(mc)
+    # await rs.start(iterations=5)
+
+    for _ in range(5):
+            positions = [random.uniform(0.5, 1) for _ in range(constants.n_motors)]
+            speeds = [random.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
+            await mc.move_all(positions, speeds)
 
 
     # await mc.calibrate(reset=True)

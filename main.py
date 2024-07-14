@@ -1,5 +1,6 @@
 import asyncio
 import time
+import random
 import constants
 import RPi.GPIO as GPIO
 from lib.mc.controller import MotorController
@@ -17,13 +18,13 @@ async def main():
 
     mc = MotorController(debug=True)
 
-    sequence = RandomSequence(mc)
+    await mc.move_all_home()
 
-    await sequence.start()
+    for _ in range(5):
+        positions = [random.uniform(0.5, 1) for _ in range(constants.n_motors)]
+        speeds = [random.uniform(0.2, 0.7) for _ in range(constants.n_motors)]
+        await mc.move_all(positions, speeds)
 
-    time.sleep(30)
-
-    sequence.stop()
 
     # await mc.calibrate(reset=True)
 

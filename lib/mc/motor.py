@@ -81,7 +81,6 @@ class Motor:
         while True:
             current_time = time.time()
             # initial count position has not changed -> already home or jammed
-
             if not override_initial_timeout:
                 if current_time - start_time > constants.to_home_initial_timeout and self.last_read_time is None:
                     log.success(f"Motor {self.pin} already at home")

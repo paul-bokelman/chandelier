@@ -14,7 +14,7 @@ class Sequence:
             speeds = [rand.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
             yield (positions, speeds)
         
-    def wave(self, iterations: int = 5) -> Generator[tuple[list[float], list[float]]]:
+    def wave(self, iterations: int = 5) -> Generator[tuple[list[float], list[float]], None, None]:
         yield ([], [])
 
     def alternating(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3) -> Generator[tuple[list[float], list[float]], None, None]:

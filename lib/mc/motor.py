@@ -186,20 +186,20 @@ class Motor:
         log.info(f"Finding min speeds for M{self.pin}")
         
         # ---------------------------- find min down speed --------------------------- #
-        # log.info(f"Finding min down speed for M{self.pin}", override=True)
-        # self.direction = constants.down 
+        log.info(f"Finding min down speed for M{self.pin}", override=True)
+        self.direction = constants.down 
 
-        # # move the motor to the calibration position at different speeds and look for timeout (down)
-        # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
-        #     log.info(f"Testing speed: {current_speed}")
-        #     _, timed_out = await self.to(0.2, current_speed)
+        # move the motor to the calibration position at different speeds and look for timeout (down)
+        for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
+            log.info(f"Testing speed: {current_speed}")
+            _, timed_out = await self.to(0.2, current_speed)
 
-        #     # motor has timed out -> found slowest speed
-        #     if timed_out:
-        #         break
+            # motor has timed out -> found slowest speed
+            if timed_out:
+                break
 
-        #     self.min_down_speed = current_speed
-        #     await self.to_home() # return home for next iteration
+            self.min_down_speed = current_speed
+            await self.to_home() # return home for next iteration
 
         # ---------------------------- find min up speed --------------------------- #
         log.info(f"Finding min up speed for M{self.pin}", override=True)
@@ -249,8 +249,8 @@ class Motor:
         log.info(f"Calibrating M{self.pin}")
 
         # find up and down cps if either is not present
-        # if self.cps_down is None or self.cps_up is None:
-        #     await self._find_cps()
+        if self.cps_down is None or self.cps_up is None:
+            await self._find_cps()
         
         # find min speeds if either is not present
         if self.min_down_speed is None or self.min_up_speed is None:

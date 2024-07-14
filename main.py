@@ -17,8 +17,6 @@ async def main():
 
     mc = MotorController(debug=True)
 
-    await  mc.move_all_home()
-
     sequence = RandomSequence(mc)
 
     await sequence.start()

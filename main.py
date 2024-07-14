@@ -21,11 +21,11 @@ async def main():
     # run random sequence
     sequence = Sequence()
 
-    for positions, speed in sequence.random():
-        await mc.move_all(positions, speed)
-
-    # for positions, speed in sequence.alternating():
+    # for positions, speed in sequence.random():
     #     await mc.move_all(positions, speed)
+
+    for positions, speed in sequence.alternating():
+        await mc.move_all(positions, speed)
 
     # await mc.calibrate(reset=True)
 

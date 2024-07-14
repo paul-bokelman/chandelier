@@ -42,30 +42,30 @@ class MotorController:
     if not isinstance(speeds, list):
       assert isinstance(speeds, float), "Speed must be a float"
       assert 0 <= speeds <= 1, "Speed must be between 0 and 1"
-      speed = [speeds] * constants.n_motors
+      speeds = [speeds] * constants.n_motors
 
     if not isinstance(positions, list):
       assert isinstance(positions, float), "Positions must be a float"
       assert 0 <= positions <= 1, "Position must be between 0 and 1"
       positions = [positions] * constants.n_motors
 
-    assert isinstance(speed, list), "Speed must be a list of floats"
+    assert isinstance(speeds, list), "Speed must be a list of floats"
     assert isinstance(positions, list), "Positions must be a list of floats"
 
-    if not all(0 <= s <= 1 for s in speed):
-      raise ValueError("Speed must be between 0 and 1")
+    if not all(0 <= s <= 1 for s in speeds):
+      raise ValueError("Speeds must be between 0 and 1")
     
     if not all(0 <= p <= 1 for p in positions):
       raise ValueError("Positions must be between 0 and 1")
     
-    if len(speed) != constants.n_motors:
+    if len(speeds) != constants.n_motors:
       raise ValueError("Speed list must be the same length as the number of motors")
     
     if len(positions) != constants.n_motors:
       raise ValueError("Positions list must be the same length as the number of motors")
 
     # move each motor to its target position simultaneously
-    await asyncio.gather(*[motor.to(position, speed) for motor, position, speed in zip(self.motors, positions, speed)])
+    await asyncio.gather(*[motor.to(position, speed) for motor, position, speed in zip(self.motors, positions, speeds)])
 
   def save_calibration(self):
     """Save calibration data with store"""

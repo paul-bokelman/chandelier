@@ -20,10 +20,10 @@ async def main():
 
     await mc.move_all_home()
 
-    # for _ in range(5):
-    #     positions = [random.uniform(0.5, 1) for _ in range(constants.n_motors)]
-    #     speeds = [random.uniform(0.2, 0.7) for _ in range(constants.n_motors)]
-    #     await mc.move_all(positions, speeds)
+    for _ in range(5):
+        positions = [random.uniform(0.5, 1) for _ in range(constants.n_motors)]
+        speeds = [random.uniform(0.2, 0.7) for _ in range(constants.n_motors)]
+        await mc.move_all(positions, speeds)
 
 
     # await mc.calibrate(reset=True)

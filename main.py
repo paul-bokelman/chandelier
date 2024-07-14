@@ -1,10 +1,8 @@
 import asyncio
-import time
-import random
 import constants
 import RPi.GPIO as GPIO
 from lib.mc.controller import MotorController
-from lib.sequences import RandomSequence
+from lib.sequence import Sequence
 
 async def idle_state(mc: MotorController):
     """Idle state"""
@@ -21,14 +19,13 @@ async def main():
     await mc.move_all_home()
 
     # run random sequence
-    # rs = RandomSequence(mc)
-    # await rs.start(iterations=5)
+    sequence = Sequence()
 
-    for _ in range(5):
-            positions = [random.uniform(0.5, 1) for _ in range(constants.n_motors)]
-            speeds = [random.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
-            await mc.move_all(positions, speeds)
+    for positions, speed in sequence.random():
+        await mc.move_all(positions, speed)
 
+    # for positions, speed in sequence.alternating():
+    #     await mc.move_all(positions, speed)
 
     # await mc.calibrate(reset=True)
 

@@ -1,20 +1,20 @@
 import asyncio
 import constants
 import RPi.GPIO as GPIO
-from lib.mc.controller import MotorController
-from lib.sequence import Sequence
+# from lib.mc.controller import MotorController
+# from lib.sequence import Sequence
 
-async def idle_state(mc: MotorController):
-    """Idle state"""
-    await mc.move_all_home()
-    mc.stop_all_motors()
+# async def idle_state(mc: MotorController):
+#     """Idle state"""
+#     await mc.move_all_home()
+#     mc.stop_all_motors()
     
 async def main():
     # setup GPIO
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    mc = MotorController(debug=True)
+    # mc = MotorController(debug=True)
     # await mc.move_all(0.5)
 
     # await mc.move_all_home()
@@ -30,9 +30,9 @@ async def main():
     # await mc.move_all([0.5, 0.5, 0.5, 0.5], 0.5)
     # await mc.move_all_home()
     
-    mc.stop_all_motors()
+    # mc.stop_all_motors()
 
-    mc.save_calibration()
+    # mc.save_calibration()
 
     GPIO.cleanup() # clean up for next session
 

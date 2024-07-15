@@ -15,14 +15,15 @@ async def main():
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     mc = MotorController(debug=True)
+    await mc.move_all(0.5)
 
-    await mc.move_all_home()
+    # await mc.move_all_home()
 
     # run random sequence
-    sequence = Sequence()
+    # sequence = Sequence()
 
-    for positions, speed in sequence.random():
-        await mc.move_all(positions, speed)
+    # for positions, speed in sequence.random():
+    #     await mc.move_all(positions, speed)
 
     # await mc.calibrate(reset=True)
 

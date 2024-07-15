@@ -36,7 +36,7 @@ class Motor:
 
         self.counts += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()
-        log.info(f"M{self.pin} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
+        log.info(f"M{self.pin} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}", override=True)
 
     def _at_home(self):
         """Set motor home state"""

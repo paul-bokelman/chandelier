@@ -1,7 +1,7 @@
 encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
 WSI = [23,24,25,8] #Wall Switch Input
 PS = [16,20] # Power Switch
-n_motors = 4
+n_motors = 16
 Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
 stop_pulse = 1500

@@ -17,12 +17,15 @@ async def main():
     # GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # GPIO.setup(ledpin, GPIO.OUT) # set ledpin as an output
     GPIO.setup(constants.led_pin, GPIO.OUT) # set ledpin as an output
-    GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # with pull up resistor
+    GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # set service_button_pin as an input
 
+    # turn on led
 
     while True:
-        GPIO.output(constants.led_pin, GPIO.input(constants.service_button_pin))
-        time.sleep(0.2)
+        GPIO.output(constants.led_pin, GPIO.HIGH)
+        time.sleep(0.5)
+        GPIO.output(constants.led_pin, GPIO.LOW)
+        time.sleep(0.5)
 
 
 

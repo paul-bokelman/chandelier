@@ -27,19 +27,16 @@ async def main():
         GPIO.output(constants.led_pin, GPIO.HIGH)
 
     GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
-
     GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
-
     GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=button_callback, bouncetime=300)
-
     GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=button_callback, bouncetime=300)
 
 
-    # while True:
-    #     GPIO.output(constants.led_pin, GPIO.HIGH)
-    #     time.sleep(0.5)
-    #     GPIO.output(constants.led_pin, GPIO.LOW)
-    #     time.sleep(0.5)
+    while True:
+        GPIO.output(constants.led_pin, GPIO.HIGH)
+        time.sleep(0.5)
+        GPIO.output(constants.led_pin, GPIO.LOW)
+        time.sleep(0.5)
 
 
 

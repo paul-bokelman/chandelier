@@ -26,11 +26,14 @@ async def main():
         print(f"Button {channel} was pushed!")
         GPIO.output(constants.led_pin, GPIO.HIGH)
 
+    def wall_switch_callback(channel):
+        print(f"Wall switch {channel} was pushed!")
+        GPIO.output(constants.led_pin, GPIO.HIGH)
+
     GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
     GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
-    GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=button_callback, bouncetime=300)
-    GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=button_callback, bouncetime=300)
-
+    GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=wall_switch_callback, bouncetime=300)
+    GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=wall_switch_callback, bouncetime=300)
 
     while True:
         GPIO.output(constants.led_pin, GPIO.HIGH)

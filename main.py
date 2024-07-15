@@ -16,12 +16,14 @@ async def main():
     GPIO.setwarnings(False)
     # GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # GPIO.setup(ledpin, GPIO.OUT) # set ledpin as an output
-    GPIO.setup(constants.WSI[0], GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # with pull up resistor
+    GPIO.setup(constants.led_pin, GPIO.OUT) # set ledpin as an output
+    GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # with pull up resistor
+
 
     while True:
-        # GPIO.output(ledpin, GPIO.input(pushpin))
-        if GPIO.input(constants.WSI[0]) == GPIO.HIGH:
-            print('pressed')
+        GPIO.output(constants.led_pin, GPIO.input(constants.service_button_pin))
+        time.sleep(0.2)
+
 
 
     # mc = MotorController(debug=True)

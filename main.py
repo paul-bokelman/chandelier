@@ -12,7 +12,19 @@ import RPi.GPIO as GPIO
 async def main():
     # setup GPIO
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setwarnings(False)
+    # GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(constants.WSI, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    while True: # Run forever
+        if GPIO.input(constants.WSI[0]) == GPIO.HIGH:
+            print("Wall Switch 1 is pressed")
+        if GPIO.input(constants.WSI[1]) == GPIO.HIGH:
+            print("Wall Switch 2 is pressed")
+        if GPIO.input(constants.WSI[2]) == GPIO.HIGH:
+            print("Wall Switch 3 is pressed")
+        if GPIO.input(constants.WSI[3]) == GPIO.HIGH:
+            print("Wall Switch 4 is pressed")
 
     # mc = MotorController(debug=True)
     # await mc.move_all(0.5)

@@ -20,14 +20,14 @@ class Sequence:
         """Generate a wave sequence for all motors"""
         for i in range(iterations):
             positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_motors)]
-            speeds = [rand.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
+            speeds = [rand.uniform(0.4, 0.5) for _ in range(constants.n_motors)]
             yield (positions, speeds)
 
     def alternating(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3) -> GeneratedSequence:
         """Generate an alternating sequence for all motors"""
         for i in range(iterations):
             positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(constants.n_motors)]
-            speeds = [rand.uniform(0.4, 0.7) for _ in range(constants.n_motors)]
+            speeds = [rand.uniform(0.4, 0.5) for _ in range(constants.n_motors)]
             yield (positions, speeds)
 
 

@@ -10,6 +10,7 @@ from lib.sequence import Sequence
 #     """Idle state"""
 #     await mc.move_all_home()
 #     mc.stop_all_motors()
+
     
 async def main():
     # setup GPIO
@@ -22,8 +23,8 @@ async def main():
     # run random sequence
     sequence = Sequence()
 
-    for positions, speed in sequence.alternating():
-        await mc.move_all(positions, speed)
+    # for positions, speed in sequence.alternating():
+    #     await mc.move_all(positions, speed)
 
     # await mc.calibrate(reset=True)
 

@@ -6,7 +6,7 @@ service_button_pin = 23
 reboot_button_pin = 7
 led_pin = 8
 
-n_motors = 16
+n_motors = 4
 Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
 stop_pulse = 1500

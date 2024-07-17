@@ -37,8 +37,8 @@ pca.frequency = 50
 # servo7 = servo.Servo(pca.channels[7], actuation_range=135)
 pca.reset()
 
-# Set all PWM channels to zero
-for i in range(16):
-    pca.channels[i].duty_cycle = 0
+pca.channels[2].duty_cycle = 0x7FFF
+time.sleep(1)
+pca.channels[2].duty_cycle = 0
 
 pca.deinit()

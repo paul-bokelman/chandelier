@@ -1,5 +1,5 @@
 encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
-PS = [16,20] # Power Switch
+power_switch_pins = [16,20] # Power Switch
 
 wall_switch_pins = [24, 25]
 service_button_pin = 23
@@ -40,3 +40,10 @@ calibrations_file_path = "calibrations.json"
 max_speed = 32 # relative to calibration speed
 min_speed = 0 # relative to calibration speed 
 max_counts = 30 # max encoder counts
+
+# charging
+max_charge_time = 7200 # 2 hours
+charge_interval = 86400 * 5 # 5 days
+
+# sequences
+max_run_time = 7200 # 2 hours

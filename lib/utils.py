@@ -1,5 +1,6 @@
-from termcolor import colored
 from typing import Optional
+import time
+from termcolor import colored
 import constants
 
 class Logger:
@@ -61,4 +62,8 @@ def calculate_relative_boosts(all_cps: list[Optional[float]]) -> list[Optional[f
     relative_boost = lambda cps: 1 - ((cps - min_cps) * ((max_r - min_r) / (max_cps) - min_cps) + min_r) if cps else None
 
     return [relative_boost(cps) for cps in all_cps]
-    
+
+def seconds_elapsed (start_time: float) -> int:
+    """Return seconds elapsed since start time"""
+    return int(time.time() - start_time)
+

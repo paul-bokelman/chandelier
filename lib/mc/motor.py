@@ -4,7 +4,7 @@ import asyncio
 import RPi.GPIO as GPIO
 from PCA9685 import pwm
 from lib.store import DataMode
-from lib.utils import log, to_pulse
+from lib.utils import log, to_pulse, seconds_elapsed
 import constants
 
 class Motor:
@@ -102,7 +102,7 @@ class Motor:
         self.stop()
         return self.counts, timed_out
         
-    async def to(self, target: float, speed: float = constants.mid_speed) -> tuple[int, bool]:
+    async def to(self, target: float, speed: float = constants.mid_speed) -> tuple[int, bool, int]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
         if target < 0 or target > 1:
@@ -119,14 +119,15 @@ class Motor:
         else:
             self.direction = constants.up
 
+        start_time = time.time() # track time
+
         if self.counts == target_counts:
             log.success(f"Motor {self.pin} already at target position")
-            return self.counts, timed_out
+            return self.counts, timed_out, seconds_elapsed(start_time)
         
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.set(speed, self.direction) # set the motor in the correct direction
         
-        start_time = time.time()
         while True:
             # check if the motor has reached the target position
             if self.counts == target_counts:
@@ -142,7 +143,7 @@ class Motor:
         
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
-        return self.counts, timed_out
+        return self.counts, timed_out, seconds_elapsed(start_time)
     
     # -------------------------------- CALIBRATION ------------------------------- #
     async def _find_cps(self):
@@ -191,7 +192,7 @@ class Motor:
         # move the motor to the calibration position at different speeds and look for timeout (down)
         for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
             log.info(f"Testing speed: {current_speed}")
-            _, timed_out = await self.to(0.2, current_speed)
+            _, timed_out, _  = await self.to(0.2, current_speed)
 
             # motor has timed out -> found slowest speed
             if timed_out:

@@ -134,8 +134,6 @@ async def main():
 
     await mc.calibrate(reset=True)
 
-    await mc.move_all_home()
-
     await mc.move_all(0.2)
 
     mc.stop_all_motors()

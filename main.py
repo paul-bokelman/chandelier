@@ -136,7 +136,7 @@ async def main():
 
     await mc.move_all_home()
 
-    await mc.move_all(0.2)
+    await mc.move_all(0.5)
 
     mc.stop_all_motors()
 

@@ -120,17 +120,29 @@ async def main():
     # GPIO.setup(constants.power_switch_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    while True:
-        if state == State.IDLE:
-            await idle(state)
-        elif state == State.RUNNING:
-            await run(state)
-        elif state == State.SERVICE:
-            await service(state)
-        else:
-            raise ValueError("Invalid state")
+    # while True:
+    #     if state == State.IDLE:
+    #         await idle(state)
+    #     elif state == State.RUNNING:
+    #         await run(state)
+    #     elif state == State.SERVICE:
+    #         await service(state)
+    #     else:
+    #         raise ValueError("Invalid state")
 
-    # GPIO.cleanup() # clean up for next session
+    mc = MotorController()
+
+    await mc.calibrate(reset=True)
+
+    await mc.move_all_home()
+
+    await mc.move_all(0.2)
+
+    mc.stop_all_motors()
+
+
+
+    GPIO.cleanup() # clean up for next session
 
 if __name__ == "__main__":
     asyncio.run(main())

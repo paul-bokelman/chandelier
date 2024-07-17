@@ -7,6 +7,8 @@ kit = ServoKit(channels=16)
 # Define the servo channel (e.g., channel 0)
 servo_channel = 2
 
+kit.continuous_servo[servo_channel].set_pulse_width_range(1000, 2000)
+
 # Function to find the neutral position
 def find_neutral(kit, channel):
     step = 0.01
@@ -31,4 +33,4 @@ except KeyboardInterrupt:
     print("Calibration stopped.")
 
 # Set the servo to a neutral position (stop)
-kit.continuous_servo[servo_channel].throttle = 0
+kit.continuous_servo[servo_channel].throttle = 0.06

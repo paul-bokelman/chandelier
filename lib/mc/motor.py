@@ -28,6 +28,9 @@ class Motor:
         self.up_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
         self.down_boost: Optional[float] = None # percentage boost needed relative to others, measured at (calibrated counts @ calibrated speed)
 
+        self.lower_neutral = None
+        self.upper_neutral = None
+
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
@@ -66,8 +69,11 @@ class Motor:
 
     def stop(self):
         """Stop the motor"""
-        log.info(f"Stopping M{self.pin}")
-        pwm.setServoPulse(self.pin, constants.stop_pulse) 
+        log.info(f"M{self.pin} | Stopping motor")
+        if self.lower_neutral is None:
+            log.error(f"M{self.pin} | Lower neutral not set, motor may not stop correctly")
+        self.servo.throttle = self.lower_neutral if self.lower_neutral is not None else 0
+        # pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
     async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""

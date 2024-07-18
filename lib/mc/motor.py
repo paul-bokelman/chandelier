@@ -201,16 +201,18 @@ class Motor:
 
         #? gradient descent approach? (move towards decreasing value)
 
-        while upper_neutral is None and lower_neutral is None:
+        while upper_neutral is None or lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle} (down)", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, 60)
 
-            if timed_out:
-                if upper_neutral is None:
-                    upper_neutral = current_throttle
-                else:
-                    lower_neutral = current_throttle
+            # initial throttle has timed out -> found upper neutral
+            if upper_neutral is None and timed_out:
+                upper_neutral = current_throttle
+
+            # upper neutral found and motor has not timed out -> found lower neutral
+            if lower_neutral is None and not timed_out and upper_neutral is not None:
+                lower_neutral = current_throttle
 
             # await self.to_home() # return home for next iteration
             self.counts = 0

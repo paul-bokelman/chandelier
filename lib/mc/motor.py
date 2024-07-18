@@ -280,6 +280,8 @@ class Motor:
 
         log.info(f"Calibrating M{self.pin}")
 
+        await self.to_home(speed=0) # temp move home
+
         # find up and down cps if either is not present
         # if self.cps_down is None or self.cps_up is None:
         #     await self._find_cps()

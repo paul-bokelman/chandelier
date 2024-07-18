@@ -115,7 +115,7 @@ class Motor:
         if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
             raise ValueError("Counts must be between 0 and max counts")
         
-        log.info(f'Moving: M{self.pin} ({self.counts} -> {self.counts + n_counts}) at speed {speed}')
+        log.info(f'Moving: M{self.pin} ({self.counts} -> {self.counts + n_counts}) at speed {speed}', override=True)
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.direction = constants.down if n_counts < 0 else constants.up

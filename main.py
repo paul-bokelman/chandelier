@@ -138,7 +138,7 @@ async def main():
     # await mc.move_all_home()
     # await mc.move_all(0.7)
 
-    mc.stop_all_motors()
+    # mc.stop_all_motors()
 
     GPIO.cleanup() # clean up for next session
 

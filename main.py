@@ -133,6 +133,8 @@ async def main():
     mc = MotorController()
     await mc.calibrate()
 
+    mc.save_calibration()
+
     mc.stop_all_motors()
 
     GPIO.cleanup() # clean up for next session

@@ -72,8 +72,9 @@ class Motor:
         log.info(f"M{self.pin} | Stopping motor")
         if self.lower_neutral is None:
             log.error(f"M{self.pin} | Lower neutral not set, motor may not stop correctly")
-        self.servo.throttle = self.lower_neutral if self.lower_neutral is not None else 0
-        # pwm.setServoPulse(self.pin, constants.stop_pulse) 
+            pwm.setServoPulse(self.pin, constants.stop_pulse) 
+        else:
+            self.servo.throttle = self.lower_neutral
 
     async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
@@ -236,29 +237,26 @@ class Motor:
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
         current_throttle = 0.25
-        upper_neutral = None
-        lower_neutral = None
-
         #? gradient descent approach? (move towards decreasing value)
 
-        while upper_neutral is None or lower_neutral is None:
+        while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle}", override=True)
             _, timed_out, _ = await self.move(2, current_throttle, constants.down, constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
-            if upper_neutral is None and timed_out:
+            if self.upper_neutral is None and timed_out:
                 log.info(f"Upper neutral found: {current_throttle}")
-                upper_neutral = current_throttle
+                self.upper_neutral = current_throttle
 
             # upper neutral found and motor has not timed out -> found lower neutral
-            if lower_neutral is None and not timed_out and upper_neutral is not None:
+            if self.lower_neutral is None and not timed_out and self.upper_neutral is not None:
                 log.info(f"Lower neutral found: {current_throttle}")
-                lower_neutral = current_throttle + step # add step to account for last iteration
+                self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        log.info(f"Neutrals: L={lower_neutral}, U={upper_neutral} ", override=True)
+        log.info(f"Neutrals: L={self.lower_neutral}, U={self.upper_neutral} ", override=True)
 
-        await self.to_home(speed=(lower_neutral - step)) # move back home at slowest
+        await self.to_home(speed=(self.lower_neutral - step)) # move back home at slowest
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
         #     log.info(f"Testing speed: {current_speed}")

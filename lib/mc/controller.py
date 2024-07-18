@@ -27,7 +27,7 @@ class MotorController:
     """Find cps down and up for each motor"""
     # if reset: self.store.reset()
     # calibrate each motor simultaneously
-    await asyncio.gather(*[motor.calibrate(self.store.get_by_pin(motor.pin)) for motor in self.motors])
+    await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in self.motors])
 
     # calculate and assign relative speeds
     # up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from adafruit_servokit import ContinuousServo
 import time
 import asyncio
@@ -8,14 +8,16 @@ from lib.store import DataMode
 from lib.utils import log, to_pulse, seconds_elapsed
 import constants
 
+Throttle = Union[float, constants.ThrottlePresets]
+
 class Motor:
     """Motor class to control a single motor"""
-    def __init__(self, pin: int, servo: ContinuousServo) -> None:
-        self.pin = pin
+    def __init__(self, channel: int, servo: ContinuousServo) -> None:
+        self.channel = channel
         self.last_read_time = None
         self.encoder_feedback_disabled = False # get feedback from encoder
         self.direction = constants.down # direction of motor
-        self.encoder_pin = constants.encoder_pins[self.pin]
+        self.encoder_pin = constants.encoder_pins[self.channel]
         self.min_down_speed:Optional[float] = None
         self.min_up_speed: Optional[float] = None
         self.servo = servo
@@ -32,6 +34,9 @@ class Motor:
         self.lower_neutral = None
         self.upper_neutral = None
 
+        self.min_throttle_down = None
+        self.min_throttle_up = None
+
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
@@ -42,7 +47,7 @@ class Motor:
 
         self.counts += self.direction * 1 # increment encoder count
         self.last_read_time = time.time()
-        log.info(f"M{self.pin} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
+        log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
 
     def _at_home(self):
         """Set motor home state"""
@@ -51,41 +56,57 @@ class Motor:
         self.direction = constants.down
         self.counts = 0
 
-    def _error(self, message: str):
-        """Set motor error state"""
-        self.encoder_feedback_disabled = True
-        self.counts = 0
-        log.error(message)
-        self.stop()
+    def _clm(self, function_name, **kwargs):
+        """Construct consistent log message for motor functions"""
+        message = f"M{self.channel} | {function_name} | "
+        for key, value in kwargs.items():
+            message += f"{key}: {value} | "
+        return message
 
-    def set(self, speed: float, direction: int = constants.down):
-        """Set a specific motor to a specific speed, speed is a value between 0 and 1"""
-        assert speed >= 0 and speed <= 1, "Speed must be between 0 and 1"
-        assert direction in [constants.up, constants.down], "Direction must be up or down"
+    def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
+        """Set a specific servo to a specific or set throttle and direction"""
+        assert isinstance(throttle, constants.ThrottlePresets), "Throttle must be a float or ThrottlePresets"
+
+        # specific value -> set throttle
+        if isinstance(throttle, float):
+            assert direction is None, "Direction not available for specific throttle"
+            assert -1 <= throttle <= 1, "Throttle must be between -1 and 1"
+            self.servo.throttle = throttle
+            return
         
-        # todo: direction not used
-        self.servo.throttle = speed 
+        # neutral positions must be calibrated and set for present throttles
+        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
+        assert direction in [constants.up, constants.down], "Direction must be up or down for preset throttle"
+        
+        # set throttle based on preset (relative to neutral)
+        offset = throttle.value
+        if direction == constants.down:
+            self.servo.throttle = self.lower_neutral - offset
+        else:
+            self.servo.throttle = self.upper_neutral + offset
 
-        # pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))
 
     def stop(self):
         """Stop the motor"""
-        log.info(f"M{self.pin} | Stopping motor")
+        log.info(self._clm("Stop"), override=True)
         self.servo._pwm_out.duty_cycle = 0 
 
-    async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:
+    async def to_home(self, speed: float = constants.to_home_throttle, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         timed_out = False
+        log.info(self._clm("To Home", message="Moving Home"), override=True)
+
         if self.is_home(): 
-            log.success(f"Motor {self.pin} at home")
+            log.success(self._clm("To Home", message="Motor already at home"))
             return self.counts, timed_out
 
         self.direction = constants.up
         self.set(speed, self.direction)
         self.last_read_time = None 
         start_time = time.time()
-        log.info(f"M{self.pin} -> Home | Speed: {speed}", override=True)
+
+        log.info(self._clm("To Home", message="Moving Home"), override=True)
         
         # move motor to home position and check for stalls
         while True:
@@ -93,17 +114,17 @@ class Motor:
             # initial count position has not changed -> already home or jammed
             if not override_initial_timeout:
                 if current_time - start_time > constants.to_home_initial_timeout and self.last_read_time is None:
-                    log.success(f"Motor {self.pin} already at home")
+                    log.success(self._clm("To Home", message="Motor at home position"))
                     self._at_home()
                     break
             # check if the motor has reached home
             if self.last_read_time is not None and current_time - self.last_read_time > constants.to_home_max_interval:
-                log.success(f"Motor {self.pin} has reached home")
+                log.success(self._clm("To Home", message="Motor at home position", time=seconds_elapsed(start_time)))
                 self._at_home()
                 break
             # if the motor has timed out, stop the motor
             if current_time - start_time > constants.to_home_timeout:
-                self._error(f"Motor {self.pin} timed out")
+                log.error(self._clm("To Home", message="Motor timed out", timeout=constants.to_home_timeout))
                 timed_out = True
                 break
             
@@ -112,31 +133,39 @@ class Motor:
         self.stop()
         return self.counts, timed_out
     
-    async def move(self, n_counts: int, speed: float = constants.mid_speed, direction: int = constants.down, timeout: int = constants.to_position_timeout) -> tuple[int, bool, int]:
-        """Move the motor a specific number of counts at a specific speed"""
+    async def move(
+        self, 
+        n_counts: int,
+        throttle: Throttle = constants.ThrottlePresets.SLOW, 
+        direction: Optional[int] = None,
+        timeout: int = constants.to_position_timeout
+    ) -> tuple[int, bool, int]:
+        """Move the motor n number of counts at a specific speed"""
         timed_out = False
 
+        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
+        
         if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
             raise ValueError("Counts must be between 0 and max counts")
         
-        log.info(f'Moving: M{self.pin} ({self.counts} -> {self.counts + n_counts}) at speed {speed}', override=True)
-
+        if n_counts == 0:
+            log.success(self._clm("Move", message="No counts to move"))
+            return self.counts, timed_out, 0
+        
         self.encoder_feedback_disabled = False # start incrementing encoder counts
-        self.set(speed, self.direction)
+        self.set(throttle, direction)
 
         start_time = time.time() # track time
-
         start_counts = self.counts
-        if n_counts == 0:
-            log.success(f"Motor {self.pin} already at target position")
-            return self.counts, timed_out, seconds_elapsed(start_time)
         
         while True:
-            if self.counts - start_counts == n_counts:
-                log.success(f"Motor {self.pin} has reached target position")
+            # check if the motor has reached the target position (have to check for abs because direction may be unknown)
+            if abs(self.counts - start_counts) == n_counts:
+                log.success(self._clm("Move", message="Motor has reached target position"))
                 break
+            # hasn't reached target position before timeout -> exit
             if time.time() - start_time > timeout:
-                self._error(f"Motor {self.pin} timed out moving to target position")
+                log.error(self._clm("Move", message="Motor timed out", timeout=timeout))
                 timed_out = True
                 break
             await asyncio.sleep(0.01) # yield control back to event
@@ -145,58 +174,34 @@ class Motor:
         self.stop()
         return self.counts, timed_out, seconds_elapsed(start_time)
         
-    async def to(self, target: float, speed: float = constants.mid_speed, timeout: int  = constants.to_position_timeout) -> tuple[int, bool, int]:
+    async def to(
+            self, target: float, 
+            throttle_offset: constants.ThrottlePresets = constants.ThrottlePresets.SLOW, 
+            timeout: int = constants.to_position_timeout
+    ) -> tuple[int, bool, int]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
+
+        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle_offset.name}"))
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
         target_counts = int((target / 1) * (constants.max_counts))
-        timed_out = False 
-        
-        log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
+        n_counts = target_counts - self.counts
 
-        # change direction based on target position
-        if target_counts > self.counts:
-            self.direction = constants.down
-        else:
-            self.direction = constants.up
-
-        start_time = time.time() # track time
-
-        if self.counts == target_counts:
-            log.success(f"Motor {self.pin} already at target position")
-            return self.counts, timed_out, seconds_elapsed(start_time)
-        
-        self.encoder_feedback_disabled = False # start incrementing encoder counts
-        self.set(speed, self.direction) # set the motor in the correct direction
-        
-        while True:
-            # check if the motor has reached the target position
-            if self.counts == target_counts:
-                log.success(f"Motor {self.pin} has reached target position")
-                break
-            # motor has timed out -> stop the motor
-            if time.time() - start_time > timeout:
-                self._error(f"Motor {self.pin} timed out moving to target position")
-                timed_out = True
-                break
-
-            await asyncio.sleep(0.01) # yield control back to event
-        
-        self.encoder_feedback_disabled = True # stop incrementing encoder counts
-        self.stop()
-        return self.counts, timed_out, seconds_elapsed(start_time)
+        self.direction = constants.down if target_counts > self.counts else constants.up
+        return await self.move(n_counts, throttle_offset, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
-        log.info(f"Finding cps up and down for M{self.pin}", override=True)
+        log.info(f"Finding cps up and down for M{self.channel}", override=True)
+        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
-            log.info(f"Calculating M{self.pin} cps down", override=True)
-            self.direction = constants.down 
+            log.info(f"Calculating M{self.channel} cps down", override=True)
+            self.direction = constants.down
             self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
 
             start = time.time()
@@ -204,7 +209,7 @@ class Motor:
             while self.counts != constants.calibration_counts:
                 # motor has timed out -> error
                 if time.time() - start > constants.calibration_timeout:
-                    self._error(f"Motor {self.pin} timed out calibrating")
+                    log.error(f"Motor {self.channel} timed out calibrating")
                     return
                 
                 await asyncio.sleep(0.01) # yield control back to event
@@ -216,7 +221,7 @@ class Motor:
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
-            log.info(f"Calculating M{self.pin} up cps", override=True)
+            log.info(f"Calculating M{self.channel} up cps", override=True)
 
             start = time.time()
             await self.to_home(speed=constants.calibration_speed)
@@ -226,10 +231,10 @@ class Motor:
 
     async def _find_mins(self):
         """Find the minimum speed of the motor in both directions"""
-        log.info(f"Finding min speeds for M{self.pin}")
+        log.info(f"Finding min speeds for M{self.channel}")
         
         # ---------------------------- find min down speed --------------------------- #
-        log.info(f"Finding min down speed for M{self.pin}", override=True)
+        log.info(f"Finding min down speed for M{self.channel}", override=True)
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
@@ -238,81 +243,46 @@ class Motor:
 
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
-            log.info(f"Testing speed: {current_throttle}", override=True)
+            log.info(self._clm("Find Mins", message=f"Testing throttle {current_throttle}"), override=True)
             _, timed_out, _ = await self.move(2, current_throttle, constants.down, constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:
-                log.info(f"Upper neutral found: {current_throttle}")
+                log.info(self._clm("Find Mins", message=f"Upper neutral found: {current_throttle}"), override=True)
                 self.upper_neutral = current_throttle
 
             # upper neutral found and motor has not timed out -> found lower neutral
             if self.lower_neutral is None and not timed_out and self.upper_neutral is not None:
-                log.info(f"Lower neutral found: {current_throttle}")
+                log.info(self._clm("Find Mins", message=f"Lower neutral found: {current_throttle}"), override=True)
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        log.info(f"Neutrals: L={self.lower_neutral}, U={self.upper_neutral} ", override=True)
+        log.info(self._clm("Find Mins", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
         await self.to_home(speed=(self.lower_neutral - 3 * step)) # move back home at slowest
 
-        # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
-        #     log.info(f"Testing speed: {current_speed}")
-        #     _, timed_out, _  = await self.to(0.2, current_speed)
-
-        #     # motor has timed out -> found slowest speed
-        #     if timed_out:
-        #         break
-
-        #     self.min_down_speed = current_speed
-        #     await self.to_home() # return home for next iteration
-
-        # # ---------------------------- find min up speed --------------------------- #
-        # log.info(f"Finding min up speed for M{self.pin}", override=True)
-        # self.direction = constants.up
-
-        # # move to calibration position -> try to move home at different speeds and look for timeout (up)
-        # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
-        #     log.info(f"Testing speed: {current_speed}", override=True)
-        #     await self.to(0.2) # move to calibration position
-        #     _, timed_out = await self.to_home(current_speed, override_initial_timeout=True) # move home and check for timeouts
-
-        #     # motor has timed out -> found slowest speed
-        #     if timed_out:
-        #         break
-
-        #     self.min_up_speed = current_speed
-
-        # log.success(f"M{self.pin} | min down speed: {self.min_down_speed} | min up speed: {self.min_up_speed}")
-
-        # cleanup
-        # await self.to_home()
-
     async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
+        log.info(self._clm("Calibrate", message="Calibrating Motor"))
 
         # load calibration data if available
         if data[DataMode.cps_down.value] is not None:
-            log.info(f"M{self.pin} | cps down already calibrated")
+            log.info(f"M{self.channel} | cps down already calibrated")
             self.cps_down = data[DataMode.cps_down.value]
         if data[DataMode.cps_up.value] is not None:
-            log.info(f"M{self.pin} | cps up already calibrated")
+            log.info(f"M{self.channel} | cps up already calibrated")
             self.cps_up = data[DataMode.cps_up.value]
         if data[DataMode.min_down_speed.value] is not None:
-            log.info(f"M{self.pin} | min down speed already calibrated")
+            log.info(f"M{self.channel} | min down speed already calibrated")
             self.min_down_speed = data[DataMode.min_down_speed.value]
         if data[DataMode.min_up_speed.value] is not None:
-            log.info(f"M{self.pin} | min up speed already calibrated")
+            log.info(f"M{self.channel} | min up speed already calibrated")
             self.min_up_speed = data[DataMode.min_up_speed.value]
 
         # ensure motor is at home before calibrating
-        # if not self.is_home():
-        #     await self.to_home()
+        if not self.is_home():
+            await self.to_home()
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
-
-        log.info(f"Calibrating M{self.pin}")
-
-        await self.to_home(speed=0) # temp move home
 
         # find up and down cps if either is not present
         # if self.cps_down is None or self.cps_up is None:
@@ -329,4 +299,4 @@ class Motor:
         return self.counts == 0
     
     def __str__(self) -> str:
-        return f"Motor {self.pin} | counts: {self.counts} | cps up: {self.cps_up} | cps down: {self.cps_down} | up boost: {self.up_boost} | down boost: {self.down_boost}"
+        return f"Motor {self.channel} | counts: {self.counts} | cps up: {self.cps_up} | cps down: {self.cps_down} | up boost: {self.up_boost} | down boost: {self.down_boost}"

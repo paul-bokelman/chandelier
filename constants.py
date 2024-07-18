@@ -1,3 +1,5 @@
+from enum import Enum
+
 encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
 power_switch_pins = [16,20] # Power Switch
 
@@ -17,12 +19,16 @@ debug = False
 # static
 up = -1
 down = 1
-fast_speed = 1
-mid_speed = 0.5
-slow_speed = 0.25
+
+# throttle configuration
+class ThrottlePresets(Enum):
+    """Speed configuration enum, values are neutral throttle offsets"""
+    SLOW = 0.1
+    MEDIUM = 0.2
+    FAST = 0.3
 
 # motor configuration
-to_home_speed = 0.1 # speed to move to home
+to_home_throttle = 0 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 2.5 # initial timeout for trying to move home
 to_home_max_interval = 3 # seconds between encoder readings (should be relative to speed...)

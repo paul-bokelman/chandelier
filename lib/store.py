@@ -68,18 +68,18 @@ class Store:
     
     return self.data[mode.name]
   
-  def get_by_pin(self, pin: int) -> list[Optional[float]]:
-    """Get calibration data for a specific motor pin"""
-    log.info(f"Getting calibration data by pin")
-    if pin < 0 or pin >= constants.n_motors:
-      raise ValueError("Invalid motor pin")
+  def get_by_channel(self, channel: int) -> list[Optional[float]]:
+    """Get calibration data for a specific motor channel"""
+    log.info(f"Getting calibration data by channel")
+    if channel < 0 or channel >= constants.n_motors:
+      raise ValueError("Invalid motor channel")
 
     return [
-      self.data["counts"][pin],
-      self.data["cps_down"][pin],
-      self.data["cps_up"][pin],
-      self.data["min_down_speed"][pin],
-      self.data["min_up_speed"][pin]
+      self.data["counts"][channel],
+      self.data["cps_down"][channel],
+      self.data["cps_up"][channel],
+      self.data["min_down_speed"][channel],
+      self.data["min_up_speed"][channel]
     ]
   
   def load(self) -> CalibrationData:

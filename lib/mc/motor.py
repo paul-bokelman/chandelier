@@ -107,7 +107,7 @@ class Motor:
         self.stop()
         return self.counts, timed_out
         
-    async def to(self, target: float, speed: float = constants.mid_speed) -> tuple[int, bool, int]:
+    async def to(self, target: float, speed: float = constants.mid_speed, timeout: int  = constants.to_position_timeout) -> tuple[int, bool, int]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
         if target < 0 or target > 1:
@@ -139,7 +139,7 @@ class Motor:
                 log.success(f"Motor {self.pin} has reached target position")
                 break
             # motor has timed out -> stop the motor
-            if time.time() - start_time > constants.to_position_timeout:
+            if time.time() - start_time > timeout:
                 self._error(f"Motor {self.pin} timed out moving to target position, disabling...")
                 timed_out = True
                 break
@@ -192,7 +192,6 @@ class Motor:
         
         # ---------------------------- find min down speed --------------------------- #
         log.info(f"Finding min down speed for M{self.pin}", override=True)
-        self.direction = constants.down 
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
@@ -202,7 +201,7 @@ class Motor:
         while True:
             current_throttle += step
             log.info(f"Testing speed: {step} (down)")
-            _, timed_out, _ = await self.to(0.2, step)
+            _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
 
             if not timed_out:
                 neutral_down = current_throttle - step

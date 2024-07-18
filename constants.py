@@ -27,6 +27,8 @@ to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 2.5 # initial timeout for trying to move home
 to_home_max_interval = 1.5 # seconds between encoder readings (should be relative to speed...)
 to_position_timeout = 60 # max timeout for trying to move to a position
+
+calibration_to_position_timeout = 15
 calibration_counts = 20 # distance to move for calibration (in counts)
 calibration_timeout = 30 # max timeout for calibration
 calibration_speed_step = 0.01 # speed step for min speed calibration

@@ -66,8 +66,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(f"Stopping M{self.pin}")
-        self.servo.throttle = 0.07
-        # pwm.setServoPulse(self.pin, constants.stop_pulse) 
+        pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
     async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
@@ -263,8 +262,8 @@ class Motor:
             self.min_up_speed = data[DataMode.min_up_speed.value]
 
         # ensure motor is at home before calibrating
-        if not self.is_home():
-            await self.to_home()
+        # if not self.is_home():
+        #     await self.to_home()
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 

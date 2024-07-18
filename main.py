@@ -132,9 +132,7 @@ async def main():
 
     mc = MotorController()
 
-    # await mc.calibrate(reset=True)
-
-    mc.kit._pca.deinit()
+    await mc.calibrate(reset=True)
 
     # await mc.move_all_home()
     # await mc.move_all(0.7)

@@ -141,8 +141,6 @@ async def main():
 
     mc.stop_all_motors()
 
-
-
     GPIO.cleanup() # clean up for next session
 
 if __name__ == "__main__":

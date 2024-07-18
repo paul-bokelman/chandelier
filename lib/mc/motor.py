@@ -221,6 +221,8 @@ class Motor:
 
         log.info(f"Neutrals: L={lower_neutral}, U={upper_neutral} ", override=True)
 
+        await self.to_home(speed=(lower_neutral - step)) # move back home at slowest
+
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
         #     log.info(f"Testing speed: {current_speed}")
         #     _, timed_out, _  = await self.to(0.2, current_speed)

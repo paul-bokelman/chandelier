@@ -72,6 +72,7 @@ class Motor:
         log.info(f"M{self.pin} | Stopping motor")
         if self.lower_neutral is None:
             log.error(f"M{self.pin} | Lower neutral not set, motor may not stop correctly")
+            self.servo._pwm_out.duty_cycle = 0
             pwm.setServoPulse(self.pin, constants.stop_pulse) 
         else:
             self.servo.throttle = self.lower_neutral
@@ -154,7 +155,7 @@ class Motor:
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
-        target_counts = int((target / 1 ) * (constants.max_counts))
+        target_counts = int((target / 1) * (constants.max_counts))
         timed_out = False 
         
         log.info(f'Moving: M{self.pin} ({self.counts} -> {target_counts}) at speed {speed}')
@@ -256,7 +257,7 @@ class Motor:
 
         log.info(f"Neutrals: L={self.lower_neutral}, U={self.upper_neutral} ", override=True)
 
-        await self.to_home(speed=(self.lower_neutral - step)) # move back home at slowest
+        await self.to_home(speed=(self.lower_neutral - 3 * step)) # move back home at slowest
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
         #     log.info(f"Testing speed: {current_speed}")

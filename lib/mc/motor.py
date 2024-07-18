@@ -244,7 +244,7 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Mins", message=f"Testing throttle {current_throttle}"), override=True)
-            _, timed_out, _ = await self.move(2, current_throttle, constants.down, constants.calibration_to_position_timeout)
+            _, timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:

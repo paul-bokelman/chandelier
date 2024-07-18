@@ -108,7 +108,7 @@ class Motor:
         self.stop()
         return self.counts, timed_out
     
-    async def move(self, n_counts: int, speed: float = constants.mid_speed, timeout: int = constants.to_position_timeout) -> tuple[int, bool, int]:
+    async def move(self, n_counts: int, speed: float = constants.mid_speed, direction: int = constants.down, timeout: int = constants.to_position_timeout) -> tuple[int, bool, int]:
         """Move the motor a specific number of counts at a specific speed"""
         timed_out = False
 
@@ -118,7 +118,6 @@ class Motor:
         log.info(f'Moving: M{self.pin} ({self.counts} -> {self.counts + n_counts}) at speed {speed}', override=True)
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
-        self.direction = constants.down if n_counts < 0 else constants.up
         self.set(speed, self.direction)
 
         start_time = time.time() # track time
@@ -239,7 +238,7 @@ class Motor:
         while upper_neutral is None or lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle}", override=True)
-            _, timed_out, _ = await self.move(2, current_throttle, constants.calibration_to_position_timeout)
+            _, timed_out, _ = await self.move(2, current_throttle, constants.down, constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if upper_neutral is None and timed_out:

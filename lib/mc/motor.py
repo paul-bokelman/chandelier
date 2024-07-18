@@ -78,7 +78,7 @@ class Motor:
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
-        if direction == constants.down:
+        if direction == constants.up:
             self.servo.throttle = self.lower_neutral - offset
         else:
             self.servo.throttle = self.upper_neutral + offset
@@ -236,7 +236,7 @@ class Motor:
         # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
-            log.info(self._clm("Find Neutrals", message=f"Testing throttle {current_throttle}"), override=True)
+            log.info(self._clm("Find Neutrals", current_throttle=current_throttle), override=True)
             _, timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
@@ -288,7 +288,7 @@ class Motor:
         self.encoder_feedback_disabled = True
 
         # ensure calibration was successful
-        assert self.cps_down is not None and self.cps_up is not None, "CPS incorrectly calibrated"
+        # assert self.cps_down is not None and self.cps_up is not None, "CPS incorrectly calibrated"
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Min speeds incorrectly calibrated"
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
 

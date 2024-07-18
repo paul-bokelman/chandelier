@@ -58,9 +58,9 @@ class Motor:
 
     def _clm(self, function_name, **kwargs):
         """Construct consistent log message for motor functions"""
-        message = f"M{self.channel} | {function_name} | "
-        for (index, (key, value)) in enumerate(kwargs.items()):
-            message += f"{key}: {value} {'| ' if index < len(kwargs) - 1 else ''}"
+        message = f"M{self.channel} | {function_name}"
+        for key, value in kwargs.items():
+            message += f" | {key}: {value}"
         return message
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):

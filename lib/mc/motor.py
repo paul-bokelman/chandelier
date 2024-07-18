@@ -203,7 +203,7 @@ class Motor:
 
         while upper_neutral is None or lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
-            log.info(f"Testing speed: {current_throttle} (down)", override=True)
+            log.info(f"Testing speed: {current_throttle}", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral

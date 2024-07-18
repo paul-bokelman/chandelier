@@ -65,7 +65,7 @@ class Motor:
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""
-        assert isinstance(throttle, (constants.ThrottlePresets, float)), "Throttle must be a float or ThrottlePresets"
+        assert isinstance(throttle, (constants.ThrottlePresets, float)), f"Throttle must be a float or ThrottlePresets, got {type(throttle)}"
 
         # specific value -> set throttle
         if isinstance(throttle, float):
@@ -101,7 +101,7 @@ class Motor:
             log.success(self._clm("To Home", message="Motor already at home"))
             return self.counts, timed_out
 
-        self.set(throttle=throttle,direction=constants.up if isinstance(throttle, constants.ThrottlePresets) else None)
+        self.set(throttle=throttle, direction=constants.up if isinstance(throttle, constants.ThrottlePresets) else None)
         self.last_read_time = None 
         start_time = time.time()
 

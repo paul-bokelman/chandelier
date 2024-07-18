@@ -195,11 +195,11 @@ class Motor:
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
-        current_throttle = 0
+        current_throttle = 0.4
         neutral_down = None
 
         while True:
-            current_throttle += step
+            current_throttle -= step
             log.info(f"Testing speed: {step} (down)", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
 

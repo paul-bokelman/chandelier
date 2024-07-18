@@ -279,8 +279,8 @@ class Motor:
             self.min_up_speed = data[DataMode.min_up_speed.value]
 
         # ensure motor is at home before calibrating
-        if not self.is_home():
-            await self.to_home()
+        # if not self.is_home():
+        #     await self.to_home(constants.uncalibrated_home_throttle)
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 

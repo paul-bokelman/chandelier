@@ -71,12 +71,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(f"M{self.pin} | Stopping motor")
-        if self.lower_neutral is None:
-            log.error(f"M{self.pin} | Lower neutral not set, motor may not stop correctly")
-            self.servo._pwm_out.duty_cycle = 0 # stop the motor
-            # pwm.setServoPulse(self.pin, constants.stop_pulse) 
-        else:
-            self.servo.throttle = self.lower_neutral
+        self.servo._pwm_out.duty_cycle = 0 
 
     async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""

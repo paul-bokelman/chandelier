@@ -196,22 +196,26 @@ class Motor:
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
         current_throttle = 0.3
+        upper_neutral = None
+        lower_neutral = None
 
         #? gradient descent approach? (move towards decreasing value)
 
-        while True:
+        while upper_neutral is None and lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle} (down)", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, 60)
 
             if timed_out:
-                break
+                if upper_neutral is None:
+                    upper_neutral = current_throttle
+                else:
+                    lower_neutral = current_throttle
 
             # await self.to_home() # return home for next iteration
             self.counts = 0
 
-        log.info(f"Neutral down: {current_throttle}")
-
+        log.info(f"Neutrals: L={lower_neutral}, U={upper_neutral} ", override=True)
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
         #     log.info(f"Testing speed: {current_speed}")
@@ -240,25 +244,10 @@ class Motor:
 
         #     self.min_up_speed = current_speed
 
-        log.success(f"M{self.pin} | min down speed: {self.min_down_speed} | min up speed: {self.min_up_speed}")
+        # log.success(f"M{self.pin} | min down speed: {self.min_down_speed} | min up speed: {self.min_up_speed}")
 
         # cleanup
         # await self.to_home()
-        self.encoder_feedback_disabled = True
-        step = 0.01
-        current_throttle = 0
-        neutral_down = None
-
-        while True:
-            current_throttle += step
-            log.info(f"Testing speed: {step} (down)")
-            _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
-
-            if not timed_out:
-                neutral_down = current_throttle - step
-                break
-
-        print(f"Neutral down: {neutral_down}")
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""

@@ -19,6 +19,7 @@ class Motor:
         self.min_down_speed:Optional[float] = None
         self.min_up_speed: Optional[float] = None
         self.servo = servo
+        self.servo.set_pulse_width_range(1000, 2000) 
 
         # calibrated data
         # todo: counts should be none unless calibrated (position unknown)
@@ -237,7 +238,7 @@ class Motor:
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
-        current_throttle = 0.25
+        current_throttle = 0.35
         #? gradient descent approach? (move towards decreasing value)
 
         while self.upper_neutral is None or self.lower_neutral is None:
@@ -257,7 +258,7 @@ class Motor:
 
         log.info(f"Neutrals: L={self.lower_neutral}, U={self.upper_neutral} ", override=True)
 
-        await self.to_home(speed=(self.lower_neutral - 3 * step)) # move back home at slowest
+        await self.to_home(speed=(self.lower_neutral - step)) # move back home at slowest
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):
         #     log.info(f"Testing speed: {current_speed}")

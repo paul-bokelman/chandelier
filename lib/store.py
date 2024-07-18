@@ -7,26 +7,26 @@ from lib.utils import log
 
 class DataMode(Enum):
   """Enum for calibration modes"""
-  counts = 0
-  cps_down = 1
-  cps_up = 2
-  min_down_speed = 3
-  min_up_speed = 4
+  COUNTS = 0
+  CPS_DOWN = 1
+  CPS_UP = 2
+  LOWER_NEUTRAL = 3
+  UPPER_NEUTRAL = 4
 
 class CalibrationData(TypedDict):
   """Schema for calibration data"""
   counts: list[Optional[float]] # currently unused
   cps_down: list[Optional[float]]
   cps_up: list[Optional[float]]
-  min_down_speed: list[Optional[float]]
-  min_up_speed: list[Optional[float]]
+  lower_neutral: list[Optional[float]]
+  upper_neutral: list[Optional[float]]
 
 default_calibration_data: CalibrationData = {
   "counts": [None] * constants.n_motors,
   "cps_down": [None] * constants.n_motors,
   "cps_up": [None] * constants.n_motors,
-  "min_down_speed": [None] * constants.n_motors,
-  "min_up_speed": [None] * constants.n_motors
+  "lower_neutral": [None] * constants.n_motors,
+  "upper_neutral": [None] * constants.n_motors
 }
 
 class Store:
@@ -61,12 +61,14 @@ class Store:
     self.data = data
   
   def get(self, mode: DataMode) -> list[Optional[float]]:
-    """Get calibration data from file"""
+    """Get specific calibration data from file"""
     log.info(f"Getting calibration data from {mode.name}")
-    if mode not in DataMode:
-      raise ValueError("Invalid calibration mode")
     
-    return self.data[mode.name]
+    assert mode in DataMode, "Invalid calibration mode"
+    key = str(mode.name.lower())
+    assert key in self.data, "Invalid calibration key"
+    
+    return self.data[key]
   
   def get_by_channel(self, channel: int) -> list[Optional[float]]:
     """Get calibration data for a specific motor channel"""
@@ -78,8 +80,8 @@ class Store:
       self.data["counts"][channel],
       self.data["cps_down"][channel],
       self.data["cps_up"][channel],
-      self.data["min_down_speed"][channel],
-      self.data["min_up_speed"][channel]
+      self.data["lower_neutral"][channel],
+      self.data["upper_neutral"][channel]
     ]
   
   def load(self) -> CalibrationData:

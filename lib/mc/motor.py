@@ -18,8 +18,6 @@ class Motor:
         self.encoder_feedback_disabled = False # get feedback from encoder
         self.direction = constants.down # direction of motor
         self.encoder_pin = constants.encoder_pins[self.channel]
-        self.min_down_speed:Optional[float] = None
-        self.min_up_speed: Optional[float] = None
         self.servo = servo
         self.servo.set_pulse_width_range(1000, 2000) 
 
@@ -89,7 +87,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(self._clm("Stop"), override=True)
-        self.servo._pwm_out.duty_cycle = 0 
+        self.servo._pwm_out.duty_cycle = 0  
 
     async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
@@ -228,54 +226,48 @@ class Motor:
             up_time = time.time() - start
             self.cps_up = constants.calibration_counts / up_time
 
-    async def _find_mins(self):
-        """Find the minimum speed of the motor in both directions"""
-        log.info(f"Finding min speeds for M{self.channel}")
+    async def _find_neutrals(self):
+        """Find the lower and upper neutral positions of servo motor"""
+        log.info(self._clm("Find Neutrals", message="Finding neutral positions"), override=True)
+
+        step = 0.01 #? should be in constants
+        current_throttle = 0.35 #? should be in constants
         
-        # ---------------------------- find min down speed --------------------------- #
-        log.info(f"Finding min down speed for M{self.channel}", override=True)
-
-        # move the motor to the calibration position at different speeds and look for timeout (down)
-        step = 0.01
-        current_throttle = 0.35
-        #? gradient descent approach? (move towards decreasing value)
-
+        # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
-            log.info(self._clm("Find Mins", message=f"Testing throttle {current_throttle}"), override=True)
+            log.info(self._clm("Find Neutrals", message=f"Testing throttle {current_throttle}"), override=True)
             _, timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:
-                log.info(self._clm("Find Mins", message=f"Upper neutral found: {current_throttle}"), override=True)
+                log.info(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"), override=True)
                 self.upper_neutral = current_throttle
 
             # upper neutral found and motor has not timed out -> found lower neutral
             if self.lower_neutral is None and not timed_out and self.upper_neutral is not None:
-                log.info(self._clm("Find Mins", message=f"Lower neutral found: {current_throttle}"), override=True)
+                log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"), override=True)
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        log.info(self._clm("Find Mins", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
-
-        await self.to_home(throttle=(self.lower_neutral - 3 * step)) # move back home at slowest
+        log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         log.info(self._clm("Calibrate", message="Calibrating Motor"))
 
         # load calibration data if available
-        if data[DataMode.cps_down.value] is not None:
-            log.info(f"M{self.channel} | cps down already calibrated")
-            self.cps_down = data[DataMode.cps_down.value]
-        if data[DataMode.cps_up.value] is not None:
-            log.info(f"M{self.channel} | cps up already calibrated")
-            self.cps_up = data[DataMode.cps_up.value]
-        if data[DataMode.min_down_speed.value] is not None:
-            log.info(f"M{self.channel} | min down speed already calibrated")
-            self.min_down_speed = data[DataMode.min_down_speed.value]
-        if data[DataMode.min_up_speed.value] is not None:
-            log.info(f"M{self.channel} | min up speed already calibrated")
-            self.min_up_speed = data[DataMode.min_up_speed.value]
+        if data[DataMode.CPS_DOWN.value] is not None:
+            log.info(self._clm("Calibrate", message="cps down already calibrated"))
+            self.cps_down = data[DataMode.CPS_DOWN.value]
+        if data[DataMode.CPS_UP.value] is not None:
+            log.info(self._clm("Calibrate", message="cps up already calibrated"))
+            self.cps_up = data[DataMode.CPS_UP.value]
+        if data[DataMode.LOWER_NEUTRAL.value] is not None:
+            log.info(self._clm("Calibrate", message="lower neutral already calibrated"))
+            self.lower_neutral = data[DataMode.LOWER_NEUTRAL.value]
+        if data[DataMode.UPPER_NEUTRAL.value] is not None:
+            log.info(self._clm("Calibrate", message="upper neutral already calibrated"))
+            self.upper_neutral = data[DataMode.UPPER_NEUTRAL.value]
 
         # ensure motor is at home before calibrating
         if not self.is_home():
@@ -287,11 +279,18 @@ class Motor:
         # if self.cps_down is None or self.cps_up is None:
         #     await self._find_cps()
         
-        # find min speeds if either is not present
-        if self.min_down_speed is None or self.min_up_speed is None:
-            await self._find_mins()
+        # find neutrals if either is not present
+        if self.lower_neutral is None or self.upper_neutral is None:
+            await self._find_neutrals()
+
+        await self.to_home() # move back with calibrated neutral positions
         
         self.encoder_feedback_disabled = True
+
+        # ensure calibration was successful
+        assert self.cps_down is not None and self.cps_up is not None, "CPS incorrectly calibrated"
+        assert self.lower_neutral is not None and self.upper_neutral is not None, "Min speeds incorrectly calibrated"
+        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
 
     def is_home(self) -> bool:
         """Check if the motor is at the home position"""

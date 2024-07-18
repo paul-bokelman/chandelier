@@ -25,7 +25,8 @@ class MotorController:
 
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
-    # if reset: self.store.reset()
+    if reset: self.store.reset()
+
     # calibrate each motor simultaneously
     await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in self.motors])
 
@@ -79,7 +80,7 @@ class MotorController:
       counts=[motor.counts for motor in self.motors],
       cps_down=[motor.cps_down for motor in self.motors],
       cps_up=[motor.cps_up for motor in self.motors],
-      min_down_speed=[motor.min_down_speed for motor in self.motors],
-      min_up_speed=[motor.min_up_speed for motor in self.motors]
+      lower_neutral=[motor.lower_neutral for motor in self.motors],
+      upper_neutral=[motor.upper_neutral for motor in self.motors]
     )
     self.store.save(data)

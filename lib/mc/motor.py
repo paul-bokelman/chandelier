@@ -58,8 +58,9 @@ class Motor:
         """Set a specific motor to a specific speed, speed is a value between 0 and 1"""
         assert speed >= 0 and speed <= 1, "Speed must be between 0 and 1"
         assert direction in [constants.up, constants.down], "Direction must be up or down"
-
-        self.servo.throttle = direction * speed
+        
+        # todo: direction not used
+        self.servo.throttle = speed 
 
         # pwm.setServoPulse(self.pin, to_pulse(speed, direction, self.up_boost, self.down_boost))
 
@@ -195,7 +196,7 @@ class Motor:
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
-        current_throttle = 0.3
+        current_throttle = 0.25
         upper_neutral = None
         lower_neutral = None
 

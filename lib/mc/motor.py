@@ -195,20 +195,22 @@ class Motor:
 
         # move the motor to the calibration position at different speeds and look for timeout (down)
         step = 0.01
-        current_throttle = 0.4
-        neutral_down = None
+        current_throttle = 0.3
+
+        #? gradient descent approach? (move towards decreasing value)
 
         while True:
-            current_throttle -= step
+            current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle} (down)", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, 60)
-            self.counts = 0
 
             if timed_out:
-                neutral_down = current_throttle - step
                 break
 
-        log.info(f"Neutral down: {neutral_down}")
+            # await self.to_home() # return home for next iteration
+            self.counts = 0
+
+        log.info(f"Neutral down: {current_throttle}")
 
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):

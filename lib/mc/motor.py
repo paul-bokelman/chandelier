@@ -66,7 +66,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(f"Stopping M{self.pin}")
-        self.servo.throttle = 0
+        self.servo.throttle = 0.07
         # pwm.setServoPulse(self.pin, constants.stop_pulse) 
 
     async def to_home(self, speed: float = constants.to_home_speed, override_initial_timeout = False) -> tuple[int, bool]:

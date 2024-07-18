@@ -22,7 +22,7 @@ mid_speed = 0.5
 slow_speed = 0.25
 
 # motor configuration
-to_home_speed = 0.4 # speed to move to home
+to_home_speed = 0.2 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
 to_home_initial_timeout = 2.5 # initial timeout for trying to move home
 to_home_max_interval = 1.5 # seconds between encoder readings (should be relative to speed...)
@@ -31,7 +31,7 @@ calibration_counts = 20 # distance to move for calibration (in counts)
 calibration_timeout = 30 # max timeout for calibration
 calibration_speed_step = 0.01 # speed step for min speed calibration
 calibration_total_steps = 30 # total steps for min speed calibration (0.30->0)
-calibration_speed = 0.5 # speed for calibration
+calibration_speed = 0.2 # speed for calibration
 
 calibrations_file_path = "calibrations.json"
 

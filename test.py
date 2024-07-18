@@ -7,8 +7,6 @@ kit = ServoKit(channels=16)
 # Define the servo channel (e.g., channel 0)
 servo_channel = 2
 
-kit.continuous_servo[servo_channel].set_pulse_width_range(1000, 2000)
-
 # Function to find the neutral position
 def find_neutral(kit, channel):
     step = 0.01

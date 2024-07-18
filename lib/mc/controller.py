@@ -1,6 +1,7 @@
 from typing import Union
 import asyncio
 import constants
+from adafruit_servokit import ServoKit
 from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
 from lib.utils import calculate_relative_boosts
@@ -10,7 +11,8 @@ class MotorController:
   def __init__(self, debug = False) -> None:
     self.debug = debug
     self.store = Store()
-    self.motors = [Motor(i) for i in range(constants.n_motors)]
+    self.kit = ServoKit(channels=16)
+    self.motors = [Motor(i,self.kit.continuous_servo[i]) for i in range(constants.n_motors)]
 
   def stop_all_motors(self):
     """Stop all motors by calling stop_motor for each motor"""
@@ -23,19 +25,19 @@ class MotorController:
 
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
-    if reset: self.store.reset()
+    # if reset: self.store.reset()
     # calibrate each motor simultaneously
     await asyncio.gather(*[motor.calibrate(self.store.get_by_pin(motor.pin)) for motor in self.motors])
 
     # calculate and assign relative speeds
-    up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])
-    down_boosts = calculate_relative_boosts([motor.cps_down for motor in self.motors])
+    # up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])
+    # down_boosts = calculate_relative_boosts([motor.cps_down for motor in self.motors])
 
-    for (motor, up_boost, down_boost) in zip(self.motors, up_boosts, down_boosts):
-      motor.up_boost = up_boost
-      motor.down_boost = down_boost
+    # for (motor, up_boost, down_boost) in zip(self.motors, up_boosts, down_boosts):
+    #   motor.up_boost = up_boost
+    #   motor.down_boost = down_boost
 
-  async def move_all(self, positions: Union[float, list[float]], speeds: Union[float, list[float]] = 0.5) -> int:
+  async def move_all(self, positions: Union[float, list[float]], speeds: Union[float, list[float]] = 0.2) -> int:
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
 
     # convert single position to list of speeds

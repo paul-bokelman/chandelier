@@ -200,14 +200,14 @@ class Motor:
 
         while True:
             current_throttle += step
-            log.info(f"Testing speed: {step} (down)")
+            log.info(f"Testing speed: {step} (down)", override=True)
             _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
 
             if not timed_out:
                 neutral_down = current_throttle - step
                 break
 
-        print(f"Neutral down: {neutral_down}")
+        log.info(f"Neutral down: {neutral_down}")
 
 
         # for current_speed in reversed([round(x * constants.calibration_speed_step, 2) for x in range(0, constants.calibration_total_steps)]):

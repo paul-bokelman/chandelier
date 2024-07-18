@@ -59,8 +59,8 @@ class Motor:
     def _clm(self, function_name, **kwargs):
         """Construct consistent log message for motor functions"""
         message = f"M{self.channel} | {function_name} | "
-        for key, value in kwargs.items():
-            message += f"{key}: {value} | "
+        for (index, (key, value)) in enumerate(kwargs.items()):
+            message += f"{key}: {value} {'| ' if index < len(kwargs) - 1 else ''}"
         return message
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
@@ -101,8 +101,7 @@ class Motor:
             log.success(self._clm("To Home", message="Motor already at home"))
             return self.counts, timed_out
 
-        self.direction = constants.up
-        self.set(throttle, self.direction)
+        self.set(throttle=throttle,direction=constants.up if isinstance(throttle, constants.ThrottlePresets) else None)
         self.last_read_time = None 
         start_time = time.time()
 
@@ -279,8 +278,8 @@ class Motor:
             self.min_up_speed = data[DataMode.min_up_speed.value]
 
         # ensure motor is at home before calibrating
-        # if not self.is_home():
-        #     await self.to_home(constants.uncalibrated_home_throttle)
+        if not self.is_home():
+            await self.to_home(constants.uncalibrated_home_throttle)
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 

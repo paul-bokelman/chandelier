@@ -107,6 +107,40 @@ class Motor:
 
         self.stop()
         return self.counts, timed_out
+    
+    async def move(self, n_counts: int, speed: float = constants.mid_speed, timeout: int = constants.to_position_timeout) -> tuple[int, bool, int]:
+        """Move the motor a specific number of counts at a specific speed"""
+        timed_out = False
+
+        if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
+            raise ValueError("Counts must be between 0 and max counts")
+        
+        log.info(f'Moving: M{self.pin} ({self.counts} -> {self.counts + n_counts}) at speed {speed}')
+
+        self.encoder_feedback_disabled = False # start incrementing encoder counts
+        self.direction = constants.down if n_counts < 0 else constants.up
+        self.set(speed, self.direction)
+
+        start_time = time.time() # track time
+
+        start_counts = self.counts
+        if n_counts == 0:
+            log.success(f"Motor {self.pin} already at target position")
+            return self.counts, timed_out, seconds_elapsed(start_time)
+        
+        while True:
+            if self.counts - start_counts == n_counts:
+                log.success(f"Motor {self.pin} has reached target position")
+                break
+            if time.time() - start_time > timeout:
+                self._error(f"Motor {self.pin} timed out moving to target position")
+                timed_out = True
+                break
+            await asyncio.sleep(0.01) # yield control back to event
+
+        self.encoder_feedback_disabled = True # stop incrementing encoder counts
+        self.stop()
+        return self.counts, timed_out, seconds_elapsed(start_time)
         
     async def to(self, target: float, speed: float = constants.mid_speed, timeout: int  = constants.to_position_timeout) -> tuple[int, bool, int]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
@@ -141,7 +175,7 @@ class Motor:
                 break
             # motor has timed out -> stop the motor
             if time.time() - start_time > timeout:
-                self._error(f"Motor {self.pin} timed out moving to target position, disabling...")
+                self._error(f"Motor {self.pin} timed out moving to target position")
                 timed_out = True
                 break
 
@@ -167,7 +201,7 @@ class Motor:
             while self.counts != constants.calibration_counts:
                 # motor has timed out -> error
                 if time.time() - start > constants.calibration_timeout:
-                    self._error(f"Motor {self.pin} timed out calibrating, disabling...")
+                    self._error(f"Motor {self.pin} timed out calibrating")
                     return
                 
                 await asyncio.sleep(0.01) # yield control back to event
@@ -205,7 +239,7 @@ class Motor:
         while upper_neutral is None or lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(f"Testing speed: {current_throttle}", override=True)
-            _, timed_out, _ = await self.to(0.1, current_throttle, constants.calibration_to_position_timeout)
+            _, timed_out, _ = await self.move(2, current_throttle, constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if upper_neutral is None and timed_out:
@@ -216,9 +250,6 @@ class Motor:
             if lower_neutral is None and not timed_out and upper_neutral is not None:
                 log.info(f"Lower neutral found: {current_throttle}")
                 lower_neutral = current_throttle + step # add step to account for last iteration
-
-            # await self.to_home() # return home for next iteration
-            self.counts = 0
 
         log.info(f"Neutrals: L={lower_neutral}, U={upper_neutral} ", override=True)
 

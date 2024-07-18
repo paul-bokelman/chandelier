@@ -65,7 +65,7 @@ class Motor:
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""
-        assert isinstance(throttle, constants.ThrottlePresets), "Throttle must be a float or ThrottlePresets"
+        assert isinstance(throttle, (constants.ThrottlePresets, float)), "Throttle must be a float or ThrottlePresets"
 
         # specific value -> set throttle
         if isinstance(throttle, float):
@@ -91,7 +91,7 @@ class Motor:
         log.info(self._clm("Stop"), override=True)
         self.servo._pwm_out.duty_cycle = 0 
 
-    async def to_home(self, speed: float = constants.to_home_throttle, override_initial_timeout = False) -> tuple[int, bool]:
+    async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[int, bool]:
         """Move the motor to the home position (0 count)"""
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         timed_out = False
@@ -102,7 +102,7 @@ class Motor:
             return self.counts, timed_out
 
         self.direction = constants.up
-        self.set(speed, self.direction)
+        self.set(throttle, self.direction)
         self.last_read_time = None 
         start_time = time.time()
 
@@ -224,7 +224,7 @@ class Motor:
             log.info(f"Calculating M{self.channel} up cps", override=True)
 
             start = time.time()
-            await self.to_home(speed=constants.calibration_speed)
+            await self.to_home(throttle=constants.calibration_speed)
             
             up_time = time.time() - start
             self.cps_up = constants.calibration_counts / up_time
@@ -258,7 +258,7 @@ class Motor:
 
         log.info(self._clm("Find Mins", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
-        await self.to_home(speed=(self.lower_neutral - 3 * step)) # move back home at slowest
+        await self.to_home(throttle=(self.lower_neutral - 3 * step)) # move back home at slowest
 
     async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""

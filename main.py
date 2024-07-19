@@ -133,11 +133,16 @@ async def main():
 
     mc = MotorController()
     await mc.calibrate()
+
+    seq = Sequence()
+
+    for positions, speeds in seq.random(10):
+        await mc.move_all(positions)
+
+
     await mc.move_all_home()
-    await mc.move_all(0.5, [0.3870312500000002, 0.9100000000000006, 0.2, 0.28])
-
-
     # M3 -> 0.28
+
     # M0 -> 0.3870312500000002
     # M1 -> 0.9100000000000006
 

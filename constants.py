@@ -35,7 +35,7 @@ to_home_max_interval = 3 # seconds between encoder readings (should be relative 
 to_position_timeout = 60 # max timeout for trying to move to a position
 
 calibration_to_position_timeout = 5 # max timeout for trying to move to a position during calibration
-calibration_counts = 20 # distance to move for calibration (in counts)
+calibration_counts = 10 # distance to move for calibration (in counts)
 calibration_timeout = 30 # max timeout for calibration
 calibration_speed_step = 0.01 # speed step for min speed calibration
 calibration_total_steps = 30 # total steps for min speed calibration (0.30->0)

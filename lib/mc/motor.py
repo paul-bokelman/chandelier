@@ -192,39 +192,43 @@ class Motor:
     # -------------------------------- CALIBRATION ------------------------------- #
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
-        log.info(f"Finding cps up and down for M{self.channel}", override=True)
+        log.info(self._clm("Find CPS", message="Finding cps up and down"), override=True)
+
+        # neutral positions must be calibrated and set for present throttles
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
+
+        # move back home if not already (allows _find_cps to be called separately from _find_neutrals)
+        if not self.is_home():
+            await self.to_home()
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
-            log.info(f"Calculating M{self.channel} cps down", override=True)
-            self.direction = constants.down
-            self.set(constants.calibration_speed, self.direction) # set the motor to the calibration speed
+            log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
+
+            self.set(throttle=constants.ThrottlePresets.SLOW, direction=constants.down) # measure down speed
 
             start = time.time()
             # move the motor to the calibration position
             while self.counts != constants.calibration_counts:
                 # motor has timed out -> error
                 if time.time() - start > constants.calibration_timeout:
-                    log.error(f"Motor {self.channel} timed out calibrating")
+                    log.error(self._clm("Find CPS", message="Motor timed out finding cps down"))
                     return
                 
                 await asyncio.sleep(0.01) # yield control back to event
                 
             self.stop()
             
-            down_time = time.time() - start # time taken to move to calibration position
-            self.cps_down = constants.calibration_counts / down_time # time per count
+            self.cps_down = constants.calibration_counts / (time.time() - start) # down counts per second
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
-            log.info(f"Calculating M{self.channel} up cps", override=True)
+            log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
 
             start = time.time()
-            await self.to_home(throttle=constants.calibration_speed)
+            await self.to_home(throttle=constants.ThrottlePresets.SLOW) # move to home position at slow speed
             
-            up_time = time.time() - start
-            self.cps_up = constants.calibration_counts / up_time
+            self.cps_up = constants.calibration_counts / (time.time() - start) # up counts per second
 
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of servo motor"""
@@ -275,13 +279,13 @@ class Motor:
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 
-        # find up and down cps if either is not present
-        # if self.cps_down is None or self.cps_up is None:
-        #     await self._find_cps()
-        
         # find neutrals if either is not present
         if self.lower_neutral is None or self.upper_neutral is None:
             await self._find_neutrals()
+
+        # find up and down cps if either is not present
+        if self.cps_down is None or self.cps_up is None:
+            await self._find_cps()
 
         await self.to_home() # move back with calibrated neutral positions
         

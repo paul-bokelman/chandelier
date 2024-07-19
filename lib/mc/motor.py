@@ -225,6 +225,7 @@ class Motor:
             # throttle timed out -> exit
             if timed_out:
                 log.error(self._clm("Find CPS", message="Throttle timed out", throttle=current_throttle))
+                current_throttle = self.upper_neutral # reset throttle
                 step /= 2 # decrease step size
                 continue
 

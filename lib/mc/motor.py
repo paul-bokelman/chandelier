@@ -139,7 +139,7 @@ class Motor:
         """Move the motor n number of counts at a specific speed"""
         timed_out = False
 
-        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
+        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"), override=True)
         
         if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
             raise ValueError("Counts must be between 0 and max counts")
@@ -227,19 +227,23 @@ class Motor:
                 return
 
             current_cps = constants.calibration_counts / time_elapsed 
-            previous_cps = current_cps
 
-            error=target_cps - current_cps # calculate error
+            # target in between previous and current cps -> decrease step size
+            if previous_cps is not None:
+                if previous_cps < target_cps < current_cps or previous_cps > target_cps > current_cps:
+                    step_multiplier /= 2
+
+            previous_cps = current_cps
+            distance=target_cps - current_cps # calculate distance from target cps
 
             # throttle too low -> increase throttle
             if current_cps < target_cps:
                 current_throttle += step * step_multiplier
-                log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps, error=error), override=True)
+                log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps, distance=distance), override=True)
             # throttle too high -> decrease throttle and decrease step size
             else:
                 current_throttle -= step * step_multiplier
-                step_multiplier /= 2
-                log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps, error=error), override=True)
+                log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps, distance=distance), override=True)
 
             #? could calculate cps up here
             await self.to_home() # move back to home position for next iteration

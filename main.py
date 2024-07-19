@@ -132,8 +132,7 @@ async def main():
     #         raise ValueError("Invalid state")
 
     mc = MotorController()
-    # await mc.calibrate()
-
+    await mc.calibrate()
     await mc.move_all_home()
     await mc.move_all(0.5, [0.3870312500000002, 0.9100000000000006, 0.08, 0.28])
 

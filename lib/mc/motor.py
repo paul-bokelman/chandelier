@@ -230,9 +230,15 @@ class Motor:
             
             self.cps_up = constants.calibration_counts / (time.time() - start) # up counts per second
 
+        log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
+
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of servo motor"""
         log.info(self._clm("Find Neutrals", message="Finding neutral positions"), override=True)
+
+        # ensure motor is at home position
+        if not self.is_home():
+            await self.to_home(constants.uncalibrated_home_throttle)
 
         step = 0.01 #? should be in constants
         current_throttle = 0.35 #? should be in constants
@@ -272,10 +278,6 @@ class Motor:
         if data[DataMode.UPPER_NEUTRAL.value] is not None:
             log.info(self._clm("Calibrate", message="upper neutral already calibrated"), override=True)
             self.upper_neutral = data[DataMode.UPPER_NEUTRAL.value]
-
-        # ensure motor is at home before calibrating
-        if not self.is_home():
-            await self.to_home(constants.uncalibrated_home_throttle)
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 

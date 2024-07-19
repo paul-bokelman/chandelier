@@ -207,20 +207,19 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
-        target_cps = 3 # slow throttle preset
+        target_cps = 1 # slow throttle preset
         error = 0.01 # error margin
         step = 0.01 # step size
-        step_multiplier = 1 # step size multiplier (scales based on distance)
 
         # gradient descent to find cps up and down for slow throttle
         log.info(self._clm("Find CPS", message="Finding throttle for target CPS", target_cps=target_cps), override=True)
 
         previous_cps = None
-        current_throttle = self.upper_neutral + step * step_multiplier # move down
+        current_throttle = self.upper_neutral + step # move down
 
         # move to calibration position and measure cps until within error
         while previous_cps is None or abs(target_cps - previous_cps) > error:
-            log.info(self._clm("Find CPS", message="Finding throttle", step=step, step_multiplier=step_multiplier), override=True)
+            log.info(self._clm("Find CPS", message="Finding throttle", step=step), override=True)
             timed_out, time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=current_throttle, timeout=constants.calibration_timeout)
 
             # throttle timed out -> exit
@@ -233,18 +232,19 @@ class Motor:
             # target in between previous and current cps -> decrease step size
             if previous_cps is not None:
                 if previous_cps < target_cps < current_cps or previous_cps > target_cps > current_cps:
-                    step_multiplier /= 2
+                    log.info(self._clm("Find CPS", message=f"Decreasing step size, ({step} -> {step / 2})", ), override=True)
+                    step /= 2
 
             previous_cps = current_cps
             distance=target_cps - current_cps # calculate distance from target cps
 
             # throttle too low -> increase throttle
             if current_cps < target_cps:
-                current_throttle += step * step_multiplier
+                current_throttle += step
                 log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps, distance=distance), override=True)
             # throttle too high -> decrease throttle and decrease step size
             else:
-                current_throttle -= step * step_multiplier
+                current_throttle -= step
                 log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps, distance=distance), override=True)
 
             #? could calculate cps up here

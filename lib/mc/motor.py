@@ -135,7 +135,7 @@ class Motor:
         throttle: Throttle = constants.ThrottlePresets.SLOW, 
         direction: Optional[int] = None,
         timeout: int = constants.to_position_timeout
-    ) -> tuple[int, bool, int]:
+    ) -> tuple[bool, int]:
         """Move the motor n number of counts at a specific speed"""
         timed_out = False
 
@@ -146,7 +146,7 @@ class Motor:
         
         if n_counts == 0:
             log.success(self._clm("Move", message="No counts to move"))
-            return self.counts, timed_out, 0
+            return timed_out, 0
         
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         self.set(throttle, direction)
@@ -168,13 +168,13 @@ class Motor:
 
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
-        return self.counts, timed_out, seconds_elapsed(start_time)
+        return timed_out, seconds_elapsed(start_time)
         
     async def to(
             self, target: float, 
             throttle_offset: constants.ThrottlePresets = constants.ThrottlePresets.SLOW, 
             timeout: int = constants.to_position_timeout
-    ) -> tuple[int, bool, int]:
+    ) -> tuple[bool, int]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
         log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle_offset.name}"))
@@ -205,7 +205,7 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
-        target_cps = 1 # slow throttle preset
+        target_cps = 3 # slow throttle preset
         error = 0.01 # error margin
         step = 0.01 # step size
         step_multiplier = 1 # step size multiplier (scales based on distance)
@@ -219,9 +219,14 @@ class Motor:
         # move to calibration position and measure cps until within error
         while previous_cps is None or abs(target_cps - previous_cps) > error:
             log.info(self._clm("Find CPS", message="Finding throttle", step=step, step_multiplier=step_multiplier), override=True)
-            start = time.time()
-            await self.move(n_counts=constants.calibration_counts, throttle=current_throttle, timeout=constants.calibration_timeout)
-            current_cps = constants.calibration_counts / (time.time() - start)
+            timed_out, time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=current_throttle, timeout=constants.calibration_timeout)
+
+            # throttle timed out -> exit
+            if timed_out:
+                log.error(self._clm("Find CPS", message="Throttle timed out", throttle=current_throttle))
+                return
+
+            current_cps = constants.calibration_counts / time_elapsed 
             previous_cps = current_cps
 
             error=target_cps - current_cps # calculate error
@@ -286,7 +291,7 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle), override=True)
-            _, timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
+            timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:

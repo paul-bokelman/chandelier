@@ -4,7 +4,7 @@ import time
 import asyncio
 import RPi.GPIO as GPIO
 from lib.store import DataMode
-from lib.utils import log, to_pulse, seconds_elapsed
+from lib.utils import log, to_seconds
 import constants
 
 Throttle = Union[float, constants.ThrottlePresets]
@@ -115,7 +115,7 @@ class Motor:
                     break
             # check if the motor has reached home
             if self.last_read_time is not None and current_time - self.last_read_time > constants.to_home_max_interval:
-                log.success(self._clm("To Home", message="Motor at home position", time=seconds_elapsed(start_time)))
+                log.success(self._clm("To Home", message="Motor at home position", time=to_seconds(time.time() - start_time)))
                 self._at_home()
                 break
             # if the motor has timed out, stop the motor
@@ -135,7 +135,7 @@ class Motor:
         throttle: Throttle = constants.ThrottlePresets.SLOW, 
         direction: Optional[int] = None,
         timeout: int = constants.to_position_timeout
-    ) -> tuple[bool, int]:
+    ) -> tuple[bool, float]:
         """Move the motor n number of counts at a specific speed"""
         timed_out = False
 
@@ -166,15 +166,17 @@ class Motor:
                 break
             await asyncio.sleep(0.01) # yield control back to event
 
+        time_elapsed = time.time() - start_time
+
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
-        return timed_out, seconds_elapsed(start_time)
+        return timed_out, time_elapsed
         
     async def to(
             self, target: float, 
             throttle_offset: constants.ThrottlePresets = constants.ThrottlePresets.SLOW, 
             timeout: int = constants.to_position_timeout
-    ) -> tuple[bool, int]:
+    ) -> tuple[bool, float]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
         log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle_offset.name}"))
@@ -248,7 +250,7 @@ class Motor:
             #? could calculate cps up here
             await self.to_home() # move back to home position for next iteration
 
-        log.info(self._clm("Find CPS", message="Slow throttle found", relative_throttle=current_throttle), override=True)
+        log.success(self._clm("Find CPS", message="Slow throttle found", relative_throttle=current_throttle))
 
 
         #  # ------------------------------- find cps down ------------------------------ #

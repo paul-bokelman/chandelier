@@ -5,6 +5,7 @@ import RPi.GPIO as GPIO
 import constants
 from lib.mc.controller import MotorController
 from lib.sequence import Sequence
+from lib.utils import to_seconds
 
 class State(Enum):
     IDLE = 0
@@ -83,7 +84,7 @@ async def run(state: State):
         try:
             positions, speeds = next(current_generator) # get next positions and speeds
             max_elapsed_time = await mc.move_all(positions, speeds)
-            run_time_elapsed += max_elapsed_time # increment time elapsed to account for time taken to move
+            run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
         except StopIteration:
             #/ should be abstracted to the sequence generator
             iterations = random.randint(30, 120) # randomize number of iterations

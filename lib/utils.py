@@ -63,7 +63,7 @@ def calculate_relative_boosts(all_cps: list[Optional[float]]) -> list[Optional[f
 
     return [relative_boost(cps) for cps in all_cps]
 
-def seconds_elapsed (start_time: float) -> int:
+def to_seconds(elapsed_time: float) -> int:
     """Return seconds elapsed since start time"""
-    return int(time.time() - start_time)
+    return int(elapsed_time)
 

@@ -38,7 +38,7 @@ class MotorController:
     #   motor.up_boost = up_boost
     #   motor.down_boost = down_boost
 
-  async def move_all(self, positions: Union[float, list[float]], speeds: Union[float, list[float]] = 0.2) -> int:
+  async def move_all(self, positions: Union[float, list[float]], speeds: Union[float, list[float]] = 0.2) -> float:
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
 
     # convert single position to list of speeds

@@ -131,8 +131,9 @@ async def main():
     #         raise ValueError("Invalid state")
 
     mc = MotorController()
-    await mc.calibrate()
-    mc.save_calibration()
+    await mc.motors[0].calibrate([None, None, 0.05, 0.27])
+    # await mc.calibrate()
+    # mc.save_calibration()
 
     mc.stop_all_motors()
 

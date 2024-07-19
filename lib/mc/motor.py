@@ -3,7 +3,6 @@ from adafruit_servokit import ContinuousServo
 import time
 import asyncio
 import RPi.GPIO as GPIO
-from PCA9685 import pwm
 from lib.store import DataMode
 from lib.utils import log, to_pulse, seconds_elapsed
 import constants
@@ -190,8 +189,13 @@ class Motor:
         return await self.move(n_counts, throttle_offset, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
+
     async def _find_cps(self):
-        """Find counts per second of the motor in both directions"""
+        """Find cps of motor"""
+        pass
+
+    async def _find_relative_throttles(self):
+        """Find relative throttles based on target cps from throttle presets"""
         log.info(self._clm("Find CPS", message="Finding cps up and down"), override=True)
 
         # neutral positions must be calibrated and set for present throttles
@@ -201,32 +205,67 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
-         # ------------------------------- find cps down ------------------------------ #
-        if self.cps_down is None:
-            log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
+        target_cps = 1 # slow throttle preset
+        error = 0.01 # error margin
+        step = 0.01 # step size
+        step_multiplier = 1 # step size multiplier (scales based on distance)
+
+        # gradient descent to find cps up and down for slow throttle
+        log.info(self._clm("Find CPS", message="Finding throttle for target CPS"), override=True)
+
+        previous_cps = None
+        current_throttle = self.upper_neutral + step * step_multiplier # move down
+
+        # move to calibration position and measure cps until within error
+        while previous_cps is None or abs(target_cps - previous_cps) > error:
             start = time.time()
+            await self.move(n_counts=constants.calibration_counts, throttle=current_throttle, timeout=constants.calibration_timeout)
+            current_cps = constants.calibration_counts / (time.time() - start)
+            previous_cps = current_cps
 
-            # move to calibration position
-            await self.move(
-                n_counts=constants.calibration_counts, 
-                throttle=constants.ThrottlePresets.SLOW, 
-                direction=constants.down, 
-                timeout=constants.calibration_timeout
-            ) 
+            # throttle too low -> increase throttle
+            if current_cps < target_cps:
+                current_throttle += step * step_multiplier
+                log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps), override=True)
 
-            self.cps_down = constants.calibration_counts / (time.time() - start) # compute cps down
-            log.info(self._clm("Find CPS", cps_down=self.cps_down), override=True)
+            # throttle too high -> decrease throttle and decrease step size
+            else:
+                current_throttle -= step * step_multiplier
+                step_multiplier /= 2
+                log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps), override=True)
 
-        # -------------------------------- find cps up ------------------------------- #
-        if self.cps_up is None:
-            log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
-            start = time.time()
+            #? could calculate cps up here
+            await self.to_home() # move back to home position for next iteration
 
-            # move to home position at slow speed
-            await self.to_home(throttle=constants.ThrottlePresets.SLOW)
+        log.info(self._clm("Find CPS", message="Slow throttle found", relative_throttle=current_throttle), override=True)
+
+
+        #  # ------------------------------- find cps down ------------------------------ #
+        # if self.cps_down is None:
+        #     log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
+        #     start = time.time()
+
+        #     # move to calibration position
+        #     await self.move(
+        #         n_counts=constants.calibration_counts, 
+        #         throttle=constants.ThrottlePresets.SLOW, 
+        #         direction=constants.down, 
+        #         timeout=constants.calibration_timeout
+        #     ) 
+
+        #     self.cps_down = constants.calibration_counts / (time.time() - start) # compute cps down
+        #     log.info(self._clm("Find CPS", cps_down=self.cps_down), override=True)
+
+        # # -------------------------------- find cps up ------------------------------- #
+        # if self.cps_up is None:
+        #     log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
+        #     start = time.time()
+
+        #     # move to home position at slow speed
+        #     await self.to_home(throttle=constants.ThrottlePresets.SLOW)
             
-            self.cps_up = constants.calibration_counts / (time.time() - start) # compute cps up
-            log.info(self._clm("Find CPS", cps_up=self.cps_up), override=True)
+        #     self.cps_up = constants.calibration_counts / (time.time() - start) # compute cps up
+        #     log.info(self._clm("Find CPS", cps_up=self.cps_up), override=True)
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
 
@@ -283,9 +322,9 @@ class Motor:
         if self.lower_neutral is None or self.upper_neutral is None:
             await self._find_neutrals()
 
-        # find up and down cps if either is not present
+        # find relative throttles if either is not present
         if self.cps_down is None or self.cps_up is None:
-            await self._find_cps()
+            await self._find_relative_throttles()
 
         await self.to_home() # move back with calibrated neutral positions
         

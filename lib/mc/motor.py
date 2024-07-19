@@ -251,22 +251,22 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
-    async def calibrate(self, data: list[Optional[float]] = [None, None, None, None, None]):
+    async def calibrate(self, data: list[Optional[float]] = [None, None, None, None]):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         log.info(self._clm("Calibrate", message="Calibrating Motor"))
 
         # load calibration data if available
         if data[DataMode.CPS_DOWN.value] is not None:
-            log.info(self._clm("Calibrate", message="cps down already calibrated"))
+            log.info(self._clm("Calibrate", message="cps down already calibrated"), override=True)
             self.cps_down = data[DataMode.CPS_DOWN.value]
         if data[DataMode.CPS_UP.value] is not None:
-            log.info(self._clm("Calibrate", message="cps up already calibrated"))
+            log.info(self._clm("Calibrate", message="cps up already calibrated"), override=True)
             self.cps_up = data[DataMode.CPS_UP.value]
         if data[DataMode.LOWER_NEUTRAL.value] is not None:
-            log.info(self._clm("Calibrate", message="lower neutral already calibrated"))
+            log.info(self._clm("Calibrate", message="lower neutral already calibrated"), override=True)
             self.lower_neutral = data[DataMode.LOWER_NEUTRAL.value]
         if data[DataMode.UPPER_NEUTRAL.value] is not None:
-            log.info(self._clm("Calibrate", message="upper neutral already calibrated"))
+            log.info(self._clm("Calibrate", message="upper neutral already calibrated"), override=True)
             self.upper_neutral = data[DataMode.UPPER_NEUTRAL.value]
 
         # ensure motor is at home before calibrating

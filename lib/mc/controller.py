@@ -4,7 +4,7 @@ import constants
 from adafruit_servokit import ServoKit
 from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
-from lib.utils import calculate_relative_boosts
+from lib.utils import calculate_relative_boosts, log
 
 class MotorController:
   """Main motor controller class for calibrating, saving, and manipulating servos"""
@@ -76,11 +76,12 @@ class MotorController:
 
   def save_calibration(self):
     """Save calibration data with store"""
+    log.info("Saving calibration data")
     data = CalibrationData(
-      counts=[motor.counts for motor in self.motors],
       cps_down=[motor.cps_down for motor in self.motors],
       cps_up=[motor.cps_up for motor in self.motors],
       lower_neutral=[motor.lower_neutral for motor in self.motors],
       upper_neutral=[motor.upper_neutral for motor in self.motors]
     )
     self.store.save(data)
+    log.success("Calibration data saved")

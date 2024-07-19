@@ -7,22 +7,19 @@ from lib.utils import log
 
 class DataMode(Enum):
   """Enum for calibration modes"""
-  COUNTS = 0
-  CPS_DOWN = 1
-  CPS_UP = 2
-  LOWER_NEUTRAL = 3
-  UPPER_NEUTRAL = 4
+  CPS_DOWN = 0
+  CPS_UP = 1
+  LOWER_NEUTRAL = 2
+  UPPER_NEUTRAL = 3
 
 class CalibrationData(TypedDict):
   """Schema for calibration data"""
-  counts: list[Optional[float]] # currently unused
   cps_down: list[Optional[float]]
   cps_up: list[Optional[float]]
   lower_neutral: list[Optional[float]]
   upper_neutral: list[Optional[float]]
 
 default_calibration_data: CalibrationData = {
-  "counts": [None] * constants.n_motors,
   "cps_down": [None] * constants.n_motors,
   "cps_up": [None] * constants.n_motors,
   "lower_neutral": [None] * constants.n_motors,
@@ -77,7 +74,6 @@ class Store:
       raise ValueError("Invalid motor channel")
 
     return [
-      self.data["counts"][channel],
       self.data["cps_down"][channel],
       self.data["cps_up"][channel],
       self.data["lower_neutral"][channel],

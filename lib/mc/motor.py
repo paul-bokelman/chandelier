@@ -211,28 +211,30 @@ class Motor:
         step_multiplier = 1 # step size multiplier (scales based on distance)
 
         # gradient descent to find cps up and down for slow throttle
-        log.info(self._clm("Find CPS", message="Finding throttle for target CPS"), override=True)
+        log.info(self._clm("Find CPS", message="Finding throttle for target CPS", target_cps=target_cps), override=True)
 
         previous_cps = None
         current_throttle = self.upper_neutral + step * step_multiplier # move down
 
         # move to calibration position and measure cps until within error
         while previous_cps is None or abs(target_cps - previous_cps) > error:
+            log.info(self._clm("Find CPS", message="Finding throttle", step=step, step_multiplier=step_multiplier), override=True)
             start = time.time()
             await self.move(n_counts=constants.calibration_counts, throttle=current_throttle, timeout=constants.calibration_timeout)
             current_cps = constants.calibration_counts / (time.time() - start)
             previous_cps = current_cps
 
+            error=target_cps - current_cps # calculate error
+
             # throttle too low -> increase throttle
             if current_cps < target_cps:
                 current_throttle += step * step_multiplier
-                log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps), override=True)
-
+                log.info(self._clm("Find CPS", message="Increasing throttle", throttle=current_throttle, cps=current_cps, error=error), override=True)
             # throttle too high -> decrease throttle and decrease step size
             else:
                 current_throttle -= step * step_multiplier
                 step_multiplier /= 2
-                log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps), override=True)
+                log.info(self._clm("Find CPS", message="Decreasing throttle", throttle=current_throttle, cps=current_cps, error=error), override=True)
 
             #? could calculate cps up here
             await self.to_home() # move back to home position for next iteration

@@ -4,7 +4,7 @@ import constants
 from adafruit_servokit import ServoKit
 from lib.store import Store, CalibrationData
 from lib.mc.motor import Motor
-from lib.utils import calculate_relative_boosts, log
+from lib.utils import log
 
 class MotorController:
   """Main motor controller class for calibrating, saving, and manipulating servos"""
@@ -25,18 +25,33 @@ class MotorController:
 
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""
-    if reset: self.store.reset()
+    if reset: 
+      log.info("Resetting calibration data")
+      self.store.reset()
 
+    log.info("Calibrating motors")
     # calibrate each motor simultaneously
     await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in self.motors])
+    log.success("Calibrated motors successfully")
+    max_cps_up = max([motor.cps_up for motor in self.motors if motor.cps_up is not None]) # get max cps up
+    max_cps_down = max([motor.cps_down for motor in self.motors if motor.cps_down is not None]) # get max cps down
 
-    # calculate and assign relative speeds
-    # up_boosts = calculate_relative_boosts([motor.cps_up for motor in self.motors])
-    # down_boosts = calculate_relative_boosts([motor.cps_down for motor in self.motors])
+    log.info(f"Max CPS Up: {max_cps_up} | Max CPS Down: {max_cps_down}")
 
-    # for (motor, up_boost, down_boost) in zip(self.motors, up_boosts, down_boosts):
-    #   motor.up_boost = up_boost
-    #   motor.down_boost = down_boost
+    # calculate all relative throttles 
+    await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors])
+
+    log.info("Saving calibration data")
+    data = CalibrationData(
+      cps_down=[motor.cps_down for motor in self.motors],
+      cps_up=[motor.cps_up for motor in self.motors],
+      lower_neutral=[motor.lower_neutral for motor in self.motors],
+      upper_neutral=[motor.upper_neutral for motor in self.motors]
+      # down_throttles=[motor.down_throttle for motor in self.motors],
+      # up_throttles=[motor.up_throttle for motor in self.motors],
+    )
+    self.store.save(data)
+    log.success("Calibration data saved")
 
   async def move_all(self, positions: Union[float, list[float]], speeds: Union[float, list[float]] = 0.2) -> float:
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
@@ -73,15 +88,3 @@ class MotorController:
     tasks = await asyncio.gather(*[motor.to(position) for motor, position, speed in zip(self.motors, positions, speeds)])
 
     return max([task[1] for task in tasks]) # return max elapsed time
-
-  def save_calibration(self):
-    """Save calibration data with store"""
-    log.info("Saving calibration data")
-    data = CalibrationData(
-      cps_down=[motor.cps_down for motor in self.motors],
-      cps_up=[motor.cps_up for motor in self.motors],
-      lower_neutral=[motor.lower_neutral for motor in self.motors],
-      upper_neutral=[motor.upper_neutral for motor in self.motors]
-    )
-    self.store.save(data)
-    log.success("Calibration data saved")

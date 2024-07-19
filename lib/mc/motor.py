@@ -66,7 +66,7 @@ class Motor:
 
         # specific value -> set throttle
         if isinstance(throttle, float):
-            assert direction is None, "Direction not available for specific throttle"
+            #/ doesn't use direction
             assert -1 <= throttle <= 1, "Throttle must be between -1 and 1"
             self.servo.throttle = throttle
             return
@@ -174,12 +174,12 @@ class Motor:
         
     async def to(
             self, target: float, 
-            throttle_offset: constants.ThrottlePresets = constants.ThrottlePresets.SLOW, 
+            throttle: Throttle = constants.ThrottlePresets.SLOW, 
             timeout: int = constants.to_position_timeout
     ) -> tuple[bool, float]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
-        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle_offset.name}"))
+        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"), override=True)
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
@@ -188,7 +188,7 @@ class Motor:
         n_counts = target_counts - self.counts
 
         self.direction = constants.down if target_counts > self.counts else constants.up
-        return await self.move(n_counts, throttle_offset, self.direction, timeout) # move to target position
+        return await self.move(n_counts, throttle, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
 
@@ -203,12 +203,13 @@ class Motor:
             await self.to_home()
 
         if max_cps_down == self.cps_down:
+            log.success(self._clm("Find Relative Throttle", message="Down Throttle used as baseline"))
             return
 
         # ------------------------- find relative throttle down ------------------------ #
 
         target_cps = max_cps_down # slow throttle preset
-        error = 0.01 # error margin
+        error = 0.03 # error margin
         step = 0.01 # step size
 
         # gradient descent to find cps up and down for slow throttle
@@ -237,6 +238,9 @@ class Motor:
 
             previous_cps = current_cps
             distance=target_cps - current_cps # calculate distance from target cps
+            
+            # scale step size based on distance from target cps
+            step = step * (1 + abs(distance) / target_cps)
 
             # throttle too low -> increase throttle
             if current_cps < target_cps:

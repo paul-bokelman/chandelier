@@ -134,6 +134,8 @@ async def main():
     await mc.calibrate()
     mc.save_calibration()
 
+    await mc.move_all(0.3)
+
     mc.stop_all_motors()
 
     GPIO.cleanup() # clean up for next session

@@ -225,7 +225,8 @@ class Motor:
             # throttle timed out -> exit
             if timed_out:
                 log.error(self._clm("Find CPS", message="Throttle timed out", throttle=current_throttle))
-                return
+                step /= 2 # decrease step size
+                continue
 
             current_cps = constants.calibration_counts / time_elapsed 
 

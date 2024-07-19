@@ -204,31 +204,29 @@ class Motor:
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
             log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
-
-            self.set(throttle=constants.ThrottlePresets.SLOW, direction=constants.down) # measure down speed
-
             start = time.time()
-            # move the motor to the calibration position
-            while self.counts != constants.calibration_counts:
-                # motor has timed out -> error
-                if time.time() - start > constants.calibration_timeout:
-                    log.error(self._clm("Find CPS", message="Motor timed out finding cps down"))
-                    return
-                
-                await asyncio.sleep(0.01) # yield control back to event
-                
-            self.stop()
-            
-            self.cps_down = constants.calibration_counts / (time.time() - start) # down counts per second
+
+            # move to calibration position
+            await self.move(
+                n_counts=constants.calibration_counts, 
+                throttle=constants.ThrottlePresets.SLOW, 
+                direction=constants.down, 
+                timeout=constants.calibration_timeout
+            ) 
+
+            self.cps_down = constants.calibration_counts / (time.time() - start) # compute cps down
+            log.info(self._clm("Find CPS", cps_down=self.cps_down), override=True)
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
-
             start = time.time()
-            await self.to_home(throttle=constants.ThrottlePresets.SLOW) # move to home position at slow speed
+
+            # move to home position at slow speed
+            await self.to_home(throttle=constants.ThrottlePresets.SLOW)
             
-            self.cps_up = constants.calibration_counts / (time.time() - start) # up counts per second
+            self.cps_up = constants.calibration_counts / (time.time() - start) # compute cps up
+            log.info(self._clm("Find CPS", cps_up=self.cps_up), override=True)
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
 

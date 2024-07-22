@@ -84,6 +84,6 @@ class MotorController:
     
     # todo: speeds unused
     # move each motor to its target position simultaneously
-    tasks = await asyncio.gather(*[motor.to(position) for motor, position, speed in zip(self.motors, positions, speeds)])
+    tasks = await asyncio.gather(*[motor.to(position, speed) for motor, position, speed in zip(self.motors, positions, speeds)])
 
     return max([task[1] for task in tasks]) # return max elapsed time

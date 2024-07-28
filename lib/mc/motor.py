@@ -245,9 +245,6 @@ class Motor:
 
             previous_cps = current_cps
             distance=target_cps - current_cps # calculate distance from target cps
-            
-            # scale step size based on distance from target cps
-            step = step * (1 + abs(distance) / target_cps)
 
             # throttle too low -> increase throttle
             if current_cps < target_cps:

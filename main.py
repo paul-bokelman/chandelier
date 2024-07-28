@@ -133,14 +133,7 @@ async def main():
 
     mc = MotorController()
     await mc.calibrate()
-    await mc.move_all([0.5, 0.5], [0.6850000000000003, 0.38])
-
-    # timed_out, time_elapsed = await mc.motors[2].move(constants.calibration_counts, throttle=0.38)
-
-    # timed_out, time_elapsed = await mc.motors[3].move(constants.calibration_counts, throttle=constants.ThrottlePresets.SLOW, direction=constants.down)
-
-
-    # print(constants.calibration_counts / time_elapsed, "=? 2.1271938266148247")
+    
     # await mc.move_all_home()
 
     mc.stop_all_motors()

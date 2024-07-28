@@ -173,7 +173,7 @@ class Motor:
 
         time_elapsed = time.time() - start_time
 
-        log.info(self._clm("Move", message=f"Time Elapsed: {to_seconds(time_elapsed)}"), override=True)
+        log.info(self._clm("Move", message=f"Time Elapsed: {time_elapsed}"), override=True)
 
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()

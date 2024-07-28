@@ -134,6 +134,7 @@ async def main():
     mc = MotorController()
     await mc.calibrate()
 
+
     # await mc.move_all_home()
 
     mc.stop_all_motors()

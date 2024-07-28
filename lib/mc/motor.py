@@ -269,8 +269,12 @@ class Motor:
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
 
         # move back home if not already (allows _find_cps to be called separately from _find_neutrals)
-        if not self.is_home():
-            await self.to_home()
+
+        # todo: temp fix for calibration
+        # if not self.is_home():
+        #     await self.to_home()
+
+        self.counts = 0
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:

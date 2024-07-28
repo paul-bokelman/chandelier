@@ -39,7 +39,7 @@ class MotorController:
     log.info(f"Max CPS Up: {max_cps_up} | Max CPS Down: {max_cps_down}")
 
     # calculate all relative throttles 
-    # await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors])
+    await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors if not motor.disabled])
 
     log.info("Saving calibration data")
     data = CalibrationData(
@@ -85,5 +85,5 @@ class MotorController:
     # todo: speeds unused
     # move each motor to its target position simultaneously
     tasks = await asyncio.gather(*[motor.to(position) for motor, position, speed in zip(self.motors, positions, speeds) if not motor.disabled])
-    
+
     return max([task[1] for task in tasks]) # return max elapsed time

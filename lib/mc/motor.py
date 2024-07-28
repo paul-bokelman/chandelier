@@ -275,17 +275,16 @@ class Motor:
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
             log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
-            start = time.time()
 
             # move to calibration position
-            await self.move(
+            timed_out, elapsed_time= await self.move(
                 n_counts=constants.calibration_counts, 
                 throttle=constants.ThrottlePresets.SLOW, 
                 direction=constants.down, 
                 timeout=constants.calibration_timeout
             ) 
 
-            self.cps_down = constants.calibration_counts / (time.time() - start) # compute cps down
+            self.cps_down = constants.calibration_counts / elapsed_time # compute cps down
             log.info(self._clm("Find CPS", cps_down=self.cps_down), override=True)
 
         # -------------------------------- find cps up ------------------------------- #

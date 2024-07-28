@@ -256,7 +256,8 @@ class Motor:
                 log.info(self._clm("Find Relative Throttle", message="Decreasing throttle", throttle=current_throttle, cps=current_cps, distance=distance), override=True)
 
             #? could calculate cps up here
-            await self.to_home() # move back to home position for next iteration
+            # await self.to_home() # move back to home position for next iteration
+            self.counts = 0
 
         log.success(self._clm("Find Relative Throttle", message="Found Throttle Down", relative_throttle=current_throttle))
 

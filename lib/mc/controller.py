@@ -76,14 +76,14 @@ class MotorController:
     if not all(0 <= p <= 1 for p in positions):
       raise ValueError("Positions must be between 0 and 1")
     
-    if len(speeds) != constants.n_motors:
+    if len(speeds) != len([motor for motor in self.motors if not motor.disabled]):
       raise ValueError("Speed list must be the same length as the number of motors")
     
-    if len(positions) != constants.n_motors:
+    if len(positions) != len([motor for motor in self.motors if not motor.disabled]):
       raise ValueError("Positions list must be the same length as the number of motors")
     
     # todo: speeds unused
     # move each motor to its target position simultaneously
-    tasks = await asyncio.gather(*[motor.to(position) for motor, position, speed in zip(self.motors, positions, speeds) if not motor.disabled])
+    tasks = await asyncio.gather(*[motor.to(position, speed) for motor, position, speed in zip(self.motors, positions, speeds) if not motor.disabled])
 
     return max([task[1] for task in tasks]) # return max elapsed time

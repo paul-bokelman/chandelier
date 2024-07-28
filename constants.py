@@ -9,6 +9,7 @@ reboot_button_pin = 7
 led_pin = 8
 
 n_motors = 4
+disabled_motors = [0, 1]
 Delta_Slow_Med_Speed = 5
 Delta_Slow_Fast_Speed = 10
 stop_pulse = 1500

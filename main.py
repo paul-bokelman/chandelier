@@ -134,8 +134,6 @@ async def main():
     mc = MotorController()
     await mc.calibrate()
 
-    await mc.move_all([0.4, 0.4, 0.4, 0.4], [0.38603084891416195, 0.8136511046601898, 0.12, 0.28])
-
     await mc.move_all_home()
 
     mc.stop_all_motors()

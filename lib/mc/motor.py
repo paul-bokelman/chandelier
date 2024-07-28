@@ -19,6 +19,7 @@ class Motor:
         self.encoder_pin = constants.encoder_pins[self.channel]
         self.servo = servo
         self.servo.set_pulse_width_range(1000, 2000) 
+        self.disabled = False
 
         # calibrated data
         # todo: counts should be none unless calibrated (position unknown)
@@ -36,6 +37,10 @@ class Motor:
 
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
+
+        if self.channel in constants.disabled_motors:
+            self.disabled = True
+            log.warning(f"M{self.channel} | Motor disabled")
 
     def _encoder_callback(self, channel: int):
         """Callback function for encoder"""

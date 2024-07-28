@@ -31,7 +31,7 @@ class MotorController:
 
     log.info("Calibrating motors")
     # calibrate each motor simultaneously
-    await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in self.motors])
+    await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in self.motors if not motor.disabled])
     log.success("Calibrated motors successfully")
     max_cps_up = max([motor.cps_up for motor in self.motors if motor.cps_up is not None]) # get max cps up
     max_cps_down = max([motor.cps_down for motor in self.motors if motor.cps_down is not None]) # get max cps down
@@ -39,7 +39,7 @@ class MotorController:
     log.info(f"Max CPS Up: {max_cps_up} | Max CPS Down: {max_cps_down}")
 
     # calculate all relative throttles 
-    await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors])
+    # await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors])
 
     log.info("Saving calibration data")
     data = CalibrationData(

@@ -31,8 +31,8 @@ class ThrottlePresets(Enum):
 # motor configuration
 uncalibrated_home_throttle = 0.0 # speed to move to home
 to_home_timeout = 120 # max timeout for trying to move home
-to_home_initial_timeout = 2.5 # initial timeout for trying to move home
-to_home_max_interval = 3 # seconds between encoder readings (should be relative to speed...)
+to_home_initial_timeout = 1.5 # initial timeout for trying to move home
+to_home_max_interval = 1.3 # seconds between encoder readings (should be relative to speed...)
 to_position_timeout = 60 # max timeout for trying to move to a position
 
 calibration_to_position_timeout = 5 # max timeout for trying to move to a position during calibration

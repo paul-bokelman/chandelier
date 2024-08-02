@@ -255,11 +255,12 @@ class Motor:
             up_cps = constants.calibration_counts / up_time_elapsed
 
             # target in between previous and current cps -> divide step size (more granular)
-            if previous_up_cps is not None:
+            if previous_up_cps is not None and not found_relative_up_cps(up_cps):
                 if previous_up_cps < target_up_cps < up_cps or previous_up_cps > target_up_cps > up_cps:
                     log.info(self._clm("FRT", message=f"Decreasing step size (UP), ({up_step} -> {up_step / 2})", ), override=True)
                     up_step /= 2
-            if previous_down_cps is not None:
+
+            if previous_down_cps is not None and not found_relative_down_cps(down_cps):
                 if previous_down_cps < target_down_cps < down_cps or previous_down_cps > target_down_cps > down_cps:
                     log.info(self._clm("FRT", message=f"Decreasing step size (DOWN), ({down_step} -> {down_step / 2})", ), override=True)
                     down_step /= 2
@@ -269,23 +270,27 @@ class Motor:
             down_distance = target_down_cps - down_cps # calculate distance from target cps (DOWN)
             up_distance = target_up_cps - up_cps # calculate distance from target cps (UP)
 
-            # throttle too low -> increase throttle (DOWN)
-            if current_down_throttle < target_down_cps:
-                current_down_throttle += down_step
-                log.info(self._clm("FRT", message="Increasing throttle (DOWN)", throttle=current_down_throttle, cps=down_cps, down_distance=down_distance), override=True)
-            # throttle too high -> decrease throttle and decrease step size (DOWN)
-            else:
-                current_down_throttle -= down_step
-                log.info(self._clm("FRT", message="Decreasing throttle (DOWN)", throttle=current_down_throttle, cps=down_cps, down_distance=down_distance), override=True)
+            # throttle is not within error margin -> adjust throttle
+            if not found_relative_down_cps(down_cps):
+                # throttle too low -> increase throttle (DOWN)
+                if current_down_throttle < target_down_cps:
+                    current_down_throttle += down_step
+                    log.info(self._clm("FRT", message="Increasing throttle (DOWN)", throttle=current_down_throttle, cps=down_cps, down_distance=down_distance), override=True)
+                # throttle too high -> decrease throttle and decrease step size (DOWN)
+                else:
+                    current_down_throttle -= down_step
+                    log.info(self._clm("FRT", message="Decreasing throttle (DOWN)", throttle=current_down_throttle, cps=down_cps, down_distance=down_distance), override=True)
 
-            # throttle too low -> increase throttle (UP)
-            if current_up_throttle < target_down_cps:
-                current_up_throttle += up_step
-                log.info(self._clm("FRT", message="Increasing throttle (UP)", throttle=current_up_throttle, cps=up_cps, up_distance=up_distance), override=True)
-            # throttle too high -> decrease throttle and decrease step size (UP)
-            else:
-                current_up_throttle -= up_step
-                log.info(self._clm("FRT", message="Decreasing throttle (UP)", throttle=current_up_throttle, cps=up_cps, up_distance=up_distance), override=True)
+            # throttle is not within error margin -> adjust throttle
+            if not found_relative_up_cps(up_cps):
+                # throttle too low -> increase throttle (UP)
+                if current_up_throttle < target_down_cps:
+                    current_up_throttle += up_step
+                    log.info(self._clm("FRT", message="Increasing throttle (UP)", throttle=current_up_throttle, cps=up_cps, up_distance=up_distance), override=True)
+                # throttle too high -> decrease throttle and decrease step size (UP)
+                else:
+                    current_up_throttle -= up_step
+                    log.info(self._clm("FRT", message="Decreasing throttle (UP)", throttle=current_up_throttle, cps=up_cps, up_distance=up_distance), override=True)
 
         self.slow_throttle_down = current_down_throttle
         self.slow_throttle_up = current_up_throttle

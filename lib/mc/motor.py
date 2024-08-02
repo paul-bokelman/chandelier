@@ -96,6 +96,11 @@ class Motor:
 
     async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[bool, float]:
         """Move the motor to the home position (0 count)"""
+        if constants.testing_mode:
+            log.info(self._clm("To Home", message="Mimicked home movement"), override=True)
+            self.counts = 0
+            return False, 0.0
+
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         timed_out = False
         log.info(self._clm("To Home", message="Moving Home"), override=True)
@@ -244,7 +249,8 @@ class Motor:
             
             down_cps = constants.calibration_counts / down_time_elapsed # calculate cps down
 
-            up_timed_out, up_time_elapsed = await self.to_home() # move back to home position to measure up cps
+            # up_timed_out, up_time_elapsed = await self.to_home() # move back to home position to measure up cps
+            up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=current_up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
 
             # to home timed out -> exit
             if up_timed_out:

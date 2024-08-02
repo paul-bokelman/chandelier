@@ -14,6 +14,7 @@ down = 1
 # general configuration
 n_motors = 4
 debug = False
+testing_mode = True
 disabled_motors = [0, 1]
 
 max_charge_time = 7200 # 2 hours

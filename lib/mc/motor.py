@@ -249,8 +249,12 @@ class Motor:
             
             down_cps = constants.calibration_counts / down_time_elapsed # calculate cps down
 
-            # up_timed_out, up_time_elapsed = await self.to_home() # move back to home position to measure up cps
-            up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=current_up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
+            up_timed_out, up_time_elapsed = False, 0.0
+            if not constants.testing_mode:
+                up_timed_out, up_time_elapsed = await self.to_home() # move back to home position to measure up cps
+            else:
+                up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=current_up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
+
 
             # to home timed out -> exit
             if up_timed_out:

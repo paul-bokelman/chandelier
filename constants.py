@@ -1,25 +1,24 @@
 from enum import Enum
 
+# static configuration
 encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
 power_switch_pins = [16,20] # Power Switch
-
 wall_switch_pins = [24, 25]
 service_button_pin = 23
 reboot_button_pin = 7
 led_pin = 8
-
-n_motors = 4
-disabled_motors = [0, 1]
-Delta_Slow_Med_Speed = 5
-Delta_Slow_Fast_Speed = 10
-stop_pulse = 1500
-
-# debug mode
-debug = False
-
-# static
 up = -1
 down = 1
+
+
+# general configuration
+n_motors = 4
+debug = False
+disabled_motors = [0, 1]
+
+max_charge_time = 7200 # 2 hours
+charge_interval = 86400 * 5 # 5 days
+max_run_time = 7200 # 2 hours
 
 # throttle configuration
 class ThrottlePresets(Enum):
@@ -44,15 +43,4 @@ calibration_speed = 0.2 # speed for calibration
 
 calibrations_file_path = "calibrations.json"
 
-# sequence configuration
-# (max_speed + min_speed) / 2 = calibration_speed
-max_speed = 32 # relative to calibration speed
-min_speed = 0 # relative to calibration speed 
 max_counts = 30 # max encoder counts
-
-# charging
-max_charge_time = 7200 # 2 hours
-charge_interval = 86400 * 5 # 5 days
-
-# sequences
-max_run_time = 7200 # 2 hours

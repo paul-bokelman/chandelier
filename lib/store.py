@@ -11,6 +11,17 @@ class DataMode(Enum):
   CPS_UP = 1
   LOWER_NEUTRAL = 2
   UPPER_NEUTRAL = 3
+  SLOW_THROTTLE_DOWN = 4
+  SLOW_THROTTLE_UP = 5
+
+class SingularCalibrationData(TypedDict):
+  """Schema for singular calibration data"""
+  cps_down: Optional[float]
+  cps_up: Optional[float]
+  lower_neutral: Optional[float]
+  upper_neutral: Optional[float]
+  slow_throttle_down: Optional[float]
+  slow_throttle_up: Optional[float]
 
 class CalibrationData(TypedDict):
   """Schema for calibration data"""
@@ -18,12 +29,16 @@ class CalibrationData(TypedDict):
   cps_up: list[Optional[float]]
   lower_neutral: list[Optional[float]]
   upper_neutral: list[Optional[float]]
+  slow_throttle_down: list[Optional[float]]
+  slow_throttle_up: list[Optional[float]]
 
 default_calibration_data: CalibrationData = {
   "cps_down": [None] * constants.n_motors,
   "cps_up": [None] * constants.n_motors,
   "lower_neutral": [None] * constants.n_motors,
-  "upper_neutral": [None] * constants.n_motors
+  "upper_neutral": [None] * constants.n_motors,
+  "slow_throttle_down": [None] * constants.n_motors,
+  "slow_throttle_up": [None] * constants.n_motors
 }
 
 class Store:
@@ -67,18 +82,20 @@ class Store:
     
     return self.data[key]
   
-  def get_by_channel(self, channel: int) -> list[Optional[float]]:
+  def get_by_channel(self, channel: int) -> SingularCalibrationData:
     """Get calibration data for a specific motor channel"""
     log.info(f"Getting calibration data by channel")
     if channel < 0 or channel >= constants.n_motors:
       raise ValueError("Invalid motor channel")
 
-    return [
-      self.data["cps_down"][channel],
-      self.data["cps_up"][channel],
-      self.data["lower_neutral"][channel],
-      self.data["upper_neutral"][channel]
-    ]
+    return {
+      "cps_down": self.data["cps_down"][channel],
+      "cps_up": self.data["cps_up"][channel],
+      "lower_neutral": self.data["lower_neutral"][channel],
+      "upper_neutral": self.data["upper_neutral"][channel],
+      "slow_throttle_down": self.data["slow_throttle_down"][channel],
+      "slow_throttle_up": self.data["slow_throttle_up"][channel]
+    }
   
   def load(self) -> CalibrationData:
     """Load calibration data from file"""

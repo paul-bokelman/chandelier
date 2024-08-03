@@ -335,12 +335,20 @@ class Motor:
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
-            start = time.time()
+            timed_out, time_elapsed = False, 0.0
 
             # move to home position at slow speed
-            await self.to_home(throttle=constants.ThrottlePresets.SLOW)
+            if not constants.testing_mode:
+                timed_out, time_elapsed = await self.to_home(throttle=constants.ThrottlePresets.SLOW)
+            else:
+                timed_out, time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=constants.ThrottlePresets.SLOW, direction=constants.up, timeout=constants.calibration_timeout)
+                self.counts = 0
+
+            if timed_out:
+                log.error(self._clm("Find CPS", message="Throttle timed out moving home"))
+                return
             
-            self.cps_up = constants.calibration_counts / (time.time() - start) # compute cps up
+            self.cps_up = constants.calibration_counts / time_elapsed # compute cps up
             log.info(self._clm("Find CPS", cps_up=self.cps_up), override=True)
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))

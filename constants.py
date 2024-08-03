@@ -25,9 +25,9 @@ max_run_time = 7200 # 2 hours
 # throttle configuration
 class ThrottlePresets(Enum):
     """Speed configuration enum, values are neutral throttle offsets"""
-    SLOW = 0.01
-    MEDIUM = 0.02
-    FAST = 0.03
+    SLOW = 0.03
+    MEDIUM = 0.04
+    FAST = 0.05
 
 # motor configuration
 uncalibrated_home_throttle = 0.0 # speed to move to home

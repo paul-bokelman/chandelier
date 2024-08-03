@@ -63,12 +63,12 @@ class MotorController:
     if isinstance(throttles, Throttle):
       if isinstance(throttles, float):
         assert 0 <= throttles <= 1, "Throttle must be between 0 and 1"
-      throttles = [throttles] * constants.n_motors
+      throttles = [throttles] * constants.n_active_motors
 
     # singular value -> convert to list of that value
     if isinstance(positions, float):
       assert 0 <= positions <= 1, "Position must be between 0 and 1"
-      positions = [positions] * constants.n_motors
+      positions = [positions] * constants.n_active_motors
 
     # ensure both are lists
     assert isinstance(throttles, list), "Speed must be a list of Throttle"

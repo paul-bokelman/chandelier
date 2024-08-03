@@ -236,7 +236,7 @@ class Motor:
         found_relative_up_cps = lambda cps: abs(target_up_cps - cps) < error
 
         # move to calibration position and measure cps until within error
-        while (previous_down_cps is None or found_relative_down_cps(previous_down_cps)) or (previous_up_cps is None or found_relative_up_cps(previous_up_cps)):
+        while (previous_down_cps is None or not found_relative_down_cps(previous_down_cps)) or (previous_up_cps is None or not found_relative_up_cps(previous_up_cps)):
             log.info(self._clm("FRT", message="Finding throttle", up_step=up_step, down_step=down_step), override=True)
 
             # move down to measure down cps
@@ -295,7 +295,7 @@ class Motor:
             # throttle is not within error margin -> adjust throttle
             if not found_relative_up_cps(up_cps):
                 # throttle too low -> increase throttle (UP)
-                if current_up_throttle < target_down_cps:
+                if current_up_throttle < target_up_cps:
                     current_up_throttle += up_step
                     log.info(self._clm("FRT", message="Increasing throttle (UP)", throttle=current_up_throttle, cps=up_cps, up_distance=up_distance), override=True)
                 # throttle too high -> decrease throttle and decrease step size (UP)

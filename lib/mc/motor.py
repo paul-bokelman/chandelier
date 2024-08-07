@@ -228,6 +228,11 @@ class Motor:
         is_max_cps_up = self.cps_up == max_cps_up
         is_max_cps_down = self.cps_down == max_cps_down
 
+        if is_max_cps_up:
+            log.info(self._clm("FRT", message="Contains max cps up", cps_up=self.cps_up), override=True)
+        if is_max_cps_down:
+            log.info(self._clm("FRT", message="Contains max cps down", cps_down=self.cps_down), override=True)
+
         # descent configuration
         error = 0.01 # error margin
         down_step = 0.01

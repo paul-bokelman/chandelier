@@ -237,8 +237,8 @@ class Motor:
         target_up_cps = max_cps_up
         previous_down_cps = None
         previous_up_cps = None
-        down_throttle = self.upper_neutral if is_max_cps_down else self.upper_neutral + down_step 
-        up_throttle = self.lower_neutral if is_max_cps_up else self.lower_neutral - up_step
+        down_throttle = self.upper_neutral + constants.ThrottlePresets.SLOW.value if is_max_cps_down else self.upper_neutral + down_step 
+        up_throttle = self.lower_neutral - constants.ThrottlePresets.SLOW.value if is_max_cps_up else self.lower_neutral - up_step
 
         log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps), override=True)
 

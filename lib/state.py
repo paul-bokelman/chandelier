@@ -60,19 +60,18 @@ class StateMachine:
     
     async def check(self):
         """Check current state and run appropriate state"""
-        if self.state == State.IDLE:
-            await self.idle()
-        elif self.state == State.SEQUENCE:
-            await self.sequence()
-        elif self.state == State.RANDOM:
-            await self.random()
-        elif self.state == State.SERVICE:
-            await self.service()
-        elif self.state == State.REBOOT:
-            await self.reboot()
-        else:
-            asyncio.get_event_loop().stop()
-            raise ValueError("Invalid state")
+        # if self.state == State.IDLE:
+        #     await self.idle()
+        # elif self.state == State.SEQUENCE:
+        #     await self.sequence()
+        # elif self.state == State.RANDOM:
+        #     await self.random()
+        # elif self.state == State.SERVICE:
+        #     await self.service()
+        # elif self.state == State.REBOOT:
+        #     await self.reboot()
+        # else:
+        #     raise ValueError("Invalid state")
         
     async def reboot(self):
         """Reboot state for rebooting the system"""

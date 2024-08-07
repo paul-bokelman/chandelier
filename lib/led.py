@@ -29,3 +29,7 @@ class LED:
     def stop_blink(self):
         self.blinking = False
         self.off()
+
+    def reset(self):
+        self.stop_blink()
+        self.off()

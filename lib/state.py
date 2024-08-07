@@ -40,6 +40,7 @@ class StateMachine:
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
+        self.led.reset()
         self.state = new_state
 
     def _handle_wall_switch(self, switch: int):
@@ -70,6 +71,7 @@ class StateMachine:
         elif self.state == State.REBOOT:
             await self.reboot()
         else:
+            asyncio.get_event_loop().stop()
             raise ValueError("Invalid state")
         
     async def reboot(self):
@@ -80,6 +82,7 @@ class StateMachine:
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
+        self.led.on()
         charge_state = ChargeState.CHARGED
 
         time_since_last_charge = 0 # time elapsed since last charge

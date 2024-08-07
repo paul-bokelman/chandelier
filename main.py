@@ -16,8 +16,8 @@ async def main():
 
     sm = StateMachine()
 
-    while True:
-        await sm.check()
+    asyncio.create_task(sm.check())
+    asyncio.get_event_loop().run_forever()
 
     # mc = MotorController()
     # await mc.calibrate(reset=False)

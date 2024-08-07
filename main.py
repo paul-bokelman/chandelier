@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 import constants
 # from lib.mc.controller import MotorController
 from lib.state import StateMachine
-
+from lib.utils import log
 
 async def main():
     try: 
@@ -30,7 +30,7 @@ async def main():
     # GPIO.cleanup() # clean up for next session
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        log.error(f"An error occurred: {e}")
     finally:
         GPIO.cleanup()
 
@@ -38,6 +38,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Interrupted by user")
+        log.warning("Interrupted by user")
         GPIO.cleanup()
         exit()

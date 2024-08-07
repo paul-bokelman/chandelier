@@ -229,9 +229,9 @@ class Motor:
         is_max_cps_down = self.cps_down == max_cps_down
 
         if is_max_cps_up:
-            log.info(self._clm("FRT", message="Contains max cps up", cps_up=self.cps_up), override=True)
+            log.info(self._clm("FRT", message="Contains max cps up, ignoring up", cps_up=self.cps_up), override=True)
         if is_max_cps_down:
-            log.info(self._clm("FRT", message="Contains max cps down", cps_down=self.cps_down), override=True)
+            log.info(self._clm("FRT", message="Contains max cps down, ignoring down", cps_down=self.cps_down), override=True)
 
         # descent configuration
         error = 0.01 # error margin
@@ -242,8 +242,8 @@ class Motor:
         target_up_cps = max_cps_up
         previous_down_cps = None
         previous_up_cps = None
-        down_throttle = self.upper_neutral + constants.ThrottlePresets.SLOW.value if is_max_cps_down else self.upper_neutral + down_step 
-        up_throttle = self.lower_neutral - constants.ThrottlePresets.SLOW.value if is_max_cps_up else self.lower_neutral - up_step
+        down_throttle = self.upper_neutral + down_step 
+        up_throttle = self.lower_neutral - up_step
 
         log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps))
 
@@ -262,7 +262,7 @@ class Motor:
                 log.error(self._clm("FRT", message="Throttle timed out moving down", throttle=down_throttle))
                 return
             
-            down_cps = constants.calibration_counts / down_time_elapsed # calculate cps down
+            down_cps = target_down_cps if is_max_cps_down else constants.calibration_counts / down_time_elapsed # calculate cps down
 
             up_timed_out, up_time_elapsed = False, 0.0
 
@@ -279,7 +279,7 @@ class Motor:
                 return
             
             # calculate cps up
-            up_cps = constants.calibration_counts / up_time_elapsed
+            up_cps = target_up_cps if is_max_cps_up else constants.calibration_counts / up_time_elapsed
 
             # target in between previous and current cps -> divide step size (more granular)
             if previous_up_cps is not None and not found_relative_up_cps(up_cps):

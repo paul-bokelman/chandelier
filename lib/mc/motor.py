@@ -225,18 +225,10 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
-        is_max_cps_up = self.cps_up == max_cps_up
-        is_max_cps_down = self.cps_down == max_cps_down
-
-        if is_max_cps_up:
-            log.info(self._clm("FRT", message="Contains max cps up, ignoring up", cps_up=self.cps_up), override=True)
-        if is_max_cps_down:
-            log.info(self._clm("FRT", message="Contains max cps down, ignoring down", cps_down=self.cps_down), override=True)
-
         # descent configuration
         error = 0.01 # error margin
-        down_step = 0.01
-        up_step = 0.01
+        down_step = 0.03
+        up_step = 0.03
 
         target_down_cps = max_cps_down
         target_up_cps = max_cps_up
@@ -262,7 +254,7 @@ class Motor:
                 log.error(self._clm("FRT", message="Throttle timed out moving down", throttle=down_throttle))
                 return
             
-            down_cps = target_down_cps if is_max_cps_down else constants.calibration_counts / down_time_elapsed # calculate cps down
+            down_cps = constants.calibration_counts / down_time_elapsed # calculate cps down
 
             up_timed_out, up_time_elapsed = False, 0.0
 
@@ -279,7 +271,7 @@ class Motor:
                 return
             
             # calculate cps up
-            up_cps = target_up_cps if is_max_cps_up else constants.calibration_counts / up_time_elapsed
+            up_cps = constants.calibration_counts / up_time_elapsed
 
             # target in between previous and current cps -> divide step size (more granular)
             if previous_up_cps is not None and not found_relative_up_cps(up_cps):

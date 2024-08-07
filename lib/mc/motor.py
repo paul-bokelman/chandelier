@@ -229,7 +229,7 @@ class Motor:
         is_max_cps_down = self.cps_down == max_cps_down
 
         # descent configuration
-        error = 0.03 # error margin
+        error = 0.01 # error margin
         down_step = 0.01
         up_step = 0.01
 
@@ -297,26 +297,26 @@ class Motor:
                 # throttle too low -> increase throttle (DOWN)
                 if down_cps < target_down_cps:
                     down_throttle += down_step
-                    log.info(self._clm("FRT", message="Increasing throttle (DOWN)", throttle=down_throttle, cps=down_cps, down_distance=down_distance), override=True)
+                    log.info(self._clm("FRT", message="Increasing (DOWN)", throttle=down_throttle, down_distance=down_distance), override=True)
                 # throttle too high -> decrease throttle and decrease step size (DOWN)
                 else:
                     down_throttle -= down_step
-                    log.info(self._clm("FRT", message="Decreasing throttle (DOWN)", throttle=down_throttle, cps=down_cps, down_distance=down_distance), override=True)
+                    log.info(self._clm("FRT", message="Decreasing (DOWN)", throttle=down_throttle, down_distance=down_distance), override=True)
 
             # throttle is not within error margin -> adjust throttle
             if not found_relative_up_cps(up_cps):
                 # throttle too low -> increase throttle (UP)
                 if up_cps < target_up_cps:
                     up_throttle -= up_step
-                    log.info(self._clm("FRT", message="Increasing throttle (UP)", throttle=up_throttle, cps=up_cps, up_distance=up_distance), override=True)
+                    log.info(self._clm("FRT", message="Increasing (UP)", throttle=up_throttle, up_distance=up_distance), override=True)
                 # throttle too high -> decrease throttle and decrease step size (UP)
                 else:
                     up_throttle += up_step
-                    log.info(self._clm("FRT", message="Decreasing throttle (UP)", throttle=up_throttle, cps=up_cps, up_distance=up_distance), override=True)
+                    log.info(self._clm("FRT", message="Decreasing (UP)", throttle=up_throttle, up_distance=up_distance), override=True)
 
         self.slow_throttle_down = down_throttle
         self.slow_throttle_up = up_throttle
-        log.success(self._clm("FRT", slow_throttle_down=self.slow_throttle_down, slow_throttle_up=self.slow_throttle_up))
+        log.success(self._clm("FRT", slow_throttle_down=self.slow_throttle_down, slow_throttle_up=self.slow_throttle_up), override=True)
 
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""

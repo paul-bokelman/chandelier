@@ -10,8 +10,9 @@ class Logger:
         if constants.debug or override:
             print(msg)
 
-    def success(self, msg):
-        print(colored(msg, 'green'))
+    def success(self, msg, override=False):
+        if constants.debug or override:
+            print(colored(msg, 'green'))
 
     def error(self, msg):
         print(colored(msg, 'red'))

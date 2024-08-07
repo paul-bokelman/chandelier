@@ -1,22 +1,22 @@
 import asyncio
 import RPi.GPIO as GPIO
 import constants
-from lib.mc.controller import MotorController
-from lib.state import StateMachine
+# from lib.mc.controller import MotorController
+# from lib.state import StateMachine
 
 
 async def main():
     # GPIO setup
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.setup(constants.wall_switch_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
+    # GPIO.setup(constants.wall_switch_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    sm = StateMachine()
+    # sm = StateMachine()
 
-    await sm.check()
+    # await sm.check()
 
     # mc = MotorController()
     # await mc.calibrate(reset=False)

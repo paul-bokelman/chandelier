@@ -227,8 +227,8 @@ class Motor:
 
         # descent configuration
         error = 0.01 # error margin
-        down_step = 0.03
-        up_step = 0.03
+        down_step = 0.01
+        up_step = 0.01
 
         target_down_cps = max_cps_down
         target_up_cps = max_cps_up

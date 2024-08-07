@@ -14,11 +14,14 @@ async def main():
         GPIO.setup(constants.wall_switch_pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            
+        def buttonEventHandler_falling (pin):
+            raise Exception('button released')
 
-        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=lambda x: print('pressed'), bouncetime=1000)
-
-        while True:
-            await asyncio.sleep(0.5)
+        # indicating that the button was released.
+        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=buttonEventHandler_falling)
+        
+        while True : pass  
 
         # sm = StateMachine()
 

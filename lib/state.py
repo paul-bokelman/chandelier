@@ -23,7 +23,7 @@ class ChargeState(Enum):
 
 class StateMachine:
     """State machine for managing states"""
-    async def __init__(self) -> None:
+    def __init__(self) -> None:
         self.state = State.IDLE
         self.led = LED(constants.led_pin)
         self.mc = MotorController()
@@ -34,8 +34,6 @@ class StateMachine:
         GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._change_state(State.REBOOT), bouncetime=300)
         GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_wall_switch(0), bouncetime=300)
         GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_wall_switch(1), bouncetime=300)
-
-        await self.mc.calibrate(reset=False) # calibrate motors or load calibration data
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""

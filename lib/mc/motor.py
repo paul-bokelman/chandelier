@@ -85,7 +85,9 @@ class Motor:
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:
             # calibrated throttle is set -> use it (only slow)
+            print(f'true for M{self.channel}', throttle == constants.ThrottlePresets.SLOW)
             if throttle == constants.ThrottlePresets.SLOW and self.slow_throttle_up is not None:
+                print(f'using {self.slow_throttle_up} for M{self.channel}')
                 self.servo.throttle = self.slow_throttle_up
             else:
                 self.servo.throttle = (self.lower_neutral - offset)
@@ -98,19 +100,19 @@ class Motor:
 
     def stop(self):
         """Stop the motor"""
-        log.info(self._clm("Stop"), override=True)
+        log.info(self._clm("Stop"))
         self.servo._pwm_out.duty_cycle = 0  
 
     async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[bool, float]:
         """Move the motor to the home position (0 count)"""
         if constants.testing_mode:
-            log.info(self._clm("To Home", message="Mimicked home movement"), override=True)
+            log.info(self._clm("To Home", message="Mimicked home movement"))
             self.counts = 0
             return False, 0.0
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
         timed_out = False
-        log.info(self._clm("To Home", message="Moving Home"), override=True)
+        log.info(self._clm("To Home", message="Moving Home"))
 
         if self.is_home(): 
             log.success(self._clm("To Home", message="Motor already at home"))
@@ -120,7 +122,7 @@ class Motor:
         self.last_read_time = None 
         start_time = time.time()
 
-        log.info(self._clm("To Home", message="Moving Home"), override=True)
+        log.info(self._clm("To Home", message="Moving Home"))
         
         # move motor to home position and check for stalls
         while True:
@@ -157,7 +159,7 @@ class Motor:
         """Move the motor n number of counts at a specific speed"""
         timed_out = False
 
-        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"), override=True)
+        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
         
         if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
             raise ValueError("Counts must be between 0 and max counts")
@@ -186,7 +188,7 @@ class Motor:
 
         time_elapsed = time.time() - start_time
 
-        log.info(self._clm("Move", message=f"Time Elapsed: {time_elapsed}"), override=True)
+        log.info(self._clm("Move", message=f"Time Elapsed: {time_elapsed}"))
 
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
@@ -199,7 +201,7 @@ class Motor:
     ) -> tuple[bool, float]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
 
-        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"), override=True)
+        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
@@ -240,7 +242,7 @@ class Motor:
         down_throttle = self.upper_neutral + constants.ThrottlePresets.SLOW.value if is_max_cps_down else self.upper_neutral + down_step 
         up_throttle = self.lower_neutral - constants.ThrottlePresets.SLOW.value if is_max_cps_up else self.lower_neutral - up_step
 
-        log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps), override=True)
+        log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps))
 
         found_relative_down_cps = lambda cps: abs(target_down_cps - cps) < error
         found_relative_up_cps = lambda cps: abs(target_up_cps - cps) < error
@@ -320,7 +322,7 @@ class Motor:
 
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
-        log.info(self._clm("Find CPS", message="Finding cps up and down"), override=True)
+        log.info(self._clm("Find CPS", message="Finding cps up and down"))
 
         # neutral positions must be calibrated and set for present throttles
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
@@ -330,7 +332,7 @@ class Motor:
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
-            log.info(self._clm("Find CPS", message="Finding cps down"), override=True)
+            log.info(self._clm("Find CPS", message="Finding cps down"))
 
             # move to calibration position
             timed_out, time_elapsed = await self.move(
@@ -341,11 +343,11 @@ class Motor:
             ) 
 
             self.cps_down = constants.calibration_counts / time_elapsed # compute cps down
-            log.info(self._clm("Find CPS", cps_down=self.cps_down), override=True)
+            log.info(self._clm("Find CPS", cps_down=self.cps_down))
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
-            log.info(self._clm("Find CPS", message="Finding cps up"), override=True)
+            log.info(self._clm("Find CPS", message="Finding cps up"))
             timed_out, time_elapsed = True, 0.0
 
             # move to home position at slow speed
@@ -366,13 +368,13 @@ class Motor:
                 return
             
             self.cps_up = constants.calibration_counts / time_elapsed # compute cps up
-            log.info(self._clm("Find CPS", cps_up=self.cps_up), override=True)
+            log.info(self._clm("Find CPS", cps_up=self.cps_up))
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
 
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of servo motor"""
-        log.info(self._clm("Find Neutrals", message="Finding neutral positions"), override=True)
+        log.info(self._clm("Find Neutrals", message="Finding neutral positions"))
 
         # ensure motor is at home position
         if not self.is_home():
@@ -384,21 +386,21 @@ class Motor:
         # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
-            log.info(self._clm("Find Neutrals", current_throttle=current_throttle), override=True)
+            log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
             timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:
-                log.info(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"), override=True)
+                log.info(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"))
                 self.upper_neutral = current_throttle
 
             # upper neutral found and motor has not timed out -> found lower neutral
             if self.lower_neutral is None and not timed_out and self.upper_neutral is not None:
-                log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"), override=True)
+                log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions calibrated incorrectly"
-        log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
+        log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
     async def calibrate(self, data: SingularCalibrationData):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
@@ -406,22 +408,22 @@ class Motor:
 
         # load calibration data if available
         if data['cps_down'] is not None:
-            log.info(self._clm("Calibrate", message="cps down already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="cps down already calibrated"))
             self.cps_down = data['cps_down']
         if data['cps_up'] is not None:
-            log.info(self._clm("Calibrate", message="cps up already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="cps up already calibrated"))
             self.cps_up = data['cps_up']
         if data['lower_neutral'] is not None:
-            log.info(self._clm("Calibrate", message="lower neutral already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="lower neutral already calibrated"))
             self.lower_neutral = data['lower_neutral']
         if data['upper_neutral'] is not None:
-            log.info(self._clm("Calibrate", message="upper neutral already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="upper neutral already calibrated"))
             self.upper_neutral = data['upper_neutral']
         if data['slow_throttle_down'] is not None:
-            log.info(self._clm("Calibrate", message="slow throttle down already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="slow throttle down already calibrated"))
             self.slow_throttle_down = data['slow_throttle_down']
         if data['slow_throttle_up'] is not None:
-            log.info(self._clm("Calibrate", message="slow throttle up already calibrated"), override=True)
+            log.info(self._clm("Calibrate", message="slow throttle up already calibrated"))
             self.slow_throttle_up = data['slow_throttle_up']
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts

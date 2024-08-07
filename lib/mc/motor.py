@@ -226,7 +226,7 @@ class Motor:
             await self.to_home()
 
         # descent configuration
-        error = 0.01 # error margin
+        error = 0.03 # error margin
         down_step = 0.01
         up_step = 0.01
 

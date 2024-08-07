@@ -82,19 +82,16 @@ class Motor:
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
 
-        print(f'true for M{self.channel}', throttle == constants.ThrottlePresets.SLOW)
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:
             # calibrated throttle is set -> use it (only slow)
             if throttle == constants.ThrottlePresets.SLOW and self.slow_throttle_up is not None:
-                print(f'using {self.slow_throttle_up} for M{self.channel}')
                 self.servo.throttle = self.slow_throttle_up
             else:
                 self.servo.throttle = (self.lower_neutral - offset)
         else:
             # calibrated throttle is set -> use it (only slow)
             if throttle == constants.ThrottlePresets.SLOW and self.slow_throttle_down is not None:
-                print(f'using {self.slow_throttle_down} for M{self.channel}')
                 self.servo.throttle = self.slow_throttle_down
             else:
                 self.servo.throttle = (self.upper_neutral + offset)

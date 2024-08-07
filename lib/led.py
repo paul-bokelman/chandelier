@@ -11,11 +11,11 @@ class LED:
 
     def on(self):
         self.state = True
-        # GPIO.output(self.pin, GPIO.HIGH)
+        GPIO.output(self.pin, GPIO.HIGH)
 
     def off(self):
         self.state = False
-        # GPIO.output(self.pin, GPIO.LOW)
+        GPIO.output(self.pin, GPIO.LOW)
 
     async def blink(self, duration: float = 1):
         self.blinking = True

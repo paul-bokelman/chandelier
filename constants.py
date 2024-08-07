@@ -1,15 +1,13 @@
 from enum import Enum
 
 # static configuration
-encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] #Motor Encoder GPIO Mapping
-power_switch_pins = [16,20] # Power Switch
-wall_switch_pins = [24, 25]
+encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] # encoder pins
+wall_switch_pins = [24, 25] # 00 -> idle, 10 -> sequence, 01 -> random
 service_button_pin = 23
 reboot_button_pin = 7
 led_pin = 8
 up = -1
 down = 1
-
 
 # general configuration
 n_motors = 4

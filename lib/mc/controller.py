@@ -89,3 +89,8 @@ class MotorController:
 
     # return max elapsed time
     return max([task[1] for task in tasks])
+  
+  def destroy(self):
+    """Destroy motor controller by stopping all motors"""
+    self.stop_all_motors()
+    self.kit._pca.deinit()

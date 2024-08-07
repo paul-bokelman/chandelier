@@ -81,20 +81,20 @@ class Motor:
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
-
+        
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:
             # calibrated throttle is set -> use it (only slow)
             if throttle == constants.ThrottlePresets.SLOW and self.slow_throttle_up is not None:
                 self.servo.throttle = self.slow_throttle_up
             else:
-                self.servo.throttle = (self.upper_neutral + offset)
+                self.servo.throttle = (self.lower_neutral - offset)
         else:
             # calibrated throttle is set -> use it (only slow)
             if throttle == constants.ThrottlePresets.SLOW and self.slow_throttle_down is not None:
                 self.servo.throttle = self.slow_throttle_down
             else:
-                self.servo.throttle = (self.lower_neutral - offset)
+                self.servo.throttle = (self.upper_neutral + offset)
 
     def stop(self):
         """Stop the motor"""
@@ -304,11 +304,11 @@ class Motor:
             if not found_relative_up_cps(up_cps):
                 # throttle too low -> increase throttle (UP)
                 if up_cps < target_up_cps:
-                    up_throttle += up_step
+                    up_throttle -= up_step
                     log.info(self._clm("FRT", message="Increasing throttle (UP)", throttle=up_throttle, cps=up_cps, up_distance=up_distance), override=True)
                 # throttle too high -> decrease throttle and decrease step size (UP)
                 else:
-                    up_throttle -= up_step
+                    up_throttle += up_step
                     log.info(self._clm("FRT", message="Decreasing throttle (UP)", throttle=up_throttle, cps=up_cps, up_distance=up_distance), override=True)
 
         self.slow_throttle_down = down_throttle

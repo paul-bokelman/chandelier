@@ -5,7 +5,7 @@ from lib.mc.controller import MotorController
 from lib.state import StateMachine
 
 
-def main():
+async def main():
     # GPIO setup
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -16,8 +16,7 @@ def main():
 
     sm = StateMachine()
 
-    asyncio.create_task(sm.check())
-    asyncio.get_event_loop().run_forever()
+    await sm.check()
 
     # mc = MotorController()
     # await mc.calibrate(reset=False)
@@ -30,4 +29,4 @@ def main():
     # GPIO.cleanup() # clean up for next session
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

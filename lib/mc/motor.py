@@ -81,7 +81,7 @@ class Motor:
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
-        
+
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:
             # calibrated throttle is set -> use it (only slow)
@@ -213,17 +213,20 @@ class Motor:
     # -------------------------------- CALIBRATION ------------------------------- #
     async def find_relative_throttles(self, max_cps_up: float, max_cps_down: float):
         """Find relative throttles based on global cps data (only configured for slow speed)"""
-        log.info(self._clm("FRT"), override=True)
+        log.info(self._clm("FRT"))
         assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
         assert self.cps_down is not None and self.cps_up is not None, "CPS not found"
 
         if self.slow_throttle_down is not None and self.slow_throttle_up is not None:
-            log.info(self._clm("FRT", message="Throttles already calibrated"), override=True)
+            log.info(self._clm("FRT", message="Throttles already calibrated"))
             return
 
         # move back home if not already (allows _find_cps to be called separately from _find_neutrals)
         if not self.is_home():
             await self.to_home()
+
+        is_max_cps_up = self.cps_up == max_cps_up
+        is_max_cps_down = self.cps_down == max_cps_down
 
         # descent configuration
         error = 0.03 # error margin
@@ -234,8 +237,8 @@ class Motor:
         target_up_cps = max_cps_up
         previous_down_cps = None
         previous_up_cps = None
-        down_throttle = self.upper_neutral + down_step # move down
-        up_throttle = self.lower_neutral - up_step # move up
+        down_throttle = self.upper_neutral if is_max_cps_down else self.upper_neutral + down_step 
+        up_throttle = self.lower_neutral if is_max_cps_up else self.lower_neutral - up_step
 
         log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps), override=True)
 
@@ -244,7 +247,7 @@ class Motor:
 
         # move to calibration position and measure cps until within error
         while (previous_down_cps is None or not found_relative_down_cps(previous_down_cps)) or (previous_up_cps is None or not found_relative_up_cps(previous_up_cps)):
-            log.info(self._clm("FRT", message="Finding throttle", up_step=up_step, down_step=down_step), override=True)
+            log.info(self._clm("FRT", message="Finding throttle", up_step=up_step, down_step=down_step))
 
             # move down to measure down cps
             down_timed_out, down_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=down_throttle, timeout=constants.calibration_timeout)
@@ -276,12 +279,12 @@ class Motor:
             # target in between previous and current cps -> divide step size (more granular)
             if previous_up_cps is not None and not found_relative_up_cps(up_cps):
                 if previous_up_cps < target_up_cps < up_cps or previous_up_cps > target_up_cps > up_cps:
-                    log.info(self._clm("FRT", message=f"Decreasing step size (UP), ({up_step} -> {up_step / 2})", ), override=True)
+                    log.info(self._clm("FRT", message=f"Decreasing step size (UP), ({up_step} -> {up_step / 2})"))
                     up_step /= 2
 
             if previous_down_cps is not None and not found_relative_down_cps(down_cps):
                 if previous_down_cps < target_down_cps < down_cps or previous_down_cps > target_down_cps > down_cps:
-                    log.info(self._clm("FRT", message=f"Decreasing step size (DOWN), ({down_step} -> {down_step / 2})", ), override=True)
+                    log.info(self._clm("FRT", message=f"Decreasing step size (DOWN), ({down_step} -> {down_step / 2})"))
                     down_step /= 2
 
             previous_down_cps = down_cps

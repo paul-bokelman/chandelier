@@ -18,7 +18,7 @@ async def main():
         GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=lambda x: print('pressed'), bouncetime=300)
 
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
 
         # sm = StateMachine()
 

@@ -44,8 +44,10 @@ class StateMachine:
 
         # reflect initial switch state
         if not GPIO.input(constants.wall_switch_pins[0]):
+            self.switch_state[0] = True
             self._change_state(State.RANDOM)
         elif not GPIO.input(constants.wall_switch_pins[1]):
+            self.switch_state[1] = True
             self._change_state(State.SEQUENCE)
         else:
             self._change_state(State.IDLE)
@@ -89,8 +91,7 @@ class StateMachine:
     
     async def check(self):
         """Check current state and run appropriate state"""
-        print("Checking state")
-        print(self.state)
+        print(f"CURRENT STATE: {self.state}")
         await asyncio.sleep(1)
 
         # if self.state == State.IDLE:

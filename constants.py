@@ -17,15 +17,17 @@ testing_mode = True
 disabled_motors = [0, 1]
 n_active_motors = n_motors - len(disabled_motors)
 
-max_charge_time = 60 * 60 * 2 # 2 hours (in seconds)
+candles_per_charge_cycle = 1 # number of candles to charge per charge cycle
+charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
 charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
-testing_max_charge_time = 5 # 5 seconds
+testing_charge_cycle_time = 20 # 20 seconds
 testing_charge_interval = 10 # 20 seconds
 
 max_random_state_time = 60 * 60 * 2 # 2 hours (in seconds)
 max_sequence_state_time = 60 * 60 * 2 # 2 hours (in seconds)
-testing_max_random_state_time = 10 # 5 seconds
-testing_max_sequence_state_time = 30 # 30 seconds
+testing_max_random_state_time = 60 * 5 # 5 minutes
+testing_max_sequence_state_time = 60 * 5 # 5 minutes
+
 
 # throttle configuration
 class ThrottlePresets(Enum):

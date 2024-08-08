@@ -54,7 +54,8 @@ class StateMachine:
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
-        self.led.off()
+        self.led.off() # turn off LED for new state
+        self._charger_off() # turn off charging for new state
         self.state = new_state
 
     def _handle_event(self, channel):
@@ -121,12 +122,20 @@ class StateMachine:
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
-        charge_state = ChargeState.CHARGED
+
+        charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
+        charge_interval = constants.charge_interval if not constants.testing_mode else constants.testing_charge_interval
 
         time_since_last_charge = time.time() # time elapsed since last charge
-        elapsed_charge_time = time.time() # time spend charging
 
-        self.led.on() # led pattern (solid)
+        self.led.on() # solid on for idle state
+        charge_state = ChargeState.CHARGED
+
+        cycle = 0 # track current charge cycle
+        current_cycle_elapsed_time = time.time() # track current cycle elapsed time
+
+        await self.mc.move_all_home() # move all home before starting
+        await self.mc.move_all(0.1) # move all slightly past charger to stage for cycles
 
         # check if state changed every second
         while True:
@@ -136,30 +145,57 @@ class StateMachine:
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
                 log.info("CHARGED", override=True)
-                if time.time() - time_since_last_charge >= (constants.charge_interval if not constants.testing_mode else constants.testing_charge_interval):
+                if time.time() - time_since_last_charge >= charge_interval:
                     charge_state = ChargeState.REQUIRES_CHARGE
-                    time_since_last_charge = 0
+                    time_since_last_charge = time.time()
 
             # state requires charge -> change to charging and start charging
             if charge_state == ChargeState.REQUIRES_CHARGE:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
                 self._charger_on() # turn on charging power
-                elapsed_charge_time = time.time() # reset elapsed charge time
+                current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
                 log.info("CHARGING", override=True)
 
-                # reached max charge time -> change to charged
-                if time.time() - elapsed_charge_time >= (constants.max_charge_time if not constants.testing_mode else constants.testing_max_charge_time):
-                    charge_state = ChargeState.CHARGED
-                    time_since_last_charge = time.time()
-                    self._charger_off() # turn off charging power
+                # current cycle complete or hasn't started -> start new cycle
+                if time.time() - current_cycle_elapsed_time >= charge_cycle_time or cycle == 0:
+                    cycle += 1
 
-                await self._charge() # activate charging
-            
-            await asyncio.sleep(1) # sleep for 1 second and return back to loop
+                    # all cycles complete -> all candles charged, change charge state
+                    if cycle > constants.n_active_motors // constants.candles_per_charge_cycle:
+                        charge_state = ChargeState.CHARGED
+                        time_since_last_charge = time.time()
+                        self._charger_off() # turn off charging power
+                        continue
+                    
+                    # bounds to slice motors to charge
+                    lower_bound = (cycle - 1) * constants.candles_per_charge_cycle
+                    upper_bound = lower_bound + constants.candles_per_charge_cycle
+
+                    # ensure upper bound is in range
+                    if upper_bound > constants.n_active_motors:
+                        upper_bound = constants.n_active_motors
+
+                    # select motors to charge
+                    motors_to_charge = [m for m in self.mc.motors if not m.disabled][lower_bound:upper_bound]
+
+                    # not first cycle -> move currently charging candles slightly past charger
+                    if cycle != 1:
+                        prev_lower_bound = lower_bound - constants.candles_per_charge_cycle
+                        prev_upper_bound = prev_lower_bound + constants.candles_per_charge_cycle
+
+                        # move previously charging candles to past charger (stop charging)
+                        for motor in [m for m in self.mc.motors if not m.disabled][prev_lower_bound:prev_upper_bound]:
+                            await motor.to(0.1) 
+
+                    # move to next cycle of candles to charge
+                    for motor in motors_to_charge:
+                        await motor.to_home() 
+
+                    current_cycle_elapsed_time = time.time() # reset current cycle elapsed time for next iteration
 
     async def sequence(self):
         """Sequence state for running timed sequences"""

@@ -14,7 +14,7 @@ class Sequence:
 
     def random_iteration(self) -> tuple[list[float], Throttle]:
         """Generate a random sequence for all motors"""
-        positions = [rand.uniform(0.3, 0.9) for _ in range(constants.n_active_motors)]
+        positions = [rand.uniform(0.3, 0.7) for _ in range(constants.n_active_motors)]
         throttles = self.default_throttles
         return (positions, throttles)
 
@@ -34,7 +34,7 @@ class Sequence:
         for i in range(iterations):
             yield self.wave_iteration(i, amplitude, translation, frequency, step)
 
-    def alternating_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.4) -> tuple[list[float], Throttle]:
+    def alternating_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.3) -> tuple[list[float], Throttle]:
         """Generate an alternating sequence for all motors"""
         positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(constants.n_active_motors)]
         throttles = self.default_throttles

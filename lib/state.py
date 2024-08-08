@@ -213,7 +213,7 @@ class StateMachine:
 
         max_run_time = constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time
         elapsed_time = time.time() # time elapsed since sequence started 
-        seq = Sequence() # sequence generator
+        seq = Sequence(self.mc.n_active_motors) # sequence generator
         current_generator = seq.alternating() # current generator for sequence
 
         # check if state changed every second
@@ -231,7 +231,7 @@ class StateMachine:
                 await self.mc.move_all(positions, speeds)
             except StopIteration:
                 iterations = random.randint(30, 120) # randomize number of iterations
-                current_generator = random.choice([seq.wave, seq.alternating])(iterations, self.mc.n_active_motors) # choose random sequence
+                current_generator = random.choice([seq.wave, seq.alternating])(iterations) # choose random sequence
     
     async def random(self):
         """Random state for running random sequences"""
@@ -239,7 +239,7 @@ class StateMachine:
 
         max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
         elapsed_time = time.time() # time elapsed since sequence started 
-        seq = Sequence() # sequence generator
+        seq = Sequence(self.mc.n_active_motors) # sequence generator
 
         # check if state changed every second
         while True:

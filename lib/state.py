@@ -168,8 +168,10 @@ class StateMachine:
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or cycle == 0:
                     cycle += 1
 
+                    n_active_motors = len(self.mc._get_active_motors())
+
                     # all cycles complete -> all candles charged, change charge state
-                    if cycle > constants.n_active_motors // constants.candles_per_charge_cycle:
+                    if cycle > n_active_motors // constants.candles_per_charge_cycle:
                         charge_state = ChargeState.CHARGED
                         cycle = 0
                         time_since_last_charge = time.time()
@@ -182,8 +184,8 @@ class StateMachine:
                     upper_bound = lower_bound + constants.candles_per_charge_cycle
 
                     # ensure upper bound is in range
-                    if upper_bound > constants.n_active_motors:
-                        upper_bound = constants.n_active_motors
+                    if upper_bound > n_active_motors:
+                        upper_bound = n_active_motors
 
                     # select motors to charge
                     motors_to_charge = [m for m in self.mc.motors if not m.disabled][lower_bound:upper_bound]
@@ -229,7 +231,7 @@ class StateMachine:
                 await self.mc.move_all(positions, speeds)
             except StopIteration:
                 iterations = random.randint(30, 120) # randomize number of iterations
-                current_generator = random.choice([seq.wave, seq.alternating])(iterations) # choose random sequence
+                current_generator = random.choice([seq.wave, seq.alternating])(iterations, self.mc.n_active_motors) # choose random sequence
     
     async def random(self):
         """Random state for running random sequences"""

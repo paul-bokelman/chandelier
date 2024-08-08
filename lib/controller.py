@@ -14,6 +14,13 @@ class MotorController:
     self.store = Store()
     self.kit = ServoKit(channels=16)
     self.motors = [Motor(i,self.kit.continuous_servo[i]) for i in range(constants.n_motors)]
+    self.n_active_motors = constants.n_motors - len(constants.initial_disabled_motors)
+
+  def _get_active_motors(self):
+    """Compute active motors based on disabled motors"""
+    active_motors = [motor for motor in self.motors if not motor.disabled]
+    self.active_motors = len(active_motors)
+    return active_motors
 
   def stop_all_motors(self):
     """Stop all motors by calling stop_motor for each motor"""
@@ -61,18 +68,20 @@ class MotorController:
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[Throttle, list[Throttle]] = constants.ThrottlePresets.SLOW) -> float:
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
 
+    active_motors = self._get_active_motors()
+
     # singular value -> convert to list of that value
     if isinstance(throttles, Throttle):
       if isinstance(throttles, float):
         if not (0 <= throttles <= 1):
           raise ValueError(f"Throttle must be between 0 and 1, received {throttles}")
-      throttles = [throttles] * constants.n_active_motors
+      throttles = [throttles] * self.n_active_motors
 
     # singular value -> convert to list of that value
     if isinstance(positions, float):
       if not (0 <= positions <= 1):
         raise ValueError(f"Position must be between 0 and 1, received {positions}")
-      positions = [positions] * constants.n_active_motors
+      positions = [positions] * self.n_active_motors
 
     # ensure both are lists
     if not isinstance(throttles, list):
@@ -96,7 +105,7 @@ class MotorController:
       raise ValueError("Speed and positions must be the same length")
     
     # move each motor to its target position simultaneously
-    tasks = await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip([m for m in self.motors if not m.disabled], positions, throttles) ])
+    tasks = await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])
 
     # return max elapsed time
     return max([task[1] for task in tasks])

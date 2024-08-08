@@ -35,7 +35,7 @@ class Motor:
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
-        if self.channel in constants.disabled_motors:
+        if self.channel in constants.initial_disabled_motors:
             self.disabled = True
             log.warning(f"M{self.channel} | Motor disabled")
 

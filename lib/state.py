@@ -39,8 +39,8 @@ class StateMachine:
         # change state based on buttons and switches
         GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
         GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""

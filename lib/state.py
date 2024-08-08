@@ -47,6 +47,8 @@ class StateMachine:
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
+        log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)
+
         asyncio.run(self.mc.calibrate(reset=False)) # calibrate motors
 
     def _change_state(self, new_state: State):
@@ -72,7 +74,6 @@ class StateMachine:
                 self.switch_state[0] = not self.switch_state[0]
             if channel == constants.wall_switch_pins[1]:
                 self.switch_state[1] = not self.switch_state[1]
-            
             # set new state based on switch state
             if self.switch_state[0] and self.switch_state[1]:
                 new_state = State.IDLE
@@ -98,11 +99,11 @@ class StateMachine:
         if self.state == State.IDLE:
             await self.idle()
         elif self.state == State.SEQUENCE:
-            await self.sequence()
+            await asyncio.gather(*[self.led.double_blink(), self.sequence()])
         elif self.state == State.RANDOM:
-            await self.random()
+            await asyncio.gather(*[self.led.blink(), self.random()])
         elif self.state == State.SERVICE:
-            await self.service()
+            await asyncio.gather(*[self.led.blink(0.5), self.service()])
         elif self.state == State.REBOOT:
             await self.reboot()
         else:
@@ -129,7 +130,10 @@ class StateMachine:
 
         # check if state changed every second
         while True:
-            if self.state != State.IDLE: break # break back to main loop if state changed
+             # break back to main loop if state changed
+            if self.state != State.IDLE:
+                self.led.off()
+                break
 
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
@@ -170,18 +174,10 @@ class StateMachine:
 
         # check if state changed every second
         while True:
-            if self.state != State.SEQUENCE: break # break back to main loop if state changed
-
-            # led blink pattern (2 fast)
-            self.led.on()
-            await asyncio.sleep(0.5)
-            self.led.off()
-            await asyncio.sleep(0.5)
-            self.led.on()
-            await asyncio.sleep(0.5)
-            self.led.off()
-
-            await asyncio.sleep(2)
+             # break back to main loop if state changed
+            if self.state != State.SEQUENCE:
+                self.led.off()
+                break
 
             # elapsed time is greater than max run time -> change to idle
             if time.time() - elapsed_time >= max_run_time:
@@ -206,13 +202,10 @@ class StateMachine:
         # check if state changed every second
         while True:
             log.info(f"Entering random state loop", override=True)
-            if self.state != State.RANDOM: break # break back to main loop if state changed
-
-            # led blink pattern (slow blink)
-            self.led.on()
-            await asyncio.sleep(1)
-            self.led.off()
-            await asyncio.sleep(1)
+            # break back to main loop if state changed
+            if self.state != State.RANDOM: 
+                self.led.off()
+                break
 
             # elapsed time is greater than max run time -> change to idle
             if time.time() - elapsed_time >= max_run_time:
@@ -234,10 +227,7 @@ class StateMachine:
 
         # check if state changed every second
         while True:
-            if self.state != State.SERVICE: break # break back to main loop if state changed to idle
-
-            # led blink pattern (fast blink)
-            self.led.on()
-            await asyncio.sleep(0.5) 
-            self.led.off()
-            await asyncio.sleep(0.5)
+            # break back to main loop if state changed
+            if self.state != State.SERVICE: 
+                self.led.off()
+                break 

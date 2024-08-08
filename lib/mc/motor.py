@@ -162,7 +162,7 @@ class Motor:
 
         timed_out = False
 
-        log.info(self._clm("Move", n_counts=n_counts, direction=self.direction, throttle=throttle))
+        log.info(self._clm("Move", start_counts=self.counts, n_counts=n_counts, direction=self.direction, throttle=throttle))
         
         if n_counts == 0:
             log.success(self._clm("Move", message="No counts to move"))

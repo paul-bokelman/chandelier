@@ -6,7 +6,6 @@ import RPi.GPIO as GPIO
 import constants
 from lib.mc.controller import MotorController
 from lib.sequence import Sequence
-from lib.utils import to_seconds
 from lib.utils import log
 from lib.led import LED
 
@@ -21,12 +20,6 @@ class ChargeState(Enum):
     REQUIRES_CHARGE = 0,
     CHARGING = 1,
     CHARGED = 2
-
-def test(channel):
-    print("test", channel)
-    GPIO.output(constants.led_pin, GPIO.HIGH)
-    time.sleep(1)
-    GPIO.output(constants.led_pin, GPIO.LOW)
 
 class StateMachine:
     """State machine for managing states"""
@@ -89,6 +82,14 @@ class StateMachine:
                 new_state = State.SEQUENCE
             
         self._change_state(new_state)
+
+    def _charger_off(self):
+        """Turn off charging"""
+        GPIO.output(constants.charging_pin, GPIO.LOW)
+    
+    def _charger_on(self):
+        """Turn on charging"""
+        GPIO.output(constants.charging_pin, GPIO.HIGH)
     
     async def check(self):
         """Check current state and run appropriate state"""
@@ -141,7 +142,7 @@ class StateMachine:
             if charge_state == ChargeState.REQUIRES_CHARGE:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
-                GPIO.output(constants.charging_pin, GPIO.HIGH) # turn on charging power
+                self._charger_on() # turn on charging power
                 elapsed_charge_time = time.time() # reset elapsed charge time
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
@@ -152,7 +153,7 @@ class StateMachine:
                 if time.time() - elapsed_charge_time >= (constants.max_charge_time if not constants.testing_mode else constants.testing_max_charge_time):
                     charge_state = ChargeState.CHARGED
                     time_since_last_charge = time.time()
-                    GPIO.output(constants.charging_pin, GPIO.LOW) # turn off charging power
+                    self._charger_off() # turn off charging power
 
                 await self._charge() # activate charging
             
@@ -163,9 +164,9 @@ class StateMachine:
         log.info("Entering sequence state")
 
         max_run_time = constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time
-        run_time_elapsed = 0 # time elapsed since sequence started 
-        sequence = Sequence() # sequence generator
-        current_generator = sequence.random() # current generator for sequence
+        elapsed_time = time.time() # time elapsed since sequence started 
+        seq = Sequence() # sequence generator
+        current_generator = seq.alternating() # current generator for sequence
 
         # check if state changed every second
         while True:
@@ -183,7 +184,7 @@ class StateMachine:
             await asyncio.sleep(2)
 
             # elapsed time is greater than max run time -> change to idle
-            if run_time_elapsed >= max_run_time:
+            if time.time() - elapsed_time >= max_run_time:
                 self._change_state(State.IDLE)
 
             # run next iteration or get new generator
@@ -191,9 +192,8 @@ class StateMachine:
                 positions, speeds = next(current_generator) # get next positions and speeds
                 await self.mc.move_all(positions, speeds)
             except StopIteration:
-                #/ should be abstracted to the sequence generator
                 iterations = random.randint(30, 120) # randomize number of iterations
-                current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
+                current_generator = random.choice([seq.wave, seq.alternating])(iterations) # choose random sequence
     
     async def random(self):
         """Random state for running random sequences"""
@@ -229,8 +229,8 @@ class StateMachine:
         log.info("Entering service state")
 
         # run service sequence
-        # await self.mc.move_all(1) # move all candles all the way down
-        # charging_power_off() # turn off charging power
+        self._charger_off() # turn off charging
+        await self.mc.move_all(1) # move all candles all the way down
 
         # check if state changed every second
         while True:

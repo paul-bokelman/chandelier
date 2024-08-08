@@ -64,25 +64,36 @@ class MotorController:
     # singular value -> convert to list of that value
     if isinstance(throttles, Throttle):
       if isinstance(throttles, float):
-        assert 0 <= throttles <= 1, "Throttle must be between 0 and 1"
+        if not (0 <= throttles <= 1):
+          raise ValueError(f"Throttle must be between 0 and 1, received {throttles}")
       throttles = [throttles] * constants.n_active_motors
 
     # singular value -> convert to list of that value
     if isinstance(positions, float):
-      assert 0 <= positions <= 1, "Position must be between 0 and 1"
+      if not (0 <= positions <= 1):
+        raise ValueError(f"Position must be between 0 and 1, received {positions}")
       positions = [positions] * constants.n_active_motors
 
     # ensure both are lists
-    assert isinstance(throttles, list), "Speed must be a list of Throttle"
-    assert isinstance(positions, list), "Positions must be a list of floats"
+    if not isinstance(throttles, list):
+      raise ValueError("Speed must be a list of Throttle")
+    
+    if not isinstance(positions, list):
+      raise ValueError("Positions must be a list of floats")
 
     # ensure all floats are between 0 and 1
-    assert all(0 <= s <= 1 for s in throttles if isinstance(s, float)), "Throttles must be between 0 and 1 if float"
-    assert all(0 <= p <= 1 for p in positions), "Positions must be between 0 and 1"
+    if not all(0 <= s <= 1 for s in throttles if isinstance(s, float)):
+      raise ValueError(f"Throttles must be between 0 and 1 if float, received {throttles}")
+    if not all(0 <= p <= 1 for p in positions):
+      raise ValueError(f"Positions must be between 0 and 1, received {positions}")  
 
     # ensure lengths are the same
-    assert len(throttles) == len([motor for motor in self.motors if not motor.disabled]), "Speed list must be the same length as the number of motors"
-    assert len(throttles) == len(positions), "Speed and positions must be the same length"
+    if len(throttles) != len([motor for motor in self.motors if not motor.disabled]):
+      raise ValueError("Speed list must be the same length as the number of motors")
+    if len(positions) != len([motor for motor in self.motors if not motor.disabled]):
+      raise ValueError("Position list must be the same length as the number of motors")
+    if len(throttles) != len(positions):
+      raise ValueError("Speed and positions must be the same length")
     
     # move each motor to its target position simultaneously
     tasks = await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip([m for m in self.motors if not m.disabled], positions, throttles) ])

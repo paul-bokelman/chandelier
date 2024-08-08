@@ -11,11 +11,11 @@ up = -1
 down = 1
 
 # general configuration
-n_motors = 4
-debug = True
-testing_mode = True # general testing and development mode
+n_motors = 4 # number of active motors
+debug = True # show debug messages
+testing_mode = True # general testing mode (uses constants prefixed with testing_)
 mimic_home = False # mimic home position, used when candles aren't present
-disabled_motors = [] # list of disabled motors
+disabled_motors = [] # list of disabled motors, ex: [1, 2] disables motors at index 1 and 2
 n_active_motors = n_motors - len(disabled_motors)
 
 candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
@@ -28,7 +28,6 @@ max_random_state_time = 60 * 60 * 2 # 2 hours (in seconds)
 max_sequence_state_time = 60 * 60 * 2 # 2 hours (in seconds)
 testing_max_random_state_time = 60 * 5 # 5 minutes
 testing_max_sequence_state_time = 60 * 5 # 5 minutes
-
 
 # throttle configuration
 class ThrottlePresets(Enum):

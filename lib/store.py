@@ -75,10 +75,14 @@ class Store:
   def get(self, mode: DataMode) -> list[Optional[float]]:
     """Get specific calibration data from file"""
     log.info(f"Getting calibration data from {mode.name}")
+
+    if mode not in DataMode:
+      raise ValueError("Invalid calibration mode")
     
-    assert mode in DataMode, "Invalid calibration mode"
     key = str(mode.name.lower())
-    assert key in self.data, "Invalid calibration key"
+
+    if key not in self.data:
+      raise ValueError("Invalid calibration key")
     
     return self.data[key]
   

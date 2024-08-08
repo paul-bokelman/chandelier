@@ -65,20 +65,30 @@ class Motor:
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""
-        assert isinstance(throttle, (constants.ThrottlePresets, float)), f"Throttle must be a float or ThrottlePresets, got {type(throttle)}"
+        if not isinstance(throttle, (constants.ThrottlePresets, float)):
+            raise ValueError(f"Throttle must be a float or ThrottlePresets, got {type(throttle)}")
+
 
         # specific value -> set throttle
         if isinstance(throttle, float):
-            #/ doesn't use direction
-            assert -1 <= throttle <= 1, "Throttle must be between -1 and 1"
+            if not (-1 <= throttle <= 1):
+                raise ValueError("Throttle must be between -1 and 1")
+            
             self.servo.throttle = throttle
             return
         
         # neutral positions must be calibrated and set for present throttles
-        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
-        assert direction in [constants.up, constants.down], "Direction must be up or down for preset throttle"
-        assert throttle in constants.ThrottlePresets, "Throttle must be a valid preset"
-        assert throttle in [constants.ThrottlePresets.SLOW], "Throttle must be relatively calibrated" # only support slow speed
+        if self.lower_neutral is None or self.upper_neutral is None:
+            raise ValueError("Neutral positions not found")
+        
+        if direction not in [constants.up, constants.down]:
+            raise ValueError("Direction must be up or down for preset throttle")
+        if throttle not in constants.ThrottlePresets:
+            raise ValueError("Throttle must be a valid preset")
+        
+        # only supports slow speed for now
+        if throttle not in [constants.ThrottlePresets.SLOW]: 
+            raise ValueError("Throttle must be relatively calibrated")
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
@@ -156,9 +166,14 @@ class Motor:
         timeout: int = constants.to_position_timeout
     ) -> tuple[bool, float]:
         """Move the motor n number of counts at a specific speed"""
-        assert isinstance(n_counts, int), "Counts must be an integer"
-        assert n_counts <= constants.max_counts, "Counts must be less than max counts"
-        assert n_counts >= 0, "Counts must be greater than 0"
+        
+        # validate input
+        if isinstance(n_counts, int) == False:
+            raise ValueError("Counts must be an integer")
+        if n_counts > constants.max_counts:
+            raise ValueError("Counts must be less than max counts")
+        if n_counts < 0:
+            raise ValueError("Counts must be greater than 0")
 
         timed_out = False
 
@@ -221,8 +236,12 @@ class Motor:
     async def find_relative_throttles(self, max_cps_up: float, max_cps_down: float):
         """Find relative throttles based on global cps data (only configured for slow speed)"""
         log.info(self._clm("FRT"))
-        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
-        assert self.cps_down is not None and self.cps_up is not None, "CPS not found"
+        
+        # pre-checks
+        if self.lower_neutral is None or self.upper_neutral is None:
+            raise ValueError("Neutral positions not found")
+        if self.cps_down is None or self.cps_up is None:
+            raise ValueError("CPS not found")
 
         if self.slow_throttle_down is not None and self.slow_throttle_up is not None:
             log.info(self._clm("FRT", message="Throttles already calibrated"))
@@ -297,33 +316,34 @@ class Motor:
                 # throttle too low -> increase throttle (DOWN)
                 if down_cps < target_down_cps:
                     down_throttle += down_step
-                    log.info(self._clm("FRT", message="Increasing (DOWN)", throttle=down_throttle, down_distance=down_distance), override=True)
+                    log.info(self._clm("FRT", message="Increasing (DOWN)", throttle=down_throttle, down_distance=down_distance))
                 # throttle too high -> decrease throttle and decrease step size (DOWN)
                 else:
                     down_throttle -= down_step
-                    log.info(self._clm("FRT", message="Decreasing (DOWN)", throttle=down_throttle, down_distance=down_distance), override=True)
+                    log.info(self._clm("FRT", message="Decreasing (DOWN)", throttle=down_throttle, down_distance=down_distance))
 
             # throttle is not within error margin -> adjust throttle
             if not found_relative_up_cps(up_cps):
                 # throttle too low -> increase throttle (UP)
                 if up_cps < target_up_cps:
                     up_throttle -= up_step
-                    log.info(self._clm("FRT", message="Increasing (UP)", throttle=up_throttle, up_distance=up_distance), override=True)
+                    log.info(self._clm("FRT", message="Increasing (UP)", throttle=up_throttle, up_distance=up_distance))
                 # throttle too high -> decrease throttle and decrease step size (UP)
                 else:
                     up_throttle += up_step
-                    log.info(self._clm("FRT", message="Decreasing (UP)", throttle=up_throttle, up_distance=up_distance), override=True)
+                    log.info(self._clm("FRT", message="Decreasing (UP)", throttle=up_throttle, up_distance=up_distance))
 
         self.slow_throttle_down = down_throttle
         self.slow_throttle_up = up_throttle
-        log.success(self._clm("FRT", slow_throttle_down=self.slow_throttle_down, slow_throttle_up=self.slow_throttle_up), override=True)
+        log.success(self._clm("FRT", slow_throttle_down=self.slow_throttle_down, slow_throttle_up=self.slow_throttle_up))
 
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
         log.info(self._clm("Find CPS", message="Finding cps up and down"))
 
         # neutral positions must be calibrated and set for present throttles
-        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions not found"
+        if self.lower_neutral is None or self.upper_neutral is None:
+            raise ValueError("Neutral positions not found")
 
         if not self.is_home():
             await self.to_home()
@@ -393,7 +413,9 @@ class Motor:
                 log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions calibrated incorrectly"
+        if self.lower_neutral is None or self.upper_neutral is None:
+            raise ValueError("Neutral positions calibrated incorrectly")
+
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
     async def calibrate(self, data: SingularCalibrationData):
@@ -435,8 +457,10 @@ class Motor:
         self.encoder_feedback_disabled = True
 
         # ensure calibration was successful
-        assert self.cps_down is not None and self.cps_up is not None, "CPS incorrectly calibrated"
-        assert self.lower_neutral is not None and self.upper_neutral is not None, "Neutral positions incorrectly calibrated"
+        if self.cps_down is None or self.cps_up is None:
+            raise ValueError("CPS incorrectly calibrated")
+        if self.lower_neutral is None or self.upper_neutral is None:
+            raise ValueError("Neutral positions incorrectly calibrated")
 
     def is_home(self) -> bool:
         """Check if the motor is at the home position"""

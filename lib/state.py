@@ -98,18 +98,23 @@ class StateMachine:
         """Check current state and run appropriate state"""
         print(f"CURRENT STATE: {self.state}")
 
-        if self.state == State.IDLE:
-            await self.idle()
-        elif self.state == State.SEQUENCE:
-            await asyncio.gather(*[self.led.double_blink(0.5), self.sequence()])
-        elif self.state == State.RANDOM:
-            await asyncio.gather(*[self.led.blink(), self.random()])
-        elif self.state == State.SERVICE:
-            await asyncio.gather(*[self.led.blink(0.5), self.service()])
-        elif self.state == State.REBOOT:
-            await self.reboot()
-        else:
-            raise ValueError("Invalid state")
+        try: 
+            if self.state == State.IDLE:
+                await self.idle()
+            elif self.state == State.SEQUENCE:
+                await asyncio.gather(*[self.led.double_blink(0.5), self.sequence()])
+            elif self.state == State.RANDOM:
+                await asyncio.gather(*[self.led.blink(), self.random()])
+            elif self.state == State.SERVICE:
+                await asyncio.gather(*[self.led.blink(0.5), self.service()])
+            elif self.state == State.REBOOT:
+                await self.reboot()
+            else:
+                raise ValueError("Invalid state")
+        except Exception as e:
+            log.error(f"An error occurred, exiting process...")
+            log.error(f"State Machine Error: {e}")
+            raise Exception("State machine error")
         
     async def _charge(self):
         """Charge the system"""

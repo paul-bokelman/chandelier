@@ -162,6 +162,7 @@ class StateMachine:
         """Sequence state for running timed sequences"""
         log.info("Entering sequence state")
 
+        max_run_time = constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time
         run_time_elapsed = 0 # time elapsed since sequence started 
         sequence = Sequence() # sequence generator
         current_generator = sequence.random() # current generator for sequence
@@ -182,26 +183,23 @@ class StateMachine:
             await asyncio.sleep(2)
 
             # elapsed time is greater than max run time -> change to idle
-            if run_time_elapsed >= (constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time):
+            if run_time_elapsed >= max_run_time:
                 self._change_state(State.IDLE)
 
             # run next iteration or get new generator
             try:
                 positions, speeds = next(current_generator) # get next positions and speeds
-                max_elapsed_time = await self.mc.move_all(positions, speeds)
-                run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
+                await self.mc.move_all(positions, speeds)
             except StopIteration:
                 #/ should be abstracted to the sequence generator
                 iterations = random.randint(30, 120) # randomize number of iterations
                 current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
-
-            run_time_elapsed += 1 # increment time elapsed
-            await asyncio.sleep(1) # sleep for 1 second and return back to loop
     
     async def random(self):
         """Random state for running random sequences"""
         log.info("Entering random state", override=True)
 
+        max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence() # sequence generator
 
@@ -217,7 +215,7 @@ class StateMachine:
             await asyncio.sleep(1)
 
             # elapsed time is greater than max run time -> change to idle
-            if time.time() - elapsed_time >= (constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time):
+            if time.time() - elapsed_time >= max_run_time:
                 self._change_state(State.IDLE)
 
             # run next iteration

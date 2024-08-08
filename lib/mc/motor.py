@@ -200,13 +200,15 @@ class Motor:
             timeout: int = constants.to_position_timeout
     ) -> tuple[bool, float]:
         """Move the motor to a specific position relative to `max_counts` at a specific speed"""
-
-        log.info(self._clm("To", message=f"Target: {target}, Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
+        log.info(self._clm("To"))
 
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
         target_counts = int(target * constants.max_counts)
+
+        log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
+
         n_counts = target_counts - self.counts
 
         self.direction = constants.up if n_counts < 0 else constants.down

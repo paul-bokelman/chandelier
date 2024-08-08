@@ -148,6 +148,7 @@ class StateMachine:
                 log.info("CHARGING", override=True)
                 if time.time() - elapsed_charge_time >= constants.max_charge_time:
                     charge_state = ChargeState.CHARGED
+                    time_since_last_charge = time.time()
             
             await asyncio.sleep(1) # sleep for 1 second and return back to loop
 

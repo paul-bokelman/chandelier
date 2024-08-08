@@ -43,6 +43,8 @@ class StateMachine:
 
     def _handle_wall_switch(self, switch: int):
         """Compute new state based on wall switch state"""
+        print("Handling wall switch", switch)
+
         self.switch_state[switch] = not self.switch_state[switch]
         new_state = State.IDLE
 
@@ -61,7 +63,6 @@ class StateMachine:
         print("Checking state")
         print(self.state)
         await asyncio.sleep(1)
-
 
         # if self.state == State.IDLE:
         #     await self.idle()

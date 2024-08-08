@@ -23,15 +23,15 @@ class Sequence:
         for _ in range(iterations):
             yield self.random_iteration()
 
-    def wave_iteration(self, i: int, amplitude: float = 0.3, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> tuple[list[float], Throttle]:
+    def wave_iteration(self, i: int, amplitude: float = 0.1, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> tuple[list[float], Throttle]:
         """Generate a wave sequence for all motors"""
-        positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_active_motors)]
+        positions = [amplitude * math.sin(math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_active_motors)]
         throttles = self.default_throttles
 
         print(positions, [amplitude, frequency, i, step])
         return (positions, throttles)
         
-    def wave(self, iterations: int = 5, amplitude: float = 0.3, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
+    def wave(self, iterations: int = 5, amplitude: float = 0.1, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
         """Generate a wave sequence for all motors"""
         for i in range(iterations):
             yield self.wave_iteration(i, amplitude, translation, frequency, step)

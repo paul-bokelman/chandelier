@@ -223,3 +223,4 @@ class StateMachine:
         while True:
             # break back to main loop if state changed
             if self.state != State.SERVICE: break
+            await asyncio.sleep(0.01) # yield back to main loop

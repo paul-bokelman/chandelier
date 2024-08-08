@@ -1,15 +1,8 @@
 import asyncio
 import RPi.GPIO as GPIO
-import time
 import constants
 from lib.state import StateMachine
-from lib.mc.controller import MotorController
 from lib.utils import log
-
-def test(channel):
-    GPIO.output(constants.led_pin, GPIO.HIGH)
-    time.sleep(1)
-    GPIO.output(constants.led_pin, GPIO.LOW)
 
 def main():
     try: 
@@ -38,5 +31,9 @@ if __name__ == "__main__":
        main()
     except KeyboardInterrupt:
         log.warning("Interrupted by user")
+        GPIO.cleanup()
+        exit()
+    except Exception as e:
+        log.error(f"An error occurred: {e}")
         GPIO.cleanup()
         exit()

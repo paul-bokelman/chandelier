@@ -162,6 +162,9 @@ class Motor:
 
         timed_out = False
 
+        if direction is not None:
+            self.direction = direction
+            
         log.info(self._clm("Move", start_counts=self.counts, n_counts=n_counts, direction=self.direction, throttle=throttle))
         
         if n_counts == 0:

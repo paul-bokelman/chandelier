@@ -18,7 +18,7 @@ mimic_home = False # mimic home position, used when candles aren't present
 disabled_motors = [] # list of disabled motors
 n_active_motors = n_motors - len(disabled_motors)
 
-candles_per_charge_cycle = 1 # number of candles to charge per charge cycle
+candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
 charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
 charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
 testing_charge_cycle_time = 20 # 20 seconds

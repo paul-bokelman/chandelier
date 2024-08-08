@@ -177,6 +177,9 @@ class Motor:
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
+            if self.counts == 0:
+                log.warning(self._clm("Move", message="Motor has reached home attempting to move further", remaining=n_counts - abs(self.counts - start_counts)))
+                break
             # hasn't reached target position before timeout -> exit
             if time.time() - start_time > timeout:
                 log.error(self._clm("Move", message="Motor timed out", timeout=timeout))

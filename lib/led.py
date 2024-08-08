@@ -1,10 +1,10 @@
 import RPi.GPIO as GPIO
+import asyncio
 
 class LED:
     def __init__(self, pin):
         self.pin = pin
         self.state = False
-        self.blinking = False
         self.off()
 
     def on(self):
@@ -14,3 +14,9 @@ class LED:
     def off(self):
         self.state = False
         GPIO.output(self.pin, GPIO.LOW)
+
+    async def blink(self, duration):
+        self.on()
+        await asyncio.sleep(duration)
+        self.off()
+        

@@ -24,10 +24,10 @@ async def main():
         sm = StateMachine()
 
         # change state based on buttons and switches
-        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=test, bouncetime=300)
-        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=test, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=test, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=test, bouncetime=300)
+        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=sm._internal, bouncetime=300)
+        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=sm._internal, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=sm._internal, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=sm._internal, bouncetime=300)
 
         while True:
             time.sleep(0.3)

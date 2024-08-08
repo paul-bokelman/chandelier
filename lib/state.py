@@ -48,6 +48,9 @@ class StateMachine:
         self.led.reset()
         self.state = new_state
 
+    def _internal(self, channel):
+        print("internal", channel)
+
     def _handle_wall_switch(self, switch: int):
         """Compute new state based on wall switch state"""
         print("Handling wall switch", switch)

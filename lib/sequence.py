@@ -7,6 +7,7 @@ from lib.mc.motor import Throttle
 GeneratedSequence = Generator[tuple[list[float], Throttle], None, None] # return type for generated sequence
 
 class Sequence:
+    """Generates sequences for all motors"""
     def __init__(self):
         self.default_throttles = constants.ThrottlePresets.SLOW
         pass
@@ -35,6 +36,3 @@ class Sequence:
             positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(constants.n_active_motors)]
             throttles = self.default_throttles
             yield (positions, throttles)
-
-
-    

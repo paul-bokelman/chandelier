@@ -156,12 +156,13 @@ class Motor:
         timeout: int = constants.to_position_timeout
     ) -> tuple[bool, float]:
         """Move the motor n number of counts at a specific speed"""
+        assert isinstance(n_counts, int), "Counts must be an integer"
+        assert n_counts <= constants.max_counts, "Counts must be less than max counts"
+        assert n_counts >= 0, "Counts must be greater than 0"
+
         timed_out = False
 
-        log.info(self._clm("Move", message=f"({self.counts} -> {self.counts + n_counts}), Throttle: {throttle.name if isinstance(throttle, constants.ThrottlePresets) else throttle}"))
-        
-        if self.counts + n_counts < 0 or self.counts + n_counts > constants.max_counts:
-            raise ValueError("Counts must be between 0 and max counts")
+        log.info(self._clm("Move", n_counts=n_counts, direction=self.direction, throttle=throttle))
         
         if n_counts == 0:
             log.success(self._clm("Move", message="No counts to move"))
@@ -205,7 +206,7 @@ class Motor:
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
-        target_counts = int((target / 1) * (constants.max_counts))
+        target_counts = int(target * constants.max_counts)
         n_counts = target_counts - self.counts
 
         self.direction = constants.up if n_counts < 0 else constants.down

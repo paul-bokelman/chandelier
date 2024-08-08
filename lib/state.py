@@ -36,41 +36,31 @@ class StateMachine:
         self.mc = MotorController()
         self.switch_state = [False, False]
 
-        # # change state based on buttons and switches
-        # GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._change_state(State.SERVICE), bouncetime=300)
-        # GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._change_state(State.REBOOT), bouncetime=300)
-        # GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_wall_switch(0), bouncetime=300)
-        # GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_wall_switch(1), bouncetime=300)
-
         # change state based on buttons and switches
-        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._internal, bouncetime=300)
-        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._internal, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._internal, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._internal, bouncetime=300)
+        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_event, bouncetime=300)
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
+
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
         self.led.reset()
         self.state = new_state
 
-    def _internal(self, channel):
-        print("internal", channel)
-
-    def _handle_wall_switch(self, switch: int):
-        """Compute new state based on wall switch state"""
-        print("Handling wall switch", switch)
-
-        self.switch_state[switch] = not self.switch_state[switch]
+    def _handle_event(self, channel):
+        """Handle events from GPIO"""
         new_state = State.IDLE
 
-        if self.switch_state[0] and not self.switch_state[1]:
-            new_state = State.SEQUENCE
-        if not self.switch_state[0] and self.switch_state[1]:
+        if channel == constants.service_button_pin:
+            new_state = State.SERVICE
+        elif channel == constants.reboot_button_pin:
+            new_state = State.REBOOT
+        elif channel == constants.wall_switch_pins[0]:
             new_state = State.RANDOM
-
-        if not self.switch_state[0] and not self.switch_state[1]:
-            log.error("Invalid switch state (11) -> setting to idle")
+        elif channel == constants.wall_switch_pins[1]:
+            new_state = State.SEQUENCE
 
         self._change_state(new_state)
     

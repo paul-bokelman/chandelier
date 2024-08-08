@@ -229,6 +229,8 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
+        await self.to(0.1) # move to buffer position (avoid hitting top on up)
+
         # descent configuration
         error = 0.03 # error margin
         down_step = 0.01
@@ -260,14 +262,8 @@ class Motor:
             
             down_cps = constants.calibration_counts / down_time_elapsed # calculate cps down
 
-            up_timed_out, up_time_elapsed = False, 0.0
-
             # move back to previous position to measure up cps
-            if not constants.mimic_home:
-                up_timed_out, up_time_elapsed = await self.to_home()
-            else:
-                up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
-                self.counts = 0
+            up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
 
             # to home timed out -> exit
             if up_timed_out:
@@ -329,6 +325,8 @@ class Motor:
         if not self.is_home():
             await self.to_home()
 
+        await self.to(0.1) # move to buffer position 
+
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
             log.info(self._clm("Find CPS", message="Finding cps down"))
@@ -347,20 +345,13 @@ class Motor:
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"))
-            timed_out, time_elapsed = True, 0.0
 
-            # move to home position at slow speed
-            if not constants.mimic_home:
-                timed_out, time_elapsed = await self.to_home()
-            else:
-                timed_out, time_elapsed = await self.move(
-                    n_counts=constants.calibration_counts, 
-                    throttle=constants.ThrottlePresets.SLOW, 
-                    direction=constants.up, 
-                    timeout=constants.calibration_timeout
-                )
-
-                self.counts = 0
+            timed_out, time_elapsed = await self.move(
+                n_counts=constants.calibration_counts, 
+                throttle=constants.ThrottlePresets.SLOW, 
+                direction=constants.up, 
+                timeout=constants.calibration_timeout
+            )
 
             if timed_out:
                 log.error(self._clm("Find CPS", message="Throttle timed out moving home"))

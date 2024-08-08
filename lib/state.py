@@ -47,7 +47,6 @@ class StateMachine:
             self._change_state(State.IDLE)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
-
         log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)
 
         asyncio.run(self.mc.calibrate(reset=False)) # calibrate motors
@@ -112,13 +111,8 @@ class StateMachine:
             else:
                 raise ValueError("Invalid state")
         except Exception as e:
-            log.error(f"An error occurred, exiting process...")
-            log.error(f"State Machine Error: {e}")
+            log.error(f"An error occurred, exiting state machine")
             raise Exception("State machine error")
-        
-    async def _charge(self):
-        """Charge the system"""
-        log.info("Charging system")
         
     async def reboot(self):
         """Reboot state for rebooting the system"""

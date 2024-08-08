@@ -62,6 +62,10 @@ class Motor:
         for key, value in kwargs.items():
             message += f" | {key}: {value}"
         return message
+    
+    def _disable(self, reason: str = "Unknown"):
+        log.error(self._clm("Disable", message="Disabling motor", reason=reason))
+        self.disabled = True
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""
@@ -149,7 +153,7 @@ class Motor:
                 break
             # if the motor has timed out, stop the motor
             if current_time - start_time > constants.to_home_timeout:
-                log.error(self._clm("To Home", message="Motor timed out", timeout=constants.to_home_timeout))
+                self._disable("Motor timed out, returning home")
                 timed_out = True
                 break
             
@@ -191,17 +195,24 @@ class Motor:
 
         start_time = time.time() # track time
         start_counts = self.counts
+
+        last_encoder_time = time.time()
         
         while True:
             # check if the motor has reached the target position (have to check for abs because direction may be unknown)
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
-            # hasn't reached target position before timeout -> exit
-            if time.time() - start_time > timeout:
-                log.error(self._clm("Move", message="Motor timed out", timeout=timeout))
+            if last_encoder_time is not None and time.time() - last_encoder_time > constants.max_time_between_encoder_readings:
+                self._disable("Encoder readings too far apart")
                 timed_out = True
                 break
+            # hasn't reached target position before timeout -> exit
+            if time.time() - start_time > timeout:
+                self._disable("Motor timed out")
+                timed_out = True
+                break
+
             await asyncio.sleep(0.01) # yield control back to event
 
         time_elapsed = time.time() - start_time

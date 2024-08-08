@@ -18,7 +18,7 @@ testing_mode = True # general testing mode (uses constants prefixed with testing
 mimic_home = False # mimic home position, used when candles aren't present
 initial_disabled_motors = [] # list of disabled motors, ex: [1, 2] disables motors at index 1 and 2
 
-candles_per_charge_cycle = 3 # number of candles to charge per charge cycle
+candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
 charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
 charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
 testing_charge_cycle_time = 20 # 20 seconds

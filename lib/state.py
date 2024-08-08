@@ -212,7 +212,7 @@ class StateMachine:
         max_run_time = constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence() # sequence generator
-        current_generator = seq.alternating() # current generator for sequence
+        current_generator = seq.wave() # current generator for sequence
 
         # check if state changed every second
         while True:

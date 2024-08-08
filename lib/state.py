@@ -168,8 +168,6 @@ class StateMachine:
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:
                     active_motors = self.mc._get_active_motors()
 
-                    print(completed_cycles, self.mc.active_motors)
-
                     # all cycles complete -> all candles charged, change charge state
                     if completed_cycles * constants.candles_per_charge_cycle >= self.mc.n_active_motors:
                         charge_state = ChargeState.CHARGED

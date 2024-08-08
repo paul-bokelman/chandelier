@@ -50,10 +50,11 @@ class StateMachine:
         else:
             self._change_state(State.IDLE)
 
+        log.info(f"State machine initialized, initial state is {self.state}", override=True)
+
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
-
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
         self.led.reset()
         self.state = new_state

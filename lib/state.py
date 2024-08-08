@@ -69,18 +69,22 @@ class StateMachine:
         if channel == constants.reboot_button_pin:
             new_state = State.REBOOT
 
-        # detect random and sequence switches
-        if channel == constants.wall_switch_pins[0]:
-            if self.state == State.RANDOM: # already random -> change to idle
+        # detect switch changes
+        if channel in constants.wall_switch_pins:
+            # detect random and sequence switches
+            if channel == constants.wall_switch_pins[0]:
+                self.switch_state[0] = not self.switch_state[0]
+            if channel == constants.wall_switch_pins[1]:
+                self.switch_state[1] = not self.switch_state[1]
+            
+            # set new state based on switch state
+            if self.switch_state[0] and self.switch_state[1]:
                 new_state = State.IDLE
-            else:
+            elif self.switch_state[0]:
                 new_state = State.RANDOM
-        if channel == constants.wall_switch_pins[1]:
-            if self.state == State.SEQUENCE: # already sequence -> change to idle
-                new_state = State.IDLE
-            else:
+            elif self.switch_state[1]:
                 new_state = State.SEQUENCE
-
+            
         self._change_state(new_state)
     
     async def check(self):

@@ -166,34 +166,34 @@ class StateMachine:
 
                 # current cycle complete or hasn't started -> start new cycle
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:
-                    n_active_motors = len(self.mc._get_active_motors())
+                    active_motors = self.mc._get_active_motors()
 
                     # all cycles complete -> all candles charged, change charge state
-                    if completed_cycles > n_active_motors // constants.candles_per_charge_cycle:
+                    if completed_cycles * constants.candles_per_charge_cycle >= self.mc.n_active_motors:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
                         time_since_last_charge = time.time()
                         self._charger_off() # turn off charging power
-                        await asyncio.gather(*[motor.to(0.2) for motor in self.mc.motors if not motor.disabled]) # move all candles to past charger
+                        await asyncio.gather(*[motor.to(0.2) for motor in active_motors]) # move all candles to past charger
                         continue
                     
                     # bounds to slice motors to charge
-                    lower_bound = (completed_cycles - 1) * constants.candles_per_charge_cycle
+                    lower_bound = completed_cycles * constants.candles_per_charge_cycle
                     upper_bound = lower_bound + constants.candles_per_charge_cycle
 
                     # ensure upper bound is in range
-                    if upper_bound > n_active_motors:
-                        upper_bound = n_active_motors
+                    if upper_bound > self.mc.n_active_motors:
+                        upper_bound = self.mc.n_active_motors
 
                     # select motors to charge
-                    motors_to_charge = [m for m in self.mc.motors if not m.disabled][lower_bound:upper_bound]
+                    motors_to_charge = [m for m in active_motors][lower_bound:upper_bound]
 
                     # not first cycle -> move currently charging candles slightly past charger
-                    if completed_cycles != 1:
+                    if completed_cycles != 0:
                         prev_lower_bound = lower_bound - constants.candles_per_charge_cycle
                         prev_upper_bound = prev_lower_bound + constants.candles_per_charge_cycle
 
-                        currently_charging_motors = [m for m in self.mc.motors if not m.disabled][prev_lower_bound:prev_upper_bound]
+                        currently_charging_motors = [m for m in active_motors][prev_lower_bound:prev_upper_bound]
 
                         # move previously charging candles to past charger (stop charging)
                         await asyncio.gather(*[motor.to(0.2) for motor in currently_charging_motors])

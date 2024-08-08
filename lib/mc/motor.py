@@ -45,6 +45,11 @@ class Motor:
             return
 
         self.counts += self.direction * 1 # increment encoder count
+
+        if self.counts < 0:
+            self.counts = 0
+            self.stop()
+
         self.last_read_time = time.time()
         log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
 
@@ -81,7 +86,6 @@ class Motor:
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
-        self.direction = direction
 
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:

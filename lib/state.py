@@ -134,9 +134,6 @@ class StateMachine:
         cycle = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time
 
-        await self.mc.move_all_home() # move all home before starting
-        await self.mc.move_all(0.1) # move all slightly past charger to stage for cycles
-
         # check if state changed every second
         while True:
              # break back to main loop if state changed
@@ -155,6 +152,10 @@ class StateMachine:
                 charge_state = ChargeState.CHARGING
                 self._charger_on() # turn on charging power
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
+
+                # place candles in correct position start charging
+                await self.mc.move_all_home()
+                await self.mc.move_all(0.1) 
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:

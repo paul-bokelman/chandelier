@@ -72,7 +72,6 @@ class Motor:
         if not isinstance(throttle, (constants.ThrottlePresets, float)):
             raise ValueError(f"Throttle must be a float or ThrottlePresets, got {type(throttle)}")
 
-
         # specific value -> set throttle
         if isinstance(throttle, float):
             if not (-1 <= throttle <= 1):
@@ -196,6 +195,7 @@ class Motor:
         start_time = time.time() # track time
         start_counts = self.counts
 
+        prev_counts = self.counts
         last_encoder_time = time.time()
         
         while True:
@@ -203,6 +203,12 @@ class Motor:
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
+
+            # increment encoder reading
+            if prev_counts != self.counts:
+                prev_counts = self.counts
+                last_encoder_time = time.time()
+
             if last_encoder_time is not None and time.time() - last_encoder_time > constants.max_time_between_encoder_readings:
                 self._disable("Encoder readings too far apart")
                 timed_out = True

@@ -157,10 +157,15 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.SEQUENCE: break # break back to main loop if state changed
-            await self.led.blink(0.5)
-            await self.led.blink(0.5)
+            self.led.on()
+            await asyncio.sleep(0.5)
+            self.led.off()
+            await asyncio.sleep(0.5)
+            self.led.on()
+            await asyncio.sleep(0.5)
+            self.led.off()
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
 
             # # elapsed time is greater than max run time -> change to idle
@@ -191,7 +196,10 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.RANDOM: break # break back to main loop if state changed
-            await self.led.blink(1)
+            self.led.on()
+            await asyncio.sleep(0.5)
+            self.led.off()
+            await asyncio.sleep(1)
 
             # # elapsed time is greater than max run time -> change to idle
             # if run_time_elapsed >= constants.max_run_time:
@@ -221,4 +229,7 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.SERVICE: break # break back to main loop if state changed to idle
-            await self.led.blink(0.25)
+            self.led.on()
+            await asyncio.sleep(0.5) # sleep for 1 second and return back to loop
+            self.led.off()
+            await asyncio.sleep(0.5)

@@ -47,6 +47,7 @@ class MotorController:
 
     log.info(f"Max CPS Up: {max_cps_up} | Max CPS Down: {max_cps_down}")
 
+    log.info("Calculating relative throttles")
     # calculate all relative throttles 
     await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors if not motor.disabled])
 
@@ -105,7 +106,7 @@ class MotorController:
       raise ValueError("Speed and positions must be the same length")
     
     # move each motor to its target position simultaneously
-    tasks = await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])
+    await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])
   
   def destroy(self):
     """Destroy motor controller by stopping all motors"""

@@ -65,7 +65,7 @@ class StateMachine:
 
         # detect button presses
         if channel == constants.service_button_pin:
-            new_state = State.REBOOT
+            new_state = State.SERVICE
         if channel == constants.reboot_button_pin:
             new_state = State.REBOOT
 

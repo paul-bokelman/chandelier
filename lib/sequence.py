@@ -27,6 +27,8 @@ class Sequence:
         """Generate a wave sequence for all motors"""
         positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_active_motors)]
         throttles = self.default_throttles
+
+        print(positions, [amplitude, frequency, i, step])
         return (positions, throttles)
         
     def wave(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:

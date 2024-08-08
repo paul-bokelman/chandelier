@@ -175,7 +175,6 @@ class Motor:
         
         while True:
             # check if the motor has reached the target position (have to check for abs because direction may be unknown)
-            print(self.counts, start_counts, n_counts)
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
@@ -210,7 +209,7 @@ class Motor:
         n_counts = target_counts - self.counts
 
         self.direction = constants.up if n_counts < 0 else constants.down
-        return await self.move(n_counts, throttle, self.direction, timeout) # move to target position
+        return await self.move(abs(n_counts), throttle, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
     async def find_relative_throttles(self, max_cps_up: float, max_cps_down: float):

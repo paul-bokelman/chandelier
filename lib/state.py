@@ -187,13 +187,13 @@ class StateMachine:
                         prev_lower_bound = lower_bound - constants.candles_per_charge_cycle
                         prev_upper_bound = prev_lower_bound + constants.candles_per_charge_cycle
 
+                        currently_charging_motors = [m for m in self.mc.motors if not m.disabled][prev_lower_bound:prev_upper_bound]
+
                         # move previously charging candles to past charger (stop charging)
-                        for motor in [m for m in self.mc.motors if not m.disabled][prev_lower_bound:prev_upper_bound]:
-                            await motor.to(0.1) 
+                        await asyncio.gather(*[motor.to(0.1) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
-                    for motor in motors_to_charge:
-                        await motor.to_home() 
+                    await asyncio.gather(*[motor.to_home(0.9) for motor in motors_to_charge])
 
                     current_cycle_elapsed_time = time.time() # reset current cycle elapsed time for next iteration
 

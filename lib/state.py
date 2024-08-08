@@ -1,6 +1,7 @@
 from enum import Enum
 import random
 import asyncio
+import time
 import RPi.GPIO as GPIO
 import constants
 from lib.mc.controller import MotorController
@@ -21,6 +22,12 @@ class ChargeState(Enum):
     CHARGING = 1,
     CHARGED = 2
 
+def test(channel):
+    print("test", channel)
+    GPIO.output(constants.led_pin, GPIO.HIGH)
+    time.sleep(1)
+    GPIO.output(constants.led_pin, GPIO.LOW)
+
 class StateMachine:
     """State machine for managing states"""
     def __init__(self) -> None:
@@ -32,8 +39,8 @@ class StateMachine:
         # change state based on buttons and switches
         GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._change_state(State.SERVICE), bouncetime=300)
         GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._change_state(State.REBOOT), bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.RISING, callback=self._handle_wall_switch(0), bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.RISING, callback=self._handle_wall_switch(1), bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_wall_switch(0), bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_wall_switch(1), bouncetime=300)
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""

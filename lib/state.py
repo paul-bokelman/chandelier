@@ -108,7 +108,8 @@ class StateMachine:
         
     def _charge(self):
         """Charge the system"""
-        pass
+        log.info("Charging system")
+        GPIO.output(constants.charging_pin, GPIO.HIGH)
         
     async def reboot(self):
         """Reboot state for rebooting the system"""
@@ -132,7 +133,7 @@ class StateMachine:
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
                 log.info("CHARGED", override=True)
-                if time.time() - time_since_last_charge >= constants.charge_interval:
+                if time.time() - time_since_last_charge >= (constants.charge_interval if not constants.testing_mode else constants.testing_charge_interval):
                     charge_state = ChargeState.REQUIRES_CHARGE
                     time_since_last_charge = 0
 
@@ -141,12 +142,13 @@ class StateMachine:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
                 self._charge() # charge the system
+                GPIO.output(constants.charging_pin, GPIO.LOW)
                 elapsed_charge_time = time.time() # reset elapsed charge time
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
                 log.info("CHARGING", override=True)
-                if time.time() - elapsed_charge_time >= constants.max_charge_time:
+                if time.time() - elapsed_charge_time >= (constants.max_charge_time if not constants.testing_mode else constants.testing_max_charge_time):
                     charge_state = ChargeState.CHARGED
                     time_since_last_charge = time.time()
             

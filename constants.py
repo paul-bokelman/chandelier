@@ -5,6 +5,7 @@ encoder_pins = [14,15,18,4,26,17,27,22,19,10,9,11,13,0,5,6] # encoder pins
 wall_switch_pins = [24, 25] # 00 -> idle, 10 -> sequence, 01 -> random
 service_button_pin = 23
 reboot_button_pin = 7
+charging_pin = 12
 led_pin = 8
 up = -1
 down = 1
@@ -16,10 +17,10 @@ testing_mode = True
 disabled_motors = [0, 1]
 n_active_motors = n_motors - len(disabled_motors)
 
-# max_charge_time = 60 * 60 * 2 # 2 hours (in seconds)
-max_charge_time = 5
-# charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
-charge_interval = 20
+max_charge_time = 60 * 60 * 2 # 2 hours (in seconds)
+charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
+testing_max_charge_time = 5 # 5 seconds
+testing_charge_interval = 20 # 20 seconds
 max_run_time = 60 * 60 * 2 # 2 hours (in seconds)
 
 # throttle configuration

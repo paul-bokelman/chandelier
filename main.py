@@ -22,6 +22,8 @@ async def main():
         # sm = StateMachine()
 
         GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=test, bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=test, bouncetime=300)
+        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=test, bouncetime=300)
 
         while True:
             if not GPIO.input(constants.service_button_pin):

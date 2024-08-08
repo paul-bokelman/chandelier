@@ -134,7 +134,7 @@ class StateMachine:
         self.led.on() # solid on for idle state
         charge_state = ChargeState.REQUIRES_CHARGE
 
-        cycle = 0 # track current charge cycle
+        completed_cycles = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time
 
         # check if state changed every second
@@ -166,12 +166,10 @@ class StateMachine:
 
                 # current cycle complete or hasn't started -> start new cycle
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or cycle == 0:
-                    cycle += 1
-
                     n_active_motors = len(self.mc._get_active_motors())
 
                     # all cycles complete -> all candles charged, change charge state
-                    if cycle > n_active_motors // constants.candles_per_charge_cycle:
+                    if completed_cycles > n_active_motors // constants.candles_per_charge_cycle:
                         charge_state = ChargeState.CHARGED
                         cycle = 0
                         time_since_last_charge = time.time()
@@ -180,7 +178,7 @@ class StateMachine:
                         continue
                     
                     # bounds to slice motors to charge
-                    lower_bound = (cycle - 1) * constants.candles_per_charge_cycle
+                    lower_bound = (completed_cycles - 1) * constants.candles_per_charge_cycle
                     upper_bound = lower_bound + constants.candles_per_charge_cycle
 
                     # ensure upper bound is in range
@@ -191,7 +189,7 @@ class StateMachine:
                     motors_to_charge = [m for m in self.mc.motors if not m.disabled][lower_bound:upper_bound]
 
                     # not first cycle -> move currently charging candles slightly past charger
-                    if cycle != 1:
+                    if completed_cycles != 1:
                         prev_lower_bound = lower_bound - constants.candles_per_charge_cycle
                         prev_upper_bound = prev_lower_bound + constants.candles_per_charge_cycle
 
@@ -204,6 +202,8 @@ class StateMachine:
                     await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])
 
                     current_cycle_elapsed_time = time.time() # reset current cycle elapsed time for next iteration
+
+                    completed_cycles += 1 # increment completed cycles
 
             await asyncio.sleep(1) # sleep 1 second before next check
 

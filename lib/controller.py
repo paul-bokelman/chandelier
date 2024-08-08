@@ -97,10 +97,10 @@ class MotorController:
       raise ValueError(f"Positions must be between 0 and 1, received {positions}")  
 
     # ensure lengths are the same
-    if len(throttles) != len([motor for motor in self.motors if not motor.disabled]):
-      raise ValueError("Speed list must be the same length as the number of motors")
-    if len(positions) != len([motor for motor in self.motors if not motor.disabled]):
-      raise ValueError("Position list must be the same length as the number of motors")
+    if len(throttles) < self.n_active_motors:
+      raise ValueError("Throttle list must be the same length as or longer than the number of motors")
+    if len(positions) < self.n_active_motors:
+      raise ValueError("Position list must be the same length as or longer than the number of motors")
     if len(throttles) != len(positions):
       raise ValueError("Speed and positions must be the same length")
     

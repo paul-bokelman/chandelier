@@ -11,7 +11,6 @@ class Sequence:
     def __init__(self, n_active_motors: int = constants.n_motors) -> None:
         self.default_throttles = constants.ThrottlePresets.SLOW
         self.n_active_motors = n_active_motors
-        pass
 
     def random_iteration(self) -> tuple[list[float], Throttle]:
         """Generate a random sequence for all motors"""

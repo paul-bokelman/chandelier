@@ -254,7 +254,7 @@ class StateMachine:
             # run next iteration
             positions, speeds = seq.random_iteration()
 
-            log.info(f"Moving to positions: {positions} with speeds: {speeds}", override=True)
+            log.info(f"Moving to positions: {positions} with speeds: {speeds}")
             await self.mc.move_all(positions, speeds)
 
     async def service(self):

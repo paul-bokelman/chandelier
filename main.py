@@ -7,7 +7,9 @@ from lib.state import StateMachine
 from lib.utils import log
 
 def test(channel):
-    print("Test", channel)
+    GPIO.output(constants.led_pin, GPIO.HIGH)
+    time.sleep(1)
+    GPIO.output(constants.led_pin, GPIO.LOW)
 
 async def main():
     try: 
@@ -25,18 +27,7 @@ async def main():
         GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=test, bouncetime=300)
         GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=test, bouncetime=300)
 
-        while True:
-            if not GPIO.input(constants.service_button_pin):
-                print("Service button pressed")
-            if not GPIO.input(constants.reboot_button_pin):
-                print("Reboot button pressed")
-            if not GPIO.input(constants.wall_switch_pins[0]):
-                print("Wall switch 0 pressed")
-            if not GPIO.input(constants.wall_switch_pins[1]):
-                print("Wall switch 1 pressed")
-            GPIO.output(constants.led_pin, GPIO.HIGH)
-            time.sleep(0.5)
-            GPIO.output(constants.led_pin, GPIO.LOW)
+        while True: pass
 
         # while True:
         #     await sm.check()

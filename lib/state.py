@@ -111,7 +111,7 @@ class StateMachine:
             else:
                 raise ValueError("Invalid state")
         except Exception as e:
-            log.error(f"An error occurred, exiting state machine")
+            log.error(f"An error occurred, exiting state machine. Error: {e}")
             raise Exception("State machine error")
         
     async def reboot(self):

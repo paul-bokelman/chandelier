@@ -15,7 +15,7 @@ n_motors = 4
 debug = True
 testing_mode = True # general testing and development mode
 mimic_home = False # mimic home position, used when candles aren't present
-disabled_motors = [0, 1]
+disabled_motors = [] # list of disabled motors
 n_active_motors = n_motors - len(disabled_motors)
 
 candles_per_charge_cycle = 1 # number of candles to charge per charge cycle

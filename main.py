@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import time
 import constants
 from lib.state import StateMachine
+from lib.mc.controller import MotorController
 from lib.utils import log
 
 def test(channel):

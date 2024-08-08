@@ -11,12 +11,16 @@ class Sequence:
         self.default_throttles = constants.ThrottlePresets.SLOW
         pass
 
+    def random_iteration(self) -> tuple[list[float], Throttle]:
+        """Generate a random sequence for all motors"""
+        positions = [rand.uniform(0.5, 1) for _ in range(constants.n_motors)]
+        throttles = self.default_throttles
+        return (positions, throttles)
+
     def random(self, iterations: int = 5) -> GeneratedSequence:
         """Generate a random sequence for all motors"""
         for _ in range(iterations):
-            positions = [rand.uniform(0.5, 1) for _ in range(constants.n_motors)]
-            throttles = self.default_throttles
-            yield (positions, throttles)
+            yield self.random_iteration()
         
     def wave(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
         """Generate a wave sequence for all motors"""

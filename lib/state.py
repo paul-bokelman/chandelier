@@ -106,10 +106,9 @@ class StateMachine:
         else:
             raise ValueError("Invalid state")
         
-    def _charge(self):
+    async def _charge(self):
         """Charge the system"""
         log.info("Charging system")
-        GPIO.output(constants.charging_pin, GPIO.HIGH)
         
     async def reboot(self):
         """Reboot state for rebooting the system"""
@@ -141,16 +140,20 @@ class StateMachine:
             if charge_state == ChargeState.REQUIRES_CHARGE:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
-                self._charge() # charge the system
+                GPIO.output(constants.charging_pin, GPIO.HIGH) # turn on charging power
                 elapsed_charge_time = time.time() # reset elapsed charge time
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
                 log.info("CHARGING", override=True)
+
+                # reached max charge time -> change to charged
                 if time.time() - elapsed_charge_time >= (constants.max_charge_time if not constants.testing_mode else constants.testing_max_charge_time):
                     charge_state = ChargeState.CHARGED
                     time_since_last_charge = time.time()
-                    GPIO.output(constants.charging_pin, GPIO.LOW)
+                    GPIO.output(constants.charging_pin, GPIO.LOW) # turn off charging power
+
+                await self._charge() # activate charging
             
             await asyncio.sleep(1) # sleep for 1 second and return back to loop
 
@@ -198,9 +201,8 @@ class StateMachine:
         """Random state for running random sequences"""
         log.info("Entering random state")
 
-        run_time_elapsed = 0 # time elapsed since sequence started 
-        sequence = Sequence() # sequence generator
-        current_generator = sequence.random() # current generator for sequence
+        elapsed_time = time.time() # time elapsed since sequence started 
+        seq = Sequence() # sequence generator
 
         # check if state changed every second
         while True:
@@ -213,21 +215,12 @@ class StateMachine:
             await asyncio.sleep(1)
 
             # elapsed time is greater than max run time -> change to idle
-            if run_time_elapsed >= constants.max_run_time:
+            if time.time() - elapsed_time >= constants.max_run_time:
                 self._change_state(State.IDLE)
 
-            # run next iteration or get new generator
-            try:
-                positions, speeds = next(current_generator) # get next positions and speeds
-                max_elapsed_time = await self.mc.move_all(positions, speeds)
-                run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
-            except StopIteration:
-                #/ should be abstracted to the sequence generator
-                iterations = random.randint(30, 120) # randomize number of iterations
-                current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
-
-            run_time_elapsed += 1 # increment time elapsed
-            await asyncio.sleep(1) # sleep for 1 second and return back to loop
+            # run next iteration
+            positions, speeds = seq.random_iteration()
+            await self.mc.move_all(positions, speeds)
 
     async def service(self):
         """Service state for servicing the chandelier"""

@@ -12,7 +12,7 @@ down = 1
 
 # general configuration
 n_motors = 4
-debug = True
+debug = False
 testing_mode = True
 disabled_motors = [0, 1]
 n_active_motors = n_motors - len(disabled_motors)

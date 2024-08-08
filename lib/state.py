@@ -200,13 +200,14 @@ class StateMachine:
     
     async def random(self):
         """Random state for running random sequences"""
-        log.info("Entering random state")
+        log.info("Entering random state", override=True)
 
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence() # sequence generator
 
         # check if state changed every second
         while True:
+            log.info(f"Entering random state loop", override=True)
             if self.state != State.RANDOM: break # break back to main loop if state changed
 
             # led blink pattern (slow blink)
@@ -221,6 +222,8 @@ class StateMachine:
 
             # run next iteration
             positions, speeds = seq.random_iteration()
+
+            log.info(f"Moving to positions: {positions} with speeds: {speeds}", override=True)
             await self.mc.move_all(positions, speeds)
 
     async def service(self):

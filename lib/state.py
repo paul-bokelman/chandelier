@@ -42,6 +42,15 @@ class StateMachine:
         GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
         GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
+        # detect initial state
+        if GPIO.input(constants.wall_switch_pins[0]) == GPIO.HIGH:
+            self._change_state(State.RANDOM)
+        elif GPIO.input(constants.wall_switch_pins[1] == GPIO.HIGH):
+            self._change_state(State.SEQUENCE)
+        else:
+            self._change_state(State.IDLE)
+
+
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
 
@@ -53,14 +62,23 @@ class StateMachine:
         """Handle events from GPIO"""
         new_state = State.IDLE
 
+        # detect button presses
         if channel == constants.service_button_pin:
             new_state = State.SERVICE
-        elif channel == constants.reboot_button_pin:
+        if channel == constants.reboot_button_pin:
             new_state = State.REBOOT
-        elif channel == constants.wall_switch_pins[0]:
-            new_state = State.RANDOM
-        elif channel == constants.wall_switch_pins[1]:
-            new_state = State.SEQUENCE
+
+        # detect random and sequence switches
+        if channel == constants.wall_switch_pins[0]:
+            if self.state == State.RANDOM: # already random -> change to idle
+                new_state = State.IDLE
+            else:
+                new_state = State.RANDOM
+        if channel == constants.wall_switch_pins[1]:
+            if self.state == State.SEQUENCE: # already sequence -> change to idle
+                new_state = State.IDLE
+            else:
+                new_state = State.SEQUENCE
 
         self._change_state(new_state)
     

@@ -142,7 +142,6 @@ class StateMachine:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
                 self._charge() # charge the system
-                GPIO.output(constants.charging_pin, GPIO.LOW)
                 elapsed_charge_time = time.time() # reset elapsed charge time
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
@@ -151,6 +150,7 @@ class StateMachine:
                 if time.time() - elapsed_charge_time >= (constants.max_charge_time if not constants.testing_mode else constants.testing_max_charge_time):
                     charge_state = ChargeState.CHARGED
                     time_since_last_charge = time.time()
+                    GPIO.output(constants.charging_pin, GPIO.LOW)
             
             await asyncio.sleep(1) # sleep for 1 second and return back to loop
 

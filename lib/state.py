@@ -43,9 +43,9 @@ class StateMachine:
         GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
         # detect initial state
-        if GPIO.input(constants.wall_switch_pins[0]) == GPIO.HIGH:
+        if not GPIO.input(constants.wall_switch_pins[0]):
             self._change_state(State.RANDOM)
-        elif GPIO.input(constants.wall_switch_pins[1] == GPIO.HIGH):
+        elif not GPIO.input(constants.wall_switch_pins[1]):
             self._change_state(State.SEQUENCE)
         else:
             self._change_state(State.IDLE)

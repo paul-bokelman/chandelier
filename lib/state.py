@@ -1,10 +1,11 @@
 from enum import Enum
-import random
+import os
 import asyncio
+import random
 import time
 import RPi.GPIO as GPIO
 import constants
-from lib.mc.controller import MotorController
+from lib.controller import MotorController
 from lib.sequence import Sequence
 from lib.utils import log
 from lib.led import LED
@@ -64,7 +65,7 @@ class StateMachine:
 
         # detect button presses
         if channel == constants.service_button_pin:
-            new_state = State.SERVICE
+            new_state = State.REBOOT
         if channel == constants.reboot_button_pin:
             new_state = State.REBOOT
 
@@ -118,6 +119,8 @@ class StateMachine:
         """Reboot state for rebooting the system"""
         log.info("Entering reboot state")
         log.warning("Rebooting system")
+        GPIO.cleanup()
+        os.system('sudo reboot')
 
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""

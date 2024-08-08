@@ -1,10 +1,10 @@
 from typing import Union, Optional
-from lib.mc.motor import Throttle
+from lib.motor import Throttle
 import asyncio
 import constants
 from adafruit_servokit import ServoKit
 from lib.store import Store, CalibrationData
-from lib.mc.motor import Motor
+from lib.motor import Motor
 from lib.utils import log
 
 class MotorController:

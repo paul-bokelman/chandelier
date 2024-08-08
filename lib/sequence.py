@@ -2,7 +2,7 @@ from typing import Generator
 import random as rand
 import constants
 import math
-from lib.mc.motor import Throttle
+from lib.motor import Throttle
 
 GeneratedSequence = Generator[tuple[list[float], Throttle], None, None] # return type for generated sequence
 
@@ -22,17 +22,25 @@ class Sequence:
         """Generate a random sequence for all motors"""
         for _ in range(iterations):
             yield self.random_iteration()
+
+    def wave_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.3, frequency: float = 0.5, step: float = 0.5) -> tuple[list[float], Throttle]:
+        """Generate a wave sequence for all motors"""
+        positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_active_motors)]
+        throttles = self.default_throttles
+        return (positions, throttles)
         
     def wave(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.3, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
         """Generate a wave sequence for all motors"""
         for i in range(iterations):
-            positions = [amplitude * math.sin(2 * math.pi * frequency * i + step * j) + translation + amplitude for j in range(constants.n_active_motors)]
-            throttles = self.default_throttles
-            yield (positions, throttles)
+            yield self.wave_iteration(i, amplitude, translation, frequency, step)
+
+    def alternating_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.4) -> tuple[list[float], Throttle]:
+        """Generate an alternating sequence for all motors"""
+        positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(constants.n_active_motors)]
+        throttles = self.default_throttles
+        return (positions, throttles)
 
     def alternating(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.4) -> GeneratedSequence:
         """Generate an alternating sequence for all motors"""
         for i in range(iterations):
-            positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(constants.n_active_motors)]
-            throttles = self.default_throttles
-            yield (positions, throttles)
+            yield self.alternating_iteration(i, amplitude, translation)

@@ -165,13 +165,13 @@ class StateMachine:
                 log.info("CHARGING", override=True)
 
                 # current cycle complete or hasn't started -> start new cycle
-                if time.time() - current_cycle_elapsed_time >= charge_cycle_time or cycle == 0:
+                if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:
                     n_active_motors = len(self.mc._get_active_motors())
 
                     # all cycles complete -> all candles charged, change charge state
                     if completed_cycles > n_active_motors // constants.candles_per_charge_cycle:
                         charge_state = ChargeState.CHARGED
-                        cycle = 0
+                        completed_cycles = 0
                         time_since_last_charge = time.time()
                         self._charger_off() # turn off charging power
                         await asyncio.gather(*[motor.to(0.2) for motor in self.mc.motors if not motor.disabled]) # move all candles to past charger

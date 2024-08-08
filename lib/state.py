@@ -119,6 +119,7 @@ class StateMachine:
         """Reboot state for rebooting the system"""
         log.info("Entering reboot state")
         log.warning("Rebooting system")
+        self.mc.stop_all_motors()
         GPIO.cleanup()
         os.system('sudo reboot')
 

@@ -11,7 +11,7 @@ def test(channel):
     time.sleep(1)
     GPIO.output(constants.led_pin, GPIO.LOW)
 
-async def main():
+def main():
     try: 
         # set up GPIO
         GPIO.setmode(GPIO.BCM)
@@ -25,7 +25,7 @@ async def main():
         sm = StateMachine()
 
         while True:
-            await sm.check()
+            asyncio.run(sm.check())
 
         # while True:
         #     await sm.check()
@@ -49,7 +49,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+       main()
     except KeyboardInterrupt:
         log.warning("Interrupted by user")
         GPIO.cleanup()

@@ -54,6 +54,7 @@ class StateMachine:
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
+        asyncio.run(self.mc.calibrate(reset=False)) # calibrate motors
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""

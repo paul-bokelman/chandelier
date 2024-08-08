@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union
 from lib.motor import Throttle
 import asyncio
 import constants

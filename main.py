@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 import time
 import constants
 # from lib.mc.controller import MotorController
-from lib.state import StateMachine
+from lib.state import State, StateMachine
 from lib.utils import log
 
 def test(channel):
@@ -23,7 +23,14 @@ async def main():
 
         sm = StateMachine()
 
-        while True: pass
+        # change state based on buttons and switches
+        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=sm._change_state(State.SERVICE), bouncetime=300)
+        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=sm._change_state(State.REBOOT), bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=sm._handle_wall_switch(0), bouncetime=300)
+        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=sm._handle_wall_switch(1), bouncetime=300)
+
+        while True:
+            time.sleep(0.3)
 
         # while True:
         #     await sm.check()

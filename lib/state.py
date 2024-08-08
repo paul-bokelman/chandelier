@@ -35,13 +35,7 @@ class StateMachine:
         self.led = LED(constants.led_pin)
         self.mc = MotorController()
         self.switch_state = [False, False]
-
-        # change state based on buttons and switches
-        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._change_state(State.SERVICE), bouncetime=300)
-        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._change_state(State.REBOOT), bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=self._handle_wall_switch(0), bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.FALLING, callback=self._handle_wall_switch(1), bouncetime=300)
-
+        
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
         log.info(f"Changing state from {self.state} to {new_state}", override=True)

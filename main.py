@@ -6,6 +6,9 @@ import constants
 from lib.state import StateMachine
 from lib.utils import log
 
+def test(channel):
+    print("Test", channel)
+
 async def main():
     try: 
         # set up GPIO
@@ -17,6 +20,8 @@ async def main():
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         sm = StateMachine()
+
+        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=test, bouncetime=300)
 
         while True:
             if not GPIO.input(constants.service_button_pin):

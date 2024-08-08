@@ -24,7 +24,7 @@ async def main():
         sm = StateMachine()
 
         while True:
-            time.sleep(0.3)
+            await sm.check()
 
         # while True:
         #     await sm.check()

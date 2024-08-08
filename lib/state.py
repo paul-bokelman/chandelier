@@ -42,7 +42,7 @@ class StateMachine:
         GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
         GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
-        # detect initial state
+        # reflect initial switch state
         if not GPIO.input(constants.wall_switch_pins[0]):
             self._change_state(State.RANDOM)
         elif not GPIO.input(constants.wall_switch_pins[1]):

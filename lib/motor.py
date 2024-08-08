@@ -104,7 +104,7 @@ class Motor:
 
     async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[bool, float]:
         """Move the motor to the home position (0 count)"""
-        if constants.testing_mode:
+        if constants.mimic_home:
             log.info(self._clm("To Home", message="Mimicked home movement"))
             self.counts = 0
             return False, 0.0
@@ -263,7 +263,7 @@ class Motor:
             up_timed_out, up_time_elapsed = False, 0.0
 
             # move back to previous position to measure up cps
-            if not constants.testing_mode:
+            if not constants.mimic_home:
                 up_timed_out, up_time_elapsed = await self.to_home()
             else:
                 up_timed_out, up_time_elapsed = await self.move(n_counts=constants.calibration_counts, throttle=up_throttle, direction=constants.up, timeout=constants.calibration_timeout)
@@ -350,8 +350,8 @@ class Motor:
             timed_out, time_elapsed = True, 0.0
 
             # move to home position at slow speed
-            if not constants.testing_mode:
-                timed_out, time_elapsed = await self.to_home(throttle=constants.ThrottlePresets.SLOW)
+            if not constants.mimic_home:
+                timed_out, time_elapsed = await self.to_home()
             else:
                 timed_out, time_elapsed = await self.move(
                     n_counts=constants.calibration_counts, 

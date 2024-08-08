@@ -81,6 +81,7 @@ class Motor:
         
         # set throttle based on preset (relative to neutral)
         offset = throttle.value
+        self.direction = direction
 
         # set throttle based on direction and calibrated relative throttles (fallback to neutral if not set)
         if direction == constants.up:
@@ -176,9 +177,6 @@ class Motor:
             # check if the motor has reached the target position (have to check for abs because direction may be unknown)
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
-                break
-            if self.counts == 0:
-                log.warning(self._clm("Move", message="Motor has reached home attempting to move further", remaining=n_counts - abs(self.counts - start_counts)))
                 break
             # hasn't reached target position before timeout -> exit
             if time.time() - start_time > timeout:

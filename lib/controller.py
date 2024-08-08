@@ -65,7 +65,7 @@ class MotorController:
     self.store.save(data)
     log.success("Calibration data saved")
 
-  async def move_all(self, positions: Union[float, list[float]], throttles: Union[Throttle, list[Throttle]] = constants.ThrottlePresets.SLOW) -> float:
+  async def move_all(self, positions: Union[float, list[float]], throttles: Union[Throttle, list[Throttle]] = constants.ThrottlePresets.SLOW):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
 
     active_motors = self._get_active_motors()
@@ -106,9 +106,6 @@ class MotorController:
     
     # move each motor to its target position simultaneously
     tasks = await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])
-
-    # return max elapsed time
-    return max([task[1] for task in tasks])
   
   def destroy(self):
     """Destroy motor controller by stopping all motors"""

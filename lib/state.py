@@ -193,9 +193,11 @@ class StateMachine:
                         await asyncio.gather(*[motor.to(0.1) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
-                    await asyncio.gather(*[motor.to_home(0.9) for motor in motors_to_charge])
+                    await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])
 
                     current_cycle_elapsed_time = time.time() # reset current cycle elapsed time for next iteration
+
+            await asyncio.sleep(1) # sleep 1 second before next check
 
     async def sequence(self):
         """Sequence state for running timed sequences"""

@@ -16,9 +16,11 @@ testing_mode = True
 disabled_motors = [0, 1]
 n_active_motors = n_motors - len(disabled_motors)
 
-max_charge_time = 7200 # 2 hours
-charge_interval = 86400 * 5 # 5 days
-max_run_time = 7200 # 2 hours
+# max_charge_time = 60 * 60 * 2 # 2 hours (in seconds)
+max_charge_time = 5
+# charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
+charge_interval = 20
+max_run_time = 60 * 60 * 2 # 2 hours (in seconds)
 
 # throttle configuration
 class ThrottlePresets(Enum):

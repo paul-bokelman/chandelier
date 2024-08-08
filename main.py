@@ -2,8 +2,7 @@ import asyncio
 import RPi.GPIO as GPIO
 import time
 import constants
-# from lib.mc.controller import MotorController
-from lib.state import State, StateMachine
+from lib.state import StateMachine
 from lib.utils import log
 
 def test(channel):

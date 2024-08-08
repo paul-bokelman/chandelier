@@ -106,6 +106,10 @@ class StateMachine:
         else:
             raise ValueError("Invalid state")
         
+    def _charge(self):
+        """Charge the system"""
+        pass
+        
     async def reboot(self):
         """Reboot state for rebooting the system"""
         log.info("Entering reboot state")
@@ -114,37 +118,38 @@ class StateMachine:
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
-        self.led.on()
         charge_state = ChargeState.CHARGED
 
-        time_since_last_charge = 0 # time elapsed since last charge
-        elapsed_charge_time = 0 # time spend charging
+        time_since_last_charge = time.time() # time elapsed since last charge
+        elapsed_charge_time = time.time() # time spend charging
+
+        self.led.on() # led pattern (solid)
 
         # check if state changed every second
         while True:
             if self.state != State.IDLE: break # break back to main loop if state changed
-            await asyncio.sleep(0.5) # sleep for 1 second and return back to loop
 
-            # # state is charged -> increment time since last charge and check if requires charge
-            # if charge_state == ChargeState.CHARGED:
-            #     time_since_last_charge += 1
-            #     if time_since_last_charge >= constants.charge_interval:
-            #         charge_state = ChargeState.REQUIRES_CHARGE
-            #         time_since_last_charge = 0
+            # state is charged -> increment time since last charge and check if requires charge
+            if charge_state == ChargeState.CHARGED:
+                log.info("CHARGED", override=True)
+                if time.time() - time_since_last_charge >= constants.charge_interval:
+                    charge_state = ChargeState.REQUIRES_CHARGE
+                    time_since_last_charge = 0
 
-            # # state requires charge -> change to charging and start charging
-            # if charge_state == ChargeState.REQUIRES_CHARGE:
-            #     charge_state = ChargeState.CHARGING
-            #     # await charge() # start charging
+            # state requires charge -> change to charging and start charging
+            if charge_state == ChargeState.REQUIRES_CHARGE:
+                log.info("REQUIRES CHARGE", override=True)
+                charge_state = ChargeState.CHARGING
+                self._charge() # charge the system
+                elapsed_charge_time = time.time() # reset elapsed charge time
 
-            # # state is charging -> increment charge time and check if charged, if changed -> set to charged
-            # if charge_state == ChargeState.CHARGING:
-            #     elapsed_charge_time += 1
-            #     if elapsed_charge_time >= constants.max_charge_time:
-            #         charge_state = ChargeState.CHARGED
-            #         elapsed_charge_time = 0
+            # state is charging -> increment charge time and check if charged, if changed -> set to charged
+            if charge_state == ChargeState.CHARGING:
+                log.info("CHARGING", override=True)
+                if time.time() - elapsed_charge_time >= constants.max_charge_time:
+                    charge_state = ChargeState.CHARGED
             
-            # await asyncio.sleep(1) # sleep for 1 second and return back to loop
+            await asyncio.sleep(1) # sleep for 1 second and return back to loop
 
     async def sequence(self):
         """Sequence state for running timed sequences"""
@@ -157,6 +162,8 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.SEQUENCE: break # break back to main loop if state changed
+
+            # led blink pattern (2 fast)
             self.led.on()
             await asyncio.sleep(0.5)
             self.led.off()
@@ -167,23 +174,22 @@ class StateMachine:
 
             await asyncio.sleep(2)
 
+            # elapsed time is greater than max run time -> change to idle
+            if run_time_elapsed >= constants.max_run_time:
+                self._change_state(State.IDLE)
 
-            # # elapsed time is greater than max run time -> change to idle
-            # if run_time_elapsed >= constants.max_run_time:
-            #     self._change_state(State.IDLE)
+            # run next iteration or get new generator
+            try:
+                positions, speeds = next(current_generator) # get next positions and speeds
+                max_elapsed_time = await self.mc.move_all(positions, speeds)
+                run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
+            except StopIteration:
+                #/ should be abstracted to the sequence generator
+                iterations = random.randint(30, 120) # randomize number of iterations
+                current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
 
-            # # run next iteration or get new generator
-            # try:
-            #     positions, speeds = next(current_generator) # get next positions and speeds
-            #     max_elapsed_time = await self.mc.move_all(positions, speeds)
-            #     run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
-            # except StopIteration:
-            #     #/ should be abstracted to the sequence generator
-            #     iterations = random.randint(30, 120) # randomize number of iterations
-            #     current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
-
-            # run_time_elapsed += 1 # increment time elapsed
-            # await asyncio.sleep(1) # sleep for 1 second and return back to loop
+            run_time_elapsed += 1 # increment time elapsed
+            await asyncio.sleep(1) # sleep for 1 second and return back to loop
     
     async def random(self):
         """Random state for running random sequences"""
@@ -196,27 +202,29 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.RANDOM: break # break back to main loop if state changed
+
+            # led blink pattern (slow blink)
             self.led.on()
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)
             self.led.off()
             await asyncio.sleep(1)
 
-            # # elapsed time is greater than max run time -> change to idle
-            # if run_time_elapsed >= constants.max_run_time:
-            #     self._change_state(State.IDLE)
+            # elapsed time is greater than max run time -> change to idle
+            if run_time_elapsed >= constants.max_run_time:
+                self._change_state(State.IDLE)
 
-            # # run next iteration or get new generator
-            # try:
-            #     positions, speeds = next(current_generator) # get next positions and speeds
-            #     max_elapsed_time = await self.mc.move_all(positions, speeds)
-            #     run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
-            # except StopIteration:
-            #     #/ should be abstracted to the sequence generator
-            #     iterations = random.randint(30, 120) # randomize number of iterations
-            #     current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
+            # run next iteration or get new generator
+            try:
+                positions, speeds = next(current_generator) # get next positions and speeds
+                max_elapsed_time = await self.mc.move_all(positions, speeds)
+                run_time_elapsed += to_seconds(max_elapsed_time) # increment time elapsed to account for time taken to move
+            except StopIteration:
+                #/ should be abstracted to the sequence generator
+                iterations = random.randint(30, 120) # randomize number of iterations
+                current_generator = random.choice([sequence.wave, sequence.alternating])(iterations) # choose random sequence
 
-            # run_time_elapsed += 1 # increment time elapsed
-            # await asyncio.sleep(1) # sleep for 1 second and return back to loop
+            run_time_elapsed += 1 # increment time elapsed
+            await asyncio.sleep(1) # sleep for 1 second and return back to loop
 
     async def service(self):
         """Service state for servicing the chandelier"""
@@ -229,7 +237,9 @@ class StateMachine:
         # check if state changed every second
         while True:
             if self.state != State.SERVICE: break # break back to main loop if state changed to idle
+
+            # led blink pattern (fast blink)
             self.led.on()
-            await asyncio.sleep(0.5) # sleep for 1 second and return back to loop
+            await asyncio.sleep(0.5) 
             self.led.off()
             await asyncio.sleep(0.5)

@@ -46,10 +46,6 @@ class Motor:
 
         self.counts += self.direction * 1 # increment encoder count
 
-        if self.counts < 0:
-            self.counts = 0
-            self.stop()
-
         self.last_read_time = time.time()
         log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
 
@@ -212,7 +208,7 @@ class Motor:
         target_counts = int((target / 1) * (constants.max_counts))
         n_counts = target_counts - self.counts
 
-        self.direction = constants.down if target_counts > self.counts else constants.up
+        self.direction = constants.up if n_counts < 0 else constants.down
         return await self.move(n_counts, throttle, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #

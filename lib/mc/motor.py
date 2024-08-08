@@ -434,7 +434,7 @@ class Motor:
         if self.cps_down is None or self.cps_up is None:
             await self._find_cps()
 
-        # await self.to_home() # move back with calibrated neutral positions
+        await self.to_home() # move back with calibrated neutral positions
         
         self.encoder_feedback_disabled = True
 

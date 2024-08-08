@@ -13,6 +13,7 @@ down = 1
 # general configuration
 n_motors = 4 # number of active motors
 debug = True # show debug messages
+suppress_count_logging = True # suppress encoder count logging
 testing_mode = True # general testing mode (uses constants prefixed with testing_)
 mimic_home = False # mimic home position, used when candles aren't present
 initial_disabled_motors = [] # list of disabled motors, ex: [1, 2] disables motors at index 1 and 2

@@ -3,6 +3,7 @@ import random as rand
 import constants
 import math
 from lib.motor import Throttle
+from lib.utils import log
 
 GeneratedSequence = Generator[tuple[list[float], Throttle], None, None] # return type for generated sequence
 
@@ -27,6 +28,7 @@ class Sequence:
         """Generate a wave sequence for all motors"""
         positions = [amplitude * math.sin(math.pi * frequency * i + step * j) + translation + amplitude for j in range(self.n_active_motors)]
         throttles = self.default_throttles
+        log.info(f"Wave positions: {positions}, Params: {amplitude, frequency, i, step}")
 
         print(positions, [amplitude, frequency, i, step])
         return (positions, throttles)
@@ -39,6 +41,7 @@ class Sequence:
     def alternating_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.3) -> tuple[list[float], Throttle]:
         """Generate an alternating sequence for all motors"""
         positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(self.n_active_motors)]
+        log.info(f"Alternating positions: {positions}, Params: {amplitude, translation}")
         throttles = self.default_throttles
         return (positions, throttles)
 

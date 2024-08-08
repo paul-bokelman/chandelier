@@ -19,7 +19,7 @@ async def main():
         GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        sm = StateMachine()
+        # sm = StateMachine()
 
         GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.FALLING, callback=test, bouncetime=300)
 

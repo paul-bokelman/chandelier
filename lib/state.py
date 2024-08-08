@@ -167,6 +167,7 @@ class StateMachine:
                     # all cycles complete -> all candles charged, change charge state
                     if cycle > constants.n_active_motors // constants.candles_per_charge_cycle:
                         charge_state = ChargeState.CHARGED
+                        cycle = 0
                         time_since_last_charge = time.time()
                         self._charger_off() # turn off charging power
                         continue

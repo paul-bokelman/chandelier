@@ -1,5 +1,6 @@
 import asyncio
 import RPi.GPIO as GPIO
+import time
 import constants
 # from lib.mc.controller import MotorController
 from lib.state import StateMachine
@@ -10,15 +11,28 @@ async def main():
         # set up GPIO
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(constants.wall_switch_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         sm = StateMachine()
 
         while True:
-            await sm.check()
+            if not GPIO.input(constants.service_button_pin):
+                print("Service button pressed")
+            if not GPIO.input(constants.reboot_button_pin):
+                print("Reboot button pressed")
+            if not GPIO.input(constants.wall_switch_pins[0]):
+                print("Wall switch 0 pressed")
+            if not GPIO.input(constants.wall_switch_pins[1]):
+                print("Wall switch 1 pressed")
+            GPIO.output(constants.led_pin, GPIO.HIGH)
+            time.sleep(0.5)
+            GPIO.output(constants.led_pin, GPIO.LOW)
+
+        # while True:
+        #     await sm.check()
 
     # await sm.check()
 

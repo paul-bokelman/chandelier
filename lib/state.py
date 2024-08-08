@@ -99,7 +99,7 @@ class StateMachine:
         if self.state == State.IDLE:
             await self.idle()
         elif self.state == State.SEQUENCE:
-            await asyncio.gather(*[self.led.double_blink(), self.sequence()])
+            await asyncio.gather(*[self.led.double_blink(0.5), self.sequence()])
         elif self.state == State.RANDOM:
             await asyncio.gather(*[self.led.blink(), self.random()])
         elif self.state == State.SERVICE:
@@ -131,9 +131,7 @@ class StateMachine:
         # check if state changed every second
         while True:
              # break back to main loop if state changed
-            if self.state != State.IDLE:
-                self.led.off()
-                break
+            if self.state != State.IDLE: break
 
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
@@ -175,9 +173,7 @@ class StateMachine:
         # check if state changed every second
         while True:
              # break back to main loop if state changed
-            if self.state != State.SEQUENCE:
-                self.led.off()
-                break
+            if self.state != State.SEQUENCE: break
 
             # elapsed time is greater than max run time -> change to idle
             if time.time() - elapsed_time >= max_run_time:
@@ -203,9 +199,7 @@ class StateMachine:
         while True:
             log.info(f"Entering random state loop", override=True)
             # break back to main loop if state changed
-            if self.state != State.RANDOM: 
-                self.led.off()
-                break
+            if self.state != State.RANDOM: break
 
             # elapsed time is greater than max run time -> change to idle
             if time.time() - elapsed_time >= max_run_time:
@@ -228,6 +222,4 @@ class StateMachine:
         # check if state changed every second
         while True:
             # break back to main loop if state changed
-            if self.state != State.SERVICE: 
-                self.led.off()
-                break 
+            if self.state != State.SERVICE: break

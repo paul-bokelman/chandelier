@@ -182,7 +182,7 @@ class StateMachine:
             await asyncio.sleep(2)
 
             # elapsed time is greater than max run time -> change to idle
-            if run_time_elapsed >= constants.max_run_time:
+            if run_time_elapsed >= (constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time):
                 self._change_state(State.IDLE)
 
             # run next iteration or get new generator
@@ -217,7 +217,7 @@ class StateMachine:
             await asyncio.sleep(1)
 
             # elapsed time is greater than max run time -> change to idle
-            if time.time() - elapsed_time >= constants.max_run_time:
+            if time.time() - elapsed_time >= (constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time):
                 self._change_state(State.IDLE)
 
             # run next iteration

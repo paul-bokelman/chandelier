@@ -13,7 +13,7 @@ class Sequence:
 
     def random_iteration(self) -> tuple[list[float], Throttle]:
         """Generate a random sequence for all motors"""
-        positions = [rand.uniform(0.5, 1) for _ in range(constants.n_active_motors)]
+        positions = [rand.uniform(0.3, 0.9) for _ in range(constants.n_active_motors)]
         throttles = self.default_throttles
         return (positions, throttles)
 

@@ -366,6 +366,7 @@ class Motor:
             log.info(self._clm("Find CPS", cps_up=self.cps_up))
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
+        return self.cps_down, self.cps_up
 
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of servo motor"""

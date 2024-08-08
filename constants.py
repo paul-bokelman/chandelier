@@ -20,7 +20,7 @@ n_active_motors = n_motors - len(disabled_motors)
 max_charge_time = 60 * 60 * 2 # 2 hours (in seconds)
 charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
 testing_max_charge_time = 5 # 5 seconds
-testing_charge_interval = 20 # 20 seconds
+testing_charge_interval = 10 # 20 seconds
 max_run_time = 60 * 60 * 2 # 2 hours (in seconds)
 
 # throttle configuration

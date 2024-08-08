@@ -38,14 +38,14 @@ class Sequence:
         for i in range(iterations):
             yield self.wave_iteration(i, amplitude, translation, frequency, step)
 
-    def alternating_iteration(self, i: int, amplitude: float = 0.4, translation: float = 0.3) -> tuple[list[float], Throttle]:
+    def alternating_iteration(self, i: int, amplitude: float = 0.2, translation: float = 0.3) -> tuple[list[float], Throttle]:
         """Generate an alternating sequence for all motors"""
         positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(self.n_active_motors)]
         log.info(f"Alternating positions: {positions}, Params: {amplitude, translation}")
         throttles = self.default_throttles
         return (positions, throttles)
 
-    def alternating(self, iterations: int = 5, amplitude: float = 0.4, translation: float = 0.4) -> GeneratedSequence:
+    def alternating(self, iterations: int = 5, amplitude: float = 0.2, translation: float = 0.4) -> GeneratedSequence:
         """Generate an alternating sequence for all motors"""
         for i in range(iterations):
             yield self.alternating_iteration(i, amplitude, translation)

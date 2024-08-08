@@ -132,7 +132,7 @@ class StateMachine:
         time_since_last_charge = time.time() # time elapsed since last charge
 
         self.led.on() # solid on for idle state
-        charge_state = ChargeState.CHARGED
+        charge_state = ChargeState.REQUIRES_CHARGE
 
         cycle = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time

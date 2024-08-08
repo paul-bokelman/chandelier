@@ -230,7 +230,7 @@ class StateMachine:
 
         # run service sequence
         self._charger_off() # turn off charging
-        await self.mc.move_all(1) # move all candles all the way down
+        await self.mc.move_all(1.0) # move all candles all the way down
 
         # check if state changed every second
         while True:

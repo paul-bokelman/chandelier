@@ -221,7 +221,8 @@ class Motor:
                     break
             # hasn't reached target position before timeout -> exit
             if time.time() - start_time > timeout:
-                self._disable("Motor timed out")
+                if not ensure_enabled:
+                    self._disable("Motor timed out")
                 timed_out = True
                 break
 

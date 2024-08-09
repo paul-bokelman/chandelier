@@ -168,7 +168,8 @@ class Motor:
         n_counts: int,
         throttle: Throttle = constants.ThrottlePresets.SLOW, 
         direction: Optional[int] = None,
-        timeout: int = constants.to_position_timeout
+        timeout: int = constants.to_position_timeout,
+        ensure_enabled = False
     ) -> tuple[bool, float]:
         """Move the motor n number of counts at a specific speed"""
         
@@ -206,15 +207,18 @@ class Motor:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
 
-            # increment encoder reading
-            if prev_counts != self.counts:
-                prev_counts = self.counts
-                last_encoder_time = time.time()
 
-            if last_encoder_time is not None and time.time() - last_encoder_time > constants.max_time_between_encoder_readings:
-                self._disable("Encoder readings too far apart")
-                timed_out = True
-                break
+            # encoder has not been triggered -> motor is jammed or sensor is not working properly
+            if not ensure_enabled:
+                # increment encoder reading
+                if prev_counts != self.counts:
+                    prev_counts = self.counts
+                    last_encoder_time = time.time()
+                # encoder has not been triggered for a long time -> disable motor and exit
+                if last_encoder_time is not None and time.time() - last_encoder_time > constants.max_time_between_encoder_readings:
+                    self._disable("Encoder readings too far apart")
+                    timed_out = True
+                    break
             # hasn't reached target position before timeout -> exit
             if time.time() - start_time > timeout:
                 self._disable("Motor timed out")
@@ -420,7 +424,7 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
-            timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout)
+            timed_out, _ = await self.move(n_counts=2, throttle=current_throttle, timeout=constants.calibration_to_position_timeout, ensure_enabled=True)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:

@@ -207,7 +207,6 @@ class Motor:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
 
-
             # encoder has not been triggered -> motor is jammed or sensor is not working properly
             if not ensure_enabled:
                 # increment encoder reading
@@ -223,6 +222,8 @@ class Motor:
             if time.time() - start_time > timeout:
                 if not ensure_enabled:
                     self._disable("Motor timed out")
+                else:
+                    log.error(self._clm("Move", message="Motor timed out"))
                 timed_out = True
                 break
 

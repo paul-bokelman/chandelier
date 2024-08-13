@@ -111,6 +111,7 @@ class StateMachine:
             else:
                 raise ValueError("Invalid state")
         except Exception as e:
+            self.mc.stop_all_motors() # emergency stop
             log.error(f"An error occurred, exiting state machine. Error: {e}")
             raise Exception("State machine error")
         

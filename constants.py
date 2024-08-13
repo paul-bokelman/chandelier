@@ -21,8 +21,8 @@ initial_disabled_motors = [] # list of disabled motors, ex: [1, 2] disables moto
 candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
 charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
 charge_interval = 60 * 60 * 24 * 5 # 5 days (in seconds)
-testing_charge_cycle_time = 30 # 30 seconds
-testing_charge_interval = 60 * 5 # 5 minutes
+testing_charge_cycle_time = 10 # 10 seconds
+testing_charge_interval = 20 # 20 seconds
 
 max_random_state_time = 60 * 60 * 2 # 2 hours (in seconds)
 max_sequence_state_time = 60 * 60 * 2 # 2 hours (in seconds)

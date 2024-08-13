@@ -46,7 +46,7 @@ class StateMachine:
         else:
             self._change_state(State.IDLE)
 
-        self._change_state(State.SERVICE)
+        self._change_state(State.RANDOM)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
         log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)

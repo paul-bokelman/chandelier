@@ -1,7 +1,6 @@
 import asyncio
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
-from lib.utils import log
 
 async def emergency_stop():
     try: 
@@ -11,7 +10,7 @@ async def emergency_stop():
             kit.continuous_servo[i]._pwm_out.duty_cycle = 0
 
     except Exception as e:
-        log.error(f"An error occurred: {e}")
+        print(f"An error occurred: {e}")
     finally:
         GPIO.cleanup()
 

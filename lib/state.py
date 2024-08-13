@@ -46,6 +46,9 @@ class StateMachine:
         else:
             self._change_state(State.IDLE)
 
+
+        self._change_state(State.SERVICE)
+
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
         log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)
 
@@ -159,7 +162,7 @@ class StateMachine:
                 # place candles in correct position start charging
                 await self.mc.move_all_home()
                 await self.mc.move_all(0.2) 
-                
+
                 self._charger_on() # turn on charging power
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged

@@ -27,10 +27,10 @@ class MotorController:
     for motor in self.motors:
       motor.stop()
 
-  async def move_all_home(self):
+  async def move_all_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW):
     """Move all motors to home position"""
     active_motors = self._get_active_motors()
-    await asyncio.gather(*[motor.to_home() for motor in active_motors])
+    await asyncio.gather(*[motor.to_home(throttle) for motor in active_motors])
 
   async def calibrate(self, reset = False):
     """Find cps down and up for each motor"""

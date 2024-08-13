@@ -16,10 +16,8 @@ async def blank_test():
         GPIO.setup(constants.charging_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-
         await mc.move_all(0.9, 0.5)
         await mc.move_all_home(-0.2)
-        # await mc.move_all_home()
 
         mc.stop_all_motors()
 

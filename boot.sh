@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd /home/$1/Desktop/Chandelier
+cd /home/kevin/Desktop/Chandelier
 
 # update the code to latest
 git restore .

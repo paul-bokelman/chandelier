@@ -371,7 +371,7 @@ class Motor:
             raise ValueError("Neutral positions not found")
 
         if not self.is_home():
-            await self.to_home()
+            await self.to_home(constants.uncalibrated_home_throttle)
 
         await self.to(0.1) # move to buffer position 
 

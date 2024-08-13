@@ -91,7 +91,8 @@ class StateMachine:
     
     def _charger_on(self):
         """Turn on charging"""
-        GPIO.output(constants.charging_pin, GPIO.HIGH)
+        # GPIO.output(constants.charging_pin, GPIO.HIGH)
+        pass
     
     async def check(self):
         """Check current state and run appropriate state"""

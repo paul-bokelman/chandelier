@@ -46,11 +46,11 @@ max_time_between_encoder_readings = 6 # max time (in seconds) between encoder re
 
 calibration_to_position_timeout = 3 # max timeout for trying to move to a position during calibration
 calibration_counts = 8 # distance to move for calibration (in counts)
-calibration_timeout = 200 # max timeout for calibration
+calibration_timeout = 30 # max timeout for calibration
 calibration_speed_step = 0.01 # speed step for min speed calibration
 calibration_total_steps = 30 # total steps for min speed calibration (0.30->0)
 calibration_speed = 0.2 # speed for calibration
 
 calibrations_file_path = "calibrations.json"
 
-max_counts = 30 # max encoder counts
+max_counts = 200 # max encoder counts

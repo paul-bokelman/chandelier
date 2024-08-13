@@ -46,7 +46,6 @@ class StateMachine:
         else:
             self._change_state(State.IDLE)
 
-
         self._change_state(State.SERVICE)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)

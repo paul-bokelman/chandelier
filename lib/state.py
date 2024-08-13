@@ -154,12 +154,13 @@ class StateMachine:
             if charge_state == ChargeState.REQUIRES_CHARGE:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
-                self._charger_on() # turn on charging power
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
 
                 # place candles in correct position start charging
                 await self.mc.move_all_home()
                 await self.mc.move_all(0.2) 
+                
+                self._charger_on() # turn on charging power
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:

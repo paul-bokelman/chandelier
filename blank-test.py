@@ -17,7 +17,7 @@ async def blank_test():
 
         mc = MotorController()
 
-        await mc.move_all(0.3, 0.3)
+        await mc.move_all(0.9, 0.5)
 
         mc.stop_all_motors()
 

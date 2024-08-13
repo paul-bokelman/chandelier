@@ -53,4 +53,4 @@ calibration_speed = 0.2 # speed for calibration
 
 calibrations_file_path = "calibrations.json"
 
-max_counts = 200 # max encoder counts
+max_counts = 90 # max encoder counts

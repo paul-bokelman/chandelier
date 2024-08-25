@@ -130,6 +130,7 @@ class StateMachine:
 
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
         available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
+        max_counts = constants.max_counts if not constants.testing_mode else constants.testing_max_counts
 
         self.led.on() # solid on for idle state
         charge_state = ChargeState.CHARGED # initial charge state

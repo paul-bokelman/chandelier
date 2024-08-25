@@ -172,11 +172,13 @@ class Motor:
         ensure_enabled = False
     ) -> tuple[bool, float]:
         """Move the motor n number of counts at a specific speed"""
+
+        max_counts = constants.testing_max_counts if constants.testing_mode else constants.max_counts
         
         # validate input
         if isinstance(n_counts, int) == False:
             raise ValueError("Counts must be an integer")
-        if n_counts > constants.max_counts:
+        if n_counts > max_counts:
             raise ValueError("Counts must be less than max counts")
         if n_counts < 0:
             raise ValueError("Counts must be greater than 0")
@@ -248,7 +250,9 @@ class Motor:
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
         
-        target_counts = int(target * constants.max_counts)
+        max_counts = constants.testing_max_counts if constants.testing_mode else constants.max_counts
+        
+        target_counts = int(target * max_counts)
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
 

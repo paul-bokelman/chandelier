@@ -17,6 +17,7 @@ def main():
 
     try: 
         # set up GPIO pins
+        GPIO.cleanup() # clean up any existing GPIO pins
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(constants.encoder_pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(constants.service_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -34,7 +35,6 @@ def main():
             asyncio.run(mc.move_all_home(-0.2))
             mc.stop_all_motors()
             log.info("Blank test mode complete")
-            return
         # encoders test mode
         elif args.mode == "encoders":
             log.info("Running encoders test mode")
@@ -50,14 +50,13 @@ def main():
                 log.error(f"Disabled motors: {disabled_motors}")
             else:
                 log.info("All motors are enabled")
-            return
-
         # normal operation mode
-        sm = StateMachine()
+        else:
+            sm = StateMachine()
 
-        # run state machine forever
-        while True:
-            asyncio.run(sm.check())
+            # run state machine forever
+            while True:
+                asyncio.run(sm.check())
 
     except Exception as e:
         log.error(f"An error occurred: {e}")

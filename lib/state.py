@@ -3,6 +3,7 @@ import os
 import asyncio
 import random
 import time
+from datetime import datetime
 import RPi.GPIO as GPIO
 import constants
 from lib.controller import MotorController
@@ -128,9 +129,7 @@ class StateMachine:
         log.info("Entering idle state")
 
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
-        charge_interval = constants.charge_interval if not constants.testing_mode else constants.testing_charge_interval
-
-        time_since_last_charge = time.time() # time elapsed since last charge
+        available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
 
         self.led.on() # solid on for idle state
         charge_state = ChargeState.CHARGED # initial charge state
@@ -146,9 +145,8 @@ class StateMachine:
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
                 log.info("CHARGED", override=True)
-                if time.time() - time_since_last_charge >= charge_interval:
+                if datetime.now().time().hour in available_charging_hours:
                     charge_state = ChargeState.REQUIRES_CHARGE
-                    time_since_last_charge = time.time()
 
             # state requires charge -> change to charging and start charging
             if charge_state == ChargeState.REQUIRES_CHARGE:
@@ -174,7 +172,6 @@ class StateMachine:
                     if completed_cycles * constants.candles_per_charge_cycle >= self.mc.n_active_motors:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
-                        time_since_last_charge = time.time()
                         self._charger_off() # turn off charging power
                         await asyncio.gather(*[motor.to(6 / constants.max_counts) for motor in active_motors]) # move all candles to past charger
                         continue

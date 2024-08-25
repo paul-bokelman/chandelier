@@ -44,7 +44,7 @@ def main():
             asyncio.run(mc.move_all_home(-0.2))
             mc.stop_all_motors()
 
-            disabled_motors = [m for m in mc.motors if m.disabled]
+            disabled_motors = [m.channel for m in mc.motors if m.disabled]
 
             if len(disabled_motors) > 0:
                 log.error(f"Disabled motors: {disabled_motors}")

@@ -1,10 +1,11 @@
 import asyncio
+import argparse
 import RPi.GPIO as GPIO
 import constants
+from modes import normal, blank, encoders, auto
 from lib.state import StateMachine
 from lib.controller import MotorController
 from lib.utils import log
-import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
@@ -26,37 +27,14 @@ def main():
         GPIO.setup(constants.charging_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        # blank test mode
         if args.mode == "blank":
-            log.info("Running blank test mode")
-            mc = MotorController()
-            asyncio.run(mc.move_all_home(-0.2))
-            asyncio.run(mc.move_all(0.1, 0.5))
-            asyncio.run(mc.move_all_home(-0.2))
-            mc.stop_all_motors()
-            log.info("Blank test mode complete")
-        # encoders test mode
+            blank.blank_mode()
         elif args.mode == "encoders":
-            log.info("Running encoders test mode")
-            mc = MotorController()
-            asyncio.run(mc.move_all_home(-0.2))
-            asyncio.run(mc.move_all(0.1, 0.5))
-            asyncio.run(mc.move_all_home(-0.2))
-            mc.stop_all_motors()
-
-            disabled_motors = [m.channel for m in mc.motors if m.disabled]
-
-            if len(disabled_motors) > 0:
-                log.error(f"Disabled motors: {disabled_motors}")
-            else:
-                log.info("All motors are enabled")
-        # normal operation mode
+            encoders.encoders_mode()
+        elif args.mode == "auto":
+            auto.auto_mode()
         else:
-            sm = StateMachine()
-
-            # run state machine forever
-            while True:
-                asyncio.run(sm.check())
+            normal.normal_mode()
 
     except Exception as e:
         log.error(f"An error occurred: {e}")

@@ -25,27 +25,31 @@ class ChargeState(Enum):
 
 class StateMachine:
     """State machine for managing states"""
-    def __init__(self) -> None:
+    def __init__(self, auto = False) -> None:
         self.state = State.IDLE
         self.led = LED(constants.led_pin)
         self.mc = MotorController()
         self.switch_state = [False, False]
+        self.auto = auto # auto mode runs without switches
 
         # change state based on buttons and switches
-        GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-        GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
-        GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+        if not self.auto:
+            GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
-        # reflect initial switch state
-        if not GPIO.input(constants.wall_switch_pins[0]):
-            self.switch_state[0] = True
+            # reflect initial switch state
+            if not GPIO.input(constants.wall_switch_pins[0]):
+                self.switch_state[0] = True
+                self._change_state(State.RANDOM)
+            elif not GPIO.input(constants.wall_switch_pins[1]):
+                self.switch_state[1] = True
+                self._change_state(State.SEQUENCE)
+            else:
+                self._change_state(State.IDLE)
+        else: 
             self._change_state(State.RANDOM)
-        elif not GPIO.input(constants.wall_switch_pins[1]):
-            self.switch_state[1] = True
-            self._change_state(State.SEQUENCE)
-        else:
-            self._change_state(State.IDLE)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
         log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)
@@ -130,10 +134,9 @@ class StateMachine:
 
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
         available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
-        max_counts = constants.max_counts if not constants.testing_mode else constants.testing_max_counts
 
         self.led.on() # solid on for idle state
-        charge_state = ChargeState.CHARGED # initial charge state
+        charge_state = ChargeState.REQUIRES_CHARGE if self.auto else ChargeState.CHARGED # initial charge state (based on auto)
 
         completed_cycles = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time
@@ -146,8 +149,13 @@ class StateMachine:
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
                 log.info("CHARGED", override=True)
-                if datetime.now().time().hour in available_charging_hours:
-                    charge_state = ChargeState.REQUIRES_CHARGE
+
+                # auto mode -> switch to random after charge
+                if self.auto:
+                    self._change_state(State.RANDOM)
+                else:
+                    if datetime.now().time().hour in available_charging_hours:
+                        charge_state = ChargeState.REQUIRES_CHARGE
 
             # state requires charge -> change to charging and start charging
             if charge_state == ChargeState.REQUIRES_CHARGE:
@@ -238,6 +246,7 @@ class StateMachine:
         log.info("Entering random state", override=True)
 
         max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
+        available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence(self.mc.n_active_motors) # sequence generator
 
@@ -247,9 +256,15 @@ class StateMachine:
             # break back to main loop if state changed
             if self.state != State.RANDOM: break
 
-            # elapsed time is greater than max run time -> change to idle
-            if time.time() - elapsed_time >= max_run_time:
-                self._change_state(State.IDLE)
+            # auto mode -> switch to idle at available charging hours (to charge)
+            if self.auto:
+                # switch to idle at available charging hours
+                if datetime.now().time().hour in available_charging_hours:
+                    self._change_state(State.IDLE)
+            else:
+                # elapsed time is greater than max run time -> change to idle
+                if time.time() - elapsed_time >= max_run_time:
+                    self._change_state(State.IDLE)
 
             # run next iteration
             positions, speeds = seq.random_iteration()

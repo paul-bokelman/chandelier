@@ -20,7 +20,7 @@ initial_disabled_motors = [] # list of disabled motors, ex: [1, 2] disables moto
 
 candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
 charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
-available_charging_hours = [0, 1, 2] # charge at 12, 1 and 2 o'clock (24hr)
+available_charging_hours = [23, 0, 1, 2] # charge at 12, 1 and 2 o'clock (24hr)
 testing_charge_cycle_time = 10 # 10 seconds
 testing_available_charging_hours = [i for i in range(24)] # available charging at every hour (24hr)
 

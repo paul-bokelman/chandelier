@@ -246,7 +246,7 @@ class StateMachine:
         log.info("Entering random state", override=True)
 
         max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
-        available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
+        available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence(self.mc.n_active_motors) # sequence generator
 

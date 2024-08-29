@@ -1,10 +1,7 @@
-import asyncio
 import argparse
 import RPi.GPIO as GPIO
 import constants
 from modes import normal, blank, encoders, auto
-from lib.state import StateMachine
-from lib.controller import MotorController
 from lib.utils import log
 
 def main():

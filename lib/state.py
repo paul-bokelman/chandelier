@@ -260,8 +260,6 @@ class StateMachine:
             if self.auto:
                 # switch to idle at available charging hours
                 if datetime.now().time().hour in available_charging_hours:
-                    log.info("Switching to idle for charging", override=True)
-                    log.info(available_charging_hours, override=True)
                     self._change_state(State.IDLE)
             else:
                 # elapsed time is greater than max run time -> change to idle

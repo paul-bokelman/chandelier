@@ -14,13 +14,13 @@ down = 1
 n_motors = 4 # number of active motors
 debug = True # show debug messages
 suppress_count_logging = True # suppress encoder count logging
-testing_mode = True # general testing mode (uses constants prefixed with testing_)
+testing_mode = False # general testing mode (uses constants prefixed with testing_)
 mimic_home = False # mimic home position, used when candles aren't present
 initial_disabled_motors = [] # list of disabled motors, ex: [1, 2] disables motors at index 1 and 2
 
 candles_per_charge_cycle = 2 # number of candles to charge per charge cycle
-charge_cycle_time = 60 * 10 # 10 minutes (in seconds)
-available_charging_hours = [22] # charge at 12, 1 and 2 o'clock (24hr)
+charge_cycle_time = 60 * 15 # 10 minutes (in seconds)
+available_charging_hours = [1] # 1 o'clock (24hr)
 testing_charge_cycle_time = 10 # 10 seconds
 testing_available_charging_hours = [i for i in range(24)] # available charging at every hour (24hr)
 

@@ -67,7 +67,7 @@ class Motor:
     
     def _disable(self, reason: str = "Unknown"):
         log.error(self._clm("Disable", message="Disabling motor", reason=reason))
-        # self.disabled = True
+        self.disabled = True # todo: re-enable this
 
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""

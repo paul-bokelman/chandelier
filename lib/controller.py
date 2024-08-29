@@ -106,9 +106,6 @@ class MotorController:
       raise ValueError("Throttle list must be the same length as or longer than the number of motors")
     if len(positions) < self.n_active_motors:
       raise ValueError("Position list must be the same length as or longer than the number of motors")
-    
-    print(positions, throttles)
-    
     if len(throttles) != len(positions):
       raise ValueError("Speed and positions must be the same length")
     

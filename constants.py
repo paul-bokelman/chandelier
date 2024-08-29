@@ -11,7 +11,7 @@ up = -1
 down = 1
 
 # general configuration
-n_motors = 4 # number of active motors
+n_motors = 16 # number of active motors
 debug = True # show debug messages
 suppress_count_logging = True # suppress encoder count logging
 testing_mode = False # general testing mode (uses constants prefixed with testing_)

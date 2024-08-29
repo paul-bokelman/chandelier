@@ -80,13 +80,13 @@ class MotorController:
       if isinstance(throttles, float):
         if not (0 <= throttles <= 1):
           raise ValueError(f"Throttle must be between 0 and 1, received {throttles}")
-      throttles = [throttles] * self.n_active_motors
+      throttles = [throttles] * constants.n_motors
 
     # singular value -> convert to list of that value
     if isinstance(positions, float):
       if not (0 <= positions <= 1):
         raise ValueError(f"Position must be between 0 and 1, received {positions}")
-      positions = [positions] * self.n_active_motors
+      positions = [positions] * constants.n_motors
 
     # ensure both are lists
     if not isinstance(throttles, list):
@@ -102,9 +102,9 @@ class MotorController:
       raise ValueError(f"Positions must be between 0 and 1, received {positions}")  
 
     # ensure lengths are the same
-    if len(throttles) < self.n_active_motors:
+    if len(throttles) < constants.n_motors:
       raise ValueError("Throttle list must be the same length as or longer than the number of motors")
-    if len(positions) < self.n_active_motors:
+    if len(positions) < constants.n_motors:
       raise ValueError("Position list must be the same length as or longer than the number of motors")
     if len(throttles) != len(positions):
       raise ValueError("Speed and positions must be the same length")

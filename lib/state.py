@@ -133,7 +133,7 @@ class StateMachine:
         log.info("Entering idle state")
 
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
-        available_charging_hours = constants.available_charging_hours if not constants.testing_mode else constants.testing_available_charging_hours
+        available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
 
         self.led.on() # solid on for idle state
         charge_state = ChargeState.REQUIRES_CHARGE if self.auto else ChargeState.CHARGED # initial charge state (based on auto)

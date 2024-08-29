@@ -6,5 +6,5 @@ cd /home/kevin/Desktop/Chandelier
 git restore .
 git pull
 source ./env/bin/activate
-python ./main.py
+python ./main.py -m=auto
 # python ./blank-test.py

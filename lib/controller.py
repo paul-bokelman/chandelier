@@ -107,7 +107,8 @@ class MotorController:
     if len(positions) < self.n_active_motors:
       raise ValueError("Position list must be the same length as or longer than the number of motors")
     if len(throttles) != len(positions):
-      raise ValueError("Speed and positions must be the same length")
+      log.error(f"LEN MISMATCH: Throttles: {throttles}, Positions: {positions}")
+      # raise ValueError("Speed and positions must be the same length")
     
     # move each motor to its target position simultaneously
     await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])

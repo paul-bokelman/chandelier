@@ -1,0 +1,10 @@
+[Unit]
+Description=Update Repository on Wi-Fi Connection
+After=network-online.target
+
+[Service]
+ExecStart=/home/chandelier2/Desktop/Chandelier/boot.sh
+User=chandelier2
+
+[Install]
+WantedBy=multi-user.target

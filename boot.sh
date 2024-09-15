@@ -2,7 +2,7 @@
 
 # Check if Wi-Fi is connected
 if iwconfig 2>&1 | grep -q "ESSID:\""; then
-    cd /home/chandlier2/Desktop/Chandelier
+    cd /home/chandelier2/Desktop/Chandelier
 
     # update the code to latest
     git restore .

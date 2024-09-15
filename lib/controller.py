@@ -32,28 +32,46 @@ class MotorController:
     active_motors = self._get_active_motors()
     await asyncio.gather(*[motor.to_home(throttle) for motor in active_motors])
 
-  async def calibrate(self, reset = False):
+  async def calibrate(self, reset = False, load_values = False, update: list[int] = []):
     """Find cps down and up for each motor"""
     if reset: 
       log.info("Resetting calibration data")
       self.store.reset()
 
+    # all valid data is present -> load and exit
+    if load_values:
+      self.load_calibration_data()
+      log.success("Calibration data loaded")
+      return
+
     log.info("Calibrating motors")
+    self.load_calibration_data() # load calibration data if available
 
     active_motors = self._get_active_motors()
+    motors = active_motors if len(update) <= 0 else [motor for motor in self.motors if motor.channel in update]
+    prior_max_cps_up = max([motor.cps_up for motor in active_motors if motor.cps_up is not None]) # get max cps up
+    prior_max_cps_down = max([motor.cps_down for motor in active_motors if motor.cps_down is not None]) # get max cps down
 
-    # calibrate each motor individually simultaneously
-    await asyncio.gather(*[motor.calibrate(self.store.get_by_channel(motor.channel)) for motor in active_motors])
+    # update specific motors if valid configuration provided
+    if len(update) > 0 and self.calibration_is_valid():
+      # remove current calibration data for motors to be updated
+      for motor in motors:
+        self.store.delete(channel=motor.channel)
+
+    # recalibrate required motors
+    await asyncio.gather(*[motor.calibrate() for motor in motors])
+
     log.success("Completed individual calibrations")
     max_cps_up = max([motor.cps_up for motor in self.motors if motor.cps_up is not None]) # get max cps up
     max_cps_down = max([motor.cps_down for motor in self.motors if motor.cps_down is not None]) # get max cps down
 
     log.info(f"Max CPS Up: {max_cps_up} | Max CPS Down: {max_cps_down}")
-
     log.info("Calculating relative throttles")
 
     # calculate all relative throttles 
-    await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in active_motors])
+    if prior_max_cps_up != max_cps_up or prior_max_cps_down != max_cps_down:
+      log.warning("Max CPS values have changed. Recalibrating relative throttles")
+      await asyncio.gather(*[motor.find_relative_throttles(max_cps_up, max_cps_down) for motor in active_motors])
 
     log.success("Calibration complete")
 
@@ -69,6 +87,37 @@ class MotorController:
 
     self.store.save(data)
     log.success("Calibration data saved")
+
+  def load_calibration_data(self):
+    """Load calibration data from store"""
+    for motor in self.motors:
+        data = self.store.get_by_channel(motor.channel)
+        motor.cps_down = data["cps_down"]
+        motor.cps_up = data["cps_up"]
+        motor.lower_neutral = data["lower_neutral"]
+        motor.upper_neutral = data["upper_neutral"]
+        motor.slow_throttle_down = data["slow_throttle_down"]
+        motor.slow_throttle_up = data["slow_throttle_up"]
+
+  def calibration_is_valid(self):
+    """Check if calibration data is valid"""
+    data = self.store.load()
+
+    if data is None:
+      log.error("No calibration data found")
+      return False
+    
+    for key in data.keys():
+      # ensure all keys are present
+      if len(data[key]) != constants.n_motors:
+        log.error(f"Invalid calibration data: {key} length: {len(data[key])}")
+        return False
+      # ensure all values are floats
+      if not all(isinstance(i, float) for i in data[key]):
+        log.error(f"Invalid calibration data: {key} values")
+        return False
+      
+    return True
 
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[Throttle, list[Throttle]] = constants.ThrottlePresets.SLOW):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""

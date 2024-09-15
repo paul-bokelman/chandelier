@@ -447,29 +447,9 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
-    async def calibrate(self, data: SingularCalibrationData):
+    async def calibrate(self):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         log.info(self._clm("Calibrate", message="Calibrating Motor"))
-
-        # load calibration data if available
-        if data['cps_down'] is not None:
-            log.info(self._clm("Calibrate", message="cps down already calibrated"))
-            self.cps_down = data['cps_down']
-        if data['cps_up'] is not None:
-            log.info(self._clm("Calibrate", message="cps up already calibrated"))
-            self.cps_up = data['cps_up']
-        if data['lower_neutral'] is not None:
-            log.info(self._clm("Calibrate", message="lower neutral already calibrated"))
-            self.lower_neutral = data['lower_neutral']
-        if data['upper_neutral'] is not None:
-            log.info(self._clm("Calibrate", message="upper neutral already calibrated"))
-            self.upper_neutral = data['upper_neutral']
-        if data['slow_throttle_down'] is not None:
-            log.info(self._clm("Calibrate", message="slow throttle down already calibrated"))
-            self.slow_throttle_down = data['slow_throttle_down']
-        if data['slow_throttle_up'] is not None:
-            log.info(self._clm("Calibrate", message="slow throttle up already calibrated"))
-            self.slow_throttle_up = data['slow_throttle_up']
 
         self.encoder_feedback_disabled = False # start incrementing encoder counts
 

@@ -52,9 +52,12 @@ class StateMachine:
             self._change_state(State.RANDOM)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
-        log.info("Calibrating motors, STATES WILL BE IGNORED UNTIL CALIBRATION IS COMPLETE", override=True)
 
-        asyncio.run(self.mc.calibrate(reset=False)) # calibrate motors
+        if not self.mc.calibration_is_valid():
+            log.error("Calibration data is invalid, please recalibrate")
+            raise Exception("Invalid calibration data")
+
+        asyncio.run(self.mc.calibrate(load_values=True)) # load calibration data
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
@@ -131,6 +134,8 @@ class StateMachine:
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
+
+        await self.mc.move_all_home() # move all candles to home position
 
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
         available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours

@@ -71,20 +71,21 @@ class Store:
       f.close()
 
     self.data = data
-  
-  def get(self, mode: DataMode) -> list[Optional[float]]:
-    """Get specific calibration data from file"""
-    log.info(f"Getting calibration data from {mode.name}")
 
-    if mode not in DataMode:
-      raise ValueError("Invalid calibration mode")
-    
-    key = str(mode.name.lower())
+  def delete(self, channel: int, ) -> None:
+    """Delete calibration data for a specific motor channel"""
+    log.info(f"Deleting calibration data by channel")
+    if channel < 0 or channel >= constants.n_motors:
+      raise ValueError("Invalid motor channel")
 
-    if key not in self.data:
-      raise ValueError("Invalid calibration key")
-    
-    return self.data[key]
+    self.data["cps_down"][channel] = None
+    self.data["cps_up"][channel] = None
+    self.data["lower_neutral"][channel] = None
+    self.data["upper_neutral"][channel] = None
+    self.data["slow_throttle_down"][channel] = None
+    self.data["slow_throttle_up"][channel] = None
+
+    self.save(self.data)
   
   def get_by_channel(self, channel: int) -> SingularCalibrationData:
     """Get calibration data for a specific motor channel"""
@@ -105,3 +106,5 @@ class Store:
     """Load calibration data from file"""
     log.info(f"Loading calibration data")
     return self.data
+
+  

@@ -56,4 +56,4 @@ calibrations_file_path = "calibrations.json"
 max_counts = 90 # max encoder counts
 testing_max_counts = 30 # max encoder counts for testing
 
-modes = ["normal", "blank", "encoders", "auto"] # available modes
+modes = ["normal", "blank", "encoders", "auto", "calibration"] # available modes

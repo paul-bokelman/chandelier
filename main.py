@@ -1,7 +1,7 @@
 import argparse
 import RPi.GPIO as GPIO
 import constants
-from modes import normal, blank, encoders, auto
+from modes import normal, blank, encoders, auto, calibration
 from lib.utils import log
 
 def main():
@@ -30,6 +30,8 @@ def main():
             encoders.encoders_mode()
         elif args.mode == "auto":
             auto.auto_mode()
+        elif args.mode == "calibration":
+            calibration.calibration_mode()
         else:
             normal.normal_mode()
 

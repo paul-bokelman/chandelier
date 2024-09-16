@@ -135,8 +135,6 @@ class StateMachine:
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
 
-        await self.mc.move_all_home() # move all candles to home position
-
         charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
         available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
 
@@ -146,6 +144,8 @@ class StateMachine:
         completed_cycles = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time
 
+        returned_after_charging = False # track if candles have returned home this iteration
+
         # check if state changed every second
         while True:
              # break back to main loop if state changed
@@ -154,6 +154,10 @@ class StateMachine:
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
                 log.info("CHARGED", override=True)
+                
+                if not returned_after_charging:
+                    await self.mc.move_all_home() # move all candles to home position
+                    returned_after_charging = True
 
                 # auto mode -> switch to random after charge
                 if self.auto:
@@ -171,6 +175,8 @@ class StateMachine:
                 # place candles in correct position start charging
                 await self.mc.move_all_home()
                 await self.mc.move_all(6 / constants.max_counts) 
+
+                returned_after_charging = False # reset returned after charging
 
                 self._charger_on() # turn on charging power
 

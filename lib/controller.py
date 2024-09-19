@@ -35,7 +35,6 @@ class MotorController:
   async def calibrate(self, reset = False, load_values = False, update: list[int] = []):
     """Find cps down and up for each motor"""
     if reset: 
-      log.info("Resetting calibration data")
       self.store.reset()
 
     # all valid data is present -> load and exit
@@ -49,8 +48,8 @@ class MotorController:
 
     active_motors = self._get_active_motors()
     motors = active_motors if len(update) <= 0 else [motor for motor in self.motors if motor.channel in update]
-    prior_max_cps_up = max([motor.cps_up for motor in active_motors if motor.cps_up is not None]) # get max cps up
-    prior_max_cps_down = max([motor.cps_down for motor in active_motors if motor.cps_down is not None]) # get max cps down
+    prior_max_cps_up = max([motor.cps_up for motor in active_motors if motor.cps_up is not None]) if self.calibration_is_valid() else None
+    prior_max_cps_down = max([motor.cps_down for motor in active_motors if motor.cps_down is not None]) if self.calibration_is_valid() else None
 
     # update specific motors if valid configuration provided
     if len(update) > 0 and self.calibration_is_valid():

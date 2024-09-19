@@ -89,7 +89,7 @@ class Store:
   
   def get_by_channel(self, channel: int) -> SingularCalibrationData:
     """Get calibration data for a specific motor channel"""
-    log.info(f"Getting calibration data by channel")
+    log.info(f"Getting calibration data for channel {channel}")
     if channel < 0 or channel >= constants.n_motors:
       raise ValueError("Invalid motor channel")
 

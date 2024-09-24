@@ -296,9 +296,8 @@ class Motor:
 
         log.info(self._clm("FRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps))
 
-        found_relative_down_cps = lambda cps: abs(target_down_cps - cps) < error
-        found_relative_up_cps = lambda cps: abs(target_up_cps - cps) < error
-
+        found_relative_down_cps = lambda cps: abs(target_down_cps - cps) < error or down_step < 0.0001
+        found_relative_up_cps = lambda cps: abs(target_up_cps - cps) < error or up_step < 0.0001
 
         # move to calibration position and measure cps until within error
         while (previous_down_cps is None or not found_relative_down_cps(previous_down_cps)) or (previous_up_cps is None or not found_relative_up_cps(previous_up_cps)):

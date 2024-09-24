@@ -299,6 +299,7 @@ class Motor:
         found_relative_down_cps = lambda cps: abs(target_down_cps - cps) < error
         found_relative_up_cps = lambda cps: abs(target_up_cps - cps) < error
 
+
         # move to calibration position and measure cps until within error
         while (previous_down_cps is None or not found_relative_down_cps(previous_down_cps)) or (previous_up_cps is None or not found_relative_up_cps(previous_up_cps)):
             log.info(self._clm("FRT", message="Finding throttle", up_step=up_step, down_step=down_step))

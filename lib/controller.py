@@ -32,6 +32,7 @@ class MotorController:
     active_motors = self._get_active_motors()
     await asyncio.gather(*[motor.to_home(throttle) for motor in active_motors])
 
+  # todo: overhaul this this mess
   async def calibrate(self, reset = False, load_values = False, update: list[int] = []):
     """Find cps down and up for each motor"""
     if reset: 
@@ -87,6 +88,7 @@ class MotorController:
     self.store.save(data)
     log.success("Calibration data saved")
 
+  # todo: this should be done in the store and executed at init 
   def load_calibration_data(self):
     """Load calibration data from store"""
     for motor in self.motors:
@@ -98,6 +100,7 @@ class MotorController:
         motor.slow_throttle_down = data["slow_throttle_down"]
         motor.slow_throttle_up = data["slow_throttle_up"]
 
+  # todo: this should be validated in the store
   def calibration_is_valid(self):
     """Check if calibration data is valid"""
     data = self.store.load()
@@ -118,6 +121,7 @@ class MotorController:
       
     return True
 
+  # todo: too much error handling, most of this validation should be done in sub-procedures
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[Throttle, list[Throttle]] = constants.ThrottlePresets.SLOW):
     """Move all motors to specific positions. Positions is a list of floats from 0 to 1 representing the position of each motor (0 is home, 1 is max). Returns total elapsed time since start."""
 

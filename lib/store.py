@@ -1,18 +1,12 @@
 from typing import Optional, TypedDict
-from enum import Enum
 import os
 import json
 import constants
 from lib.utils import log
 
-class DataMode(Enum):
-  """Enum for calibration modes"""
-  CPS_DOWN = 0
-  CPS_UP = 1
-  LOWER_NEUTRAL = 2
-  UPPER_NEUTRAL = 3
-  SLOW_THROTTLE_DOWN = 4
-  SLOW_THROTTLE_UP = 5
+# todo: rename to something that makes more sense
+# todo: needs to be refactored, it's messy and inconsistent
+# todo: handle validation and error handling 
 
 class SingularCalibrationData(TypedDict):
   """Schema for singular calibration data"""

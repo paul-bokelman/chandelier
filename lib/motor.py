@@ -3,7 +3,6 @@ from adafruit_servokit import ContinuousServo
 import time
 import asyncio
 import RPi.GPIO as GPIO
-from lib.store import SingularCalibrationData
 from lib.utils import log, to_seconds
 import constants
 
@@ -39,6 +38,7 @@ class Motor:
             self.disabled = True
             log.warning(f"M{self.channel} | Motor disabled")
 
+    # todo: needs overhaul in consistency and error handling
     def _encoder_callback(self, channel: int):
         """Callback function for encoder"""
         if self.encoder_feedback_disabled:
@@ -51,6 +51,7 @@ class Motor:
         if not constants.suppress_count_logging:
             log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == constants.down else 'up'}")
 
+    # todo: completely useless rn...
     def _at_home(self):
         """Set motor home state"""
         self.encoder_feedback_disabled = True
@@ -65,10 +66,17 @@ class Motor:
             message += f" | {key}: {value}"
         return message
     
+    # todo: may need work related to motor recovery
     def _disable(self, reason: str = "Unknown"):
         log.error(self._clm("Disable", message="Disabling motor", reason=reason))
         self.disabled = True
 
+    # todo: should be private method and maybe have additional checks?
+    def is_home(self) -> bool:
+        """Check if the motor is at the home position"""
+        return self.counts == 0
+
+    # todo: needs minor cleanup
     def set(self, throttle: Throttle = constants.ThrottlePresets.SLOW, direction: Optional[int] = None):
         """Set a specific servo to a specific or set throttle and direction"""
         if not isinstance(throttle, (constants.ThrottlePresets, float)):
@@ -117,6 +125,7 @@ class Motor:
         log.info(self._clm("Stop"))
         self.servo._pwm_out.duty_cycle = 0  
 
+    # todo: requires overhaul -> use counts instead of timeouts
     async def to_home(self, throttle: Throttle = constants.ThrottlePresets.SLOW, override_initial_timeout = False) -> tuple[bool, float]:
         """Move the motor to the home position (0 count)"""
         if constants.mimic_home:
@@ -163,6 +172,7 @@ class Motor:
         self.stop()
         return timed_out, (time.time() - start_time)
     
+    # todo: move counts, needs work and cleanup
     async def move(
         self, 
         n_counts: int,
@@ -238,7 +248,8 @@ class Motor:
         self.encoder_feedback_disabled = True # stop incrementing encoder counts
         self.stop()
         return timed_out, time_elapsed
-        
+    
+    # todo: should just use move() with util conversion of position to relative counts
     async def to(
             self, target: float, 
             throttle: Throttle = constants.ThrottlePresets.SLOW, 
@@ -262,6 +273,7 @@ class Motor:
         return await self.move(abs(n_counts), throttle, self.direction, timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
+    # todo: needs overhaul -> should scale non-linearly in step sizes
     async def find_relative_throttles(self, max_cps_up: float, max_cps_down: float):
         """Find relative throttles based on global cps data (only configured for slow speed)"""
         log.info(self._clm("FRT"))
@@ -366,6 +378,7 @@ class Motor:
         self.slow_throttle_up = up_throttle
         log.success(self._clm("FRT", slow_throttle_down=self.slow_throttle_down, slow_throttle_up=self.slow_throttle_up))
 
+    # todo: calc cps with counts and not timeouts (use move())
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
         log.info(self._clm("Find CPS", message="Finding cps up and down"))
@@ -415,6 +428,7 @@ class Motor:
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
         return self.cps_down, self.cps_up
 
+    # todo: works well, just needs minor cleanup
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of servo motor"""
         log.info(self._clm("Find Neutrals", message="Finding neutral positions"))
@@ -447,6 +461,7 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
+    # todo: needs minor cleanup
     async def calibrate(self):
         """Calibrate the motor to determine lower and upper bounds of motor speed"""
         log.info(self._clm("Calibrate", message="Calibrating Motor"))
@@ -470,7 +485,3 @@ class Motor:
             raise ValueError("CPS incorrectly calibrated")
         if self.lower_neutral is None or self.upper_neutral is None:
             raise ValueError("Neutral positions incorrectly calibrated")
-
-    def is_home(self) -> bool:
-        """Check if the motor is at the home position"""
-        return self.counts == 0

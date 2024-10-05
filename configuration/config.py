@@ -6,16 +6,24 @@ class Environments(Enum):
     DEVELOPMENT = 'development'
     TESTING = 'testing'
     PRODUCTION = 'production'
+    GENERAL = 'general'
 
 ConfigurationKeys = Literal['debug']
 
-class ConfigurationSchema(TypedDict):
+# general configuration
+class GeneralConfigurationSchema(TypedDict):
+    up: int
+    down: int
+
+# environment specific configuration
+class ConfigurationSchema(GeneralConfigurationSchema):#
     debug: bool
     
 class ConfigurationFileSchema(TypedDict):
     development: ConfigurationSchema
     testing: ConfigurationSchema
     production: ConfigurationSchema
+    general: GeneralConfigurationSchema
 
 class Config:
     _instance = None
@@ -32,9 +40,11 @@ class Config:
     def load_config(self, env: Environments = Environments.DEVELOPMENT):
         with open('config.yml', 'r') as file:
             configs: ConfigurationFileSchema = yaml.safe_load(file)
-            configuration = configs.get(env.value)
-            assert configuration is not None, f"Configuration for environment {env.value} not found"
-            self.config = configuration
+            env_configuration = configs.get(env.value)
+            general_configuration = configs.get('general')
+            assert env_configuration is not None, f"Configuration for environment {env.value} not found"
+            assert general_configuration is not None, f"Gneral configuration not found"
+            self.config = env_configuration + general_configuration
 
             for key in self.config.keys():
                 assert key in ConfigurationSchema.__annotations__, f"Invalid configuration key: {key}"

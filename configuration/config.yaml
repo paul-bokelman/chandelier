@@ -1,8 +1,58 @@
-# todo: migrate constants.py to config.yaml
+# general configuration schema, applied to all environments
+general:
+  encoder_pins: [14, 15, 18, 4, 26, 17, 27, 22, 19, 10, 9, 11, 13, 0, 5, 6]
+  wall_switch_pins: [24, 25] # 00 -> idle, 10 -> sequence, 01 -> random
+  service_button_pin: 23
+  reboot_button_pin: 7
+  charging_pin: 12
+  led_pin: 8
+  up: -1
+  down: 1
+  modes: [normal, auto]
+
+# base env configuration schema
+environment_specific_config: &default_env_config # general
+  debug: true
+  max_counts: 30
+  n_motors: 16
+  suppress_count_logging: false
+  initial_disabled_motors: [] # todo: used?
+
+  # states
+  random_state_duration: 3600 # 1 hour
+  sequence_state_duration: 3600 # 1 hour
+
+  # charging
+  candles_per_charge_cycle: 2
+  charge_cycle_time: 600
+  available_charging_hours: [1] # 1 o'clock (24hr) # todo: will likely be removed (new system)
+
+  # motors
+  throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
+  uncalibrated_throttle: 0.2 # throttle to use when not calibrated
+
+  # timeouts
+  to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
+  to_position_timeout: 180 # max timeout (seconds) for trying to move to a position (disables motor if reached)
+  max_time_between_encoder_readings: 10 # max time (seconds) between encoder readings before disabling
+
+  # calibration
+  calibration_counts: 8 # distance to move for calibration (in counts)
+  calibration_speed_step: 0.01 # speed step for min speed calibration  # todo: wtf is this?
+  calibration_total_steps: 30 # total steps for min speed calibration (0.30->0) # todo: wtf is this?
+  calibration_file_path: "calibrations.json" # file to store calibration data
 
 development:
-  debug: true
+  <<: *default_env_config
+  calibration_file_path: "calibrations_dev.json" # file to store calibration data
 production:
+  <<: *default_env_config
   debug: false
+  suppress_count_logging: true
 testing:
-  debug: true
+  <<: *default_env_config
+  calibration_file_path: "calibrations_test.json" # file to store calibration data
+  random_state_duration: 60 # 1 minute
+  sequence_state_duration: 60 # 1 minute
+  charge_cycle_time: 10
+  available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]

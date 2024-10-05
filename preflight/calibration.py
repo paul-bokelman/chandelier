@@ -4,6 +4,8 @@ from lib.utils import log
 import inquirer
 import constants
 
+# todo: refactor to work as preflight module
+
 def calibration_mode():
     log.info("Running calibration mode")
 

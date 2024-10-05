@@ -30,7 +30,7 @@ class StateMachine:
         self.led = LED(constants.led_pin)
         self.mc = MotorController()
         self.switch_state = [False, False]
-        self.auto = auto # auto mode runs without switches
+        self.auto = auto # auto mode runs without switches (#todo: rework auto mode)
 
         # change state based on buttons and switches
         if not self.auto:
@@ -129,7 +129,7 @@ class StateMachine:
         log.warning("Rebooting system")
         self.mc.stop_all_motors()
         GPIO.cleanup()
-        os.system('sudo bash ./reboot.sh')
+        os.system('sudo bash ./reboot.sh') # todo: should utilize python subprocess module
 
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""
@@ -257,6 +257,7 @@ class StateMachine:
         log.info("Entering random state", override=True)
 
         max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
+        #todo: unused...?
         available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence(self.mc.n_active_motors) # sequence generator

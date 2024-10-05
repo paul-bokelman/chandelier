@@ -160,8 +160,3 @@ class MotorController:
     
     # move each motor to its target position simultaneously
     await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(active_motors, positions, throttles) ])
-  
-  def destroy(self):
-    """Destroy motor controller by stopping all motors"""
-    self.stop_all_motors()
-    self.kit._pca.deinit()

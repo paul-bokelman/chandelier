@@ -7,6 +7,8 @@ from lib.utils import log
 
 GeneratedSequence = Generator[tuple[list[float], Throttle], None, None] # return type for generated sequence
 
+# todo: sequences should always return a throttle value (should never be used without calibration)
+
 class Sequence:
     """Generates sequences for all motors"""
     def __init__(self, n_active_motors: int = constants.n_motors) -> None:

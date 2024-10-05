@@ -29,3 +29,4 @@ def to_seconds(elapsed_time: float) -> int:
     """Return seconds elapsed since start time"""
     return int(elapsed_time)
 
+# todo: convert value (0-1) to motor counts

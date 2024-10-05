@@ -1,0 +1,8 @@
+# todo: migrate constants.py to config.yaml
+
+development:
+  debug: true
+production:
+  debug: false
+testing:
+  debug: true

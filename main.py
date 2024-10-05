@@ -1,8 +1,12 @@
 import argparse
 import RPi.GPIO as GPIO
 import constants
-from modes import normal, blank, encoders, auto, calibration
+from modes import normal, auto
 from lib.utils import log
+from configuration.config import Config, Environments, config
+
+#todo: integrate command line ui for selecting mode of operation (helpers, general) and sub-modes (calibration, normal, auto, etc)
+# todo: all modes should be necessary pre-flights and (post-flights?)   
 
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
@@ -23,15 +27,14 @@ def main():
         GPIO.setup(constants.led_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.charging_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(constants.reboot_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        
+        config.__new__(Config)
+        config.load_config(env=Environments.DEVELOPMENT) # todo: change based on environment
 
-        if args.mode == "blank":
-            blank.blank_mode()
-        elif args.mode == "encoders":
-            encoders.encoders_mode()
-        elif args.mode == "auto":
+        debug: bool = config.get("debug")
+
+        if args.mode == "auto":
             auto.auto_mode()
-        elif args.mode == "calibration":
-            calibration.calibration_mode()
         else:
             normal.normal_mode()
 

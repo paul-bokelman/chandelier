@@ -11,7 +11,7 @@ general:
   modes: [normal, auto]
 
 # base env configuration schema
-environment_specific_config: &default_env_config # general
+environment_specific_config: &default_env_config
   debug: true
   max_counts: 30
   n_motors: 16
@@ -34,24 +34,25 @@ environment_specific_config: &default_env_config # general
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
   to_position_timeout: 180 # max timeout (seconds) for trying to move to a position (disables motor if reached)
+  calibration_timeout: 30 # max timeout (seconds) when calibrating
   max_time_between_encoder_readings: 10 # max time (seconds) between encoder readings before disabling
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)
   calibration_speed_step: 0.01 # speed step for min speed calibration  # todo: wtf is this?
   calibration_total_steps: 30 # total steps for min speed calibration (0.30->0) # todo: wtf is this?
-  calibration_file_path: "calibrations.json" # file to store calibration data
+  calibration_file_path: calibrations.json # file to store calibration data
 
 development:
   <<: *default_env_config
-  calibration_file_path: "calibrations_dev.json" # file to store calibration data
+  calibration_file_path: calibrations_dev.json # file to store calibration data
 production:
   <<: *default_env_config
   debug: false
   suppress_count_logging: true
 testing:
   <<: *default_env_config
-  calibration_file_path: "calibrations_test.json" # file to store calibration data
+  calibration_file_path: calibrations_test.json # file to store calibration data
   random_state_duration: 60 # 1 minute
   sequence_state_duration: 60 # 1 minute
   charge_cycle_time: 10

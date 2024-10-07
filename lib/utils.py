@@ -1,5 +1,4 @@
 from termcolor import colored
-import constants
 
 class Logger:
     """Log messages to console with color"""
@@ -7,11 +6,11 @@ class Logger:
         pass
 
     def info(self, msg, override=False):
-        if constants.debug or override:
+        if constants_old.debug or override:
             print(msg)
 
     def success(self, msg, override=False):
-        if constants.debug or override:
+        if constants_old.debug or override:
             print(colored(msg, 'green'))
 
     def error(self, msg):

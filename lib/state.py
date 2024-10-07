@@ -5,7 +5,6 @@ import random
 import time
 from datetime import datetime
 import RPi.GPIO as GPIO
-import constants
 from lib.controller import MotorController
 from lib.sequence import Sequence
 from lib.utils import log
@@ -27,23 +26,23 @@ class StateMachine:
     """State machine for managing states"""
     def __init__(self, auto = False) -> None:
         self.state = State.IDLE
-        self.led = LED(constants.led_pin)
+        self.led = LED(constants_old.led_pin)
         self.mc = MotorController()
         self.switch_state = [False, False]
         self.auto = auto # auto mode runs without switches (#todo: rework auto mode)
 
         # change state based on buttons and switches
         if not self.auto:
-            GPIO.add_event_detect(constants.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(constants.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(constants.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(constants.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants_old.service_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants_old.reboot_button_pin, GPIO.FALLING, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants_old.wall_switch_pins[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+            GPIO.add_event_detect(constants_old.wall_switch_pins[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
 
             # reflect initial switch state
-            if not GPIO.input(constants.wall_switch_pins[0]):
+            if not GPIO.input(constants_old.wall_switch_pins[0]):
                 self.switch_state[0] = True
                 self._change_state(State.RANDOM)
-            elif not GPIO.input(constants.wall_switch_pins[1]):
+            elif not GPIO.input(constants_old.wall_switch_pins[1]):
                 self.switch_state[1] = True
                 self._change_state(State.SEQUENCE)
             else:
@@ -71,17 +70,17 @@ class StateMachine:
         new_state = State.IDLE
 
         # detect button presses
-        if channel == constants.service_button_pin:
+        if channel == constants_old.service_button_pin:
             new_state = State.SERVICE
-        if channel == constants.reboot_button_pin:
+        if channel == constants_old.reboot_button_pin:
             new_state = State.REBOOT
 
         # detect switch changes
-        if channel in constants.wall_switch_pins:
+        if channel in constants_old.wall_switch_pins:
             # detect random and sequence switches
-            if channel == constants.wall_switch_pins[0]:
+            if channel == constants_old.wall_switch_pins[0]:
                 self.switch_state[0] = not self.switch_state[0]
-            if channel == constants.wall_switch_pins[1]:
+            if channel == constants_old.wall_switch_pins[1]:
                 self.switch_state[1] = not self.switch_state[1]
             # set new state based on switch state
             if self.switch_state[0] and self.switch_state[1]:
@@ -95,11 +94,11 @@ class StateMachine:
 
     def _charger_off(self):
         """Turn off charging"""
-        GPIO.output(constants.charging_pin, GPIO.LOW)
+        GPIO.output(constants_old.charging_pin, GPIO.LOW)
     
     def _charger_on(self):
         """Turn on charging"""
-        GPIO.output(constants.charging_pin, GPIO.HIGH)
+        GPIO.output(constants_old.charging_pin, GPIO.HIGH)
     
     async def check(self):
         """Check current state and run appropriate state"""
@@ -135,8 +134,8 @@ class StateMachine:
         """Idle state for charging and waiting for sequence to run"""
         log.info("Entering idle state")
 
-        charge_cycle_time = constants.charge_cycle_time if not constants.testing_mode else constants.testing_charge_cycle_time
-        available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
+        charge_cycle_time = constants_old.charge_cycle_time if not constants_old.testing_mode else constants_old.testing_charge_cycle_time
+        available_charging_hours = constants_old.testing_available_charging_hours if constants_old.testing_mode and not self.auto else constants_old.available_charging_hours
 
         self.led.on() # solid on for idle state
         charge_state = ChargeState.REQUIRES_CHARGE if self.auto else ChargeState.CHARGED # initial charge state (based on auto)
@@ -174,7 +173,7 @@ class StateMachine:
 
                 # place candles in correct position start charging
                 await self.mc.move_all_home()
-                await self.mc.move_all(6 / constants.max_counts) 
+                await self.mc.move_all(6 / constants_old.max_counts) 
 
                 returned_after_charging = False # reset returned after charging
 
@@ -189,16 +188,16 @@ class StateMachine:
                     active_motors = self.mc._get_active_motors()
 
                     # all cycles complete -> all candles charged, change charge state
-                    if completed_cycles * constants.candles_per_charge_cycle >= self.mc.n_active_motors:
+                    if completed_cycles * constants_old.candles_per_charge_cycle >= self.mc.n_active_motors:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
                         self._charger_off() # turn off charging power
-                        await asyncio.gather(*[motor.to(6 / constants.max_counts) for motor in active_motors]) # move all candles to past charger
+                        await asyncio.gather(*[motor.to(6 / constants_old.max_counts) for motor in active_motors]) # move all candles to past charger
                         continue
                     
                     # bounds to slice motors to charge
-                    lower_bound = completed_cycles * constants.candles_per_charge_cycle
-                    upper_bound = lower_bound + constants.candles_per_charge_cycle
+                    lower_bound = completed_cycles * constants_old.candles_per_charge_cycle
+                    upper_bound = lower_bound + constants_old.candles_per_charge_cycle
 
                     # ensure upper bound is in range
                     if upper_bound > self.mc.n_active_motors:
@@ -209,8 +208,8 @@ class StateMachine:
 
                     # not first cycle -> move currently charging candles slightly past charger
                     if completed_cycles != 0:
-                        prev_lower_bound = lower_bound - constants.candles_per_charge_cycle
-                        prev_upper_bound = prev_lower_bound + constants.candles_per_charge_cycle
+                        prev_lower_bound = lower_bound - constants_old.candles_per_charge_cycle
+                        prev_upper_bound = prev_lower_bound + constants_old.candles_per_charge_cycle
 
                         currently_charging_motors = [m for m in active_motors][prev_lower_bound:prev_upper_bound]
 
@@ -230,7 +229,7 @@ class StateMachine:
         """Sequence state for running timed sequences"""
         log.info("Entering sequence state")
 
-        max_run_time = constants.max_sequence_state_time if not constants.testing_mode else constants.testing_max_sequence_state_time
+        max_run_time = constants_old.max_sequence_state_time if not constants_old.testing_mode else constants_old.testing_max_sequence_state_time
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence(self.mc.n_active_motors) # sequence generator
         current_generator = seq.alternating() # current generator for sequence
@@ -256,9 +255,9 @@ class StateMachine:
         """Random state for running random sequences"""
         log.info("Entering random state", override=True)
 
-        max_run_time = constants.max_random_state_time if not constants.testing_mode else constants.testing_max_random_state_time
+        max_run_time = constants_old.max_random_state_time if not constants_old.testing_mode else constants_old.testing_max_random_state_time
         #todo: unused...?
-        available_charging_hours = constants.testing_available_charging_hours if constants.testing_mode and not self.auto else constants.available_charging_hours
+        available_charging_hours = constants_old.testing_available_charging_hours if constants_old.testing_mode and not self.auto else constants_old.available_charging_hours
         elapsed_time = time.time() # time elapsed since sequence started 
         seq = Sequence(self.mc.n_active_motors) # sequence generator
 

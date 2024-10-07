@@ -1,6 +1,5 @@
 from typing import Generator
 import random as rand
-import constants
 import math
 from lib.motor import Throttle
 from lib.utils import log
@@ -11,8 +10,8 @@ GeneratedSequence = Generator[tuple[list[float], Throttle], None, None] # return
 
 class Sequence:
     """Generates sequences for all motors"""
-    def __init__(self, n_active_motors: int = constants.n_motors) -> None:
-        self.default_throttles = constants.ThrottlePresets.SLOW
+    def __init__(self, n_active_motors: int = constants_old.n_motors) -> None:
+        self.default_throttles = constants_old.ThrottlePresets.SLOW
         self.n_active_motors = n_active_motors
 
     def random_iteration(self) -> tuple[list[float], Throttle]:

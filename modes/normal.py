@@ -2,7 +2,7 @@ import asyncio
 from lib.state import StateMachine
 from lib.utils import log
 
-def normal_mode():
+def run():
     log.info("Running normal mode")
     sm = StateMachine()
 

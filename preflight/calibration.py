@@ -2,7 +2,6 @@ import asyncio
 from lib.controller import MotorController
 from lib.utils import log
 import inquirer
-import constants
 
 # todo: refactor to work as preflight module
 
@@ -38,7 +37,7 @@ def calibration_mode():
             mc = MotorController()
             updating_motors = [int(x) for x in followup_answers["update"].replace(" ", "").split(",")]
 
-            if not all(motor in range(constants.n_motors) for motor in updating_motors):
+            if not all(motor in range(constants_old.n_motors) for motor in updating_motors):
                 log.error("Invalid motor channel")
                 return
             

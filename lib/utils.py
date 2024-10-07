@@ -1,4 +1,5 @@
 from termcolor import colored
+from configuration.config import config
 
 class Logger:
     """Log messages to console with color"""
@@ -6,11 +7,11 @@ class Logger:
         pass
 
     def info(self, msg, override=False):
-        if constants_old.debug or override:
+        if config.get('debug') or override:
             print(msg)
 
     def success(self, msg, override=False):
-        if constants_old.debug or override:
+        if config.get('debug') or override:
             print(colored(msg, 'green'))
 
     def error(self, msg):
@@ -27,5 +28,3 @@ log = Logger()
 def to_seconds(elapsed_time: float) -> int:
     """Return seconds elapsed since start time"""
     return int(elapsed_time)
-
-# todo: convert value (0-1) to motor counts

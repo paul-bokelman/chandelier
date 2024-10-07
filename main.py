@@ -1,7 +1,7 @@
 import argparse
 import RPi.GPIO as GPIO
 from configuration.config import Config, Environments, config
-from modes import normal, auto
+from modes import normal, manual
 from lib.utils import log
 
 #todo: integrate command line ui for selecting mode of operation (helpers, general) and sub-modes (calibration, normal, auto, etc)
@@ -38,7 +38,7 @@ def main():
         config.load(env=Environments[args.env.upper()]) # load configuration
 
         if args.mode == "auto":
-            auto.run()
+            manual.run()
         elif args.mode == "normal":
             normal.run()
         else:

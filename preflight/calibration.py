@@ -1,47 +1,54 @@
-import asyncio
+from typing import Union, Literal, List, get_args
 from lib.controller import MotorController
 from lib.utils import log
 import inquirer
+from configuration.config import config
 
-# todo: refactor to work as preflight module
+CalibrationOptions = Literal["default", "prompt"]
+calibration_options: List[CalibrationOptions] = list(get_args(CalibrationOptions))
 
-def calibration_mode():
-    log.info("Running calibration mode")
+async def preflight(option: CalibrationOptions = "default") -> None:
+    log.info("Running calibration preflight")
 
-    initial_questions = [
-        inquirer.Confirm("reset", message="Reset calibration data?", default=False),
-    ]
+    if option not in calibration_options:
+        raise ValueError("Invalid calibration option")
 
+    mc = MotorController()
+
+    # calibrate all motors with no resets or prompts
+    if option == 'default':
+        return await mc.calibrate()
+    
+    reset: Union[bool, list[int]] = False
+    
+    # prompt: should reset all calibration data?
+    initial_questions = [inquirer.Confirm("reset", message="Reset calibration data?", default=False)]
     initial_answers = inquirer.prompt(initial_questions)
 
+    # ensure valid input
     if initial_answers is None:
-        log.error("Invalid input")
-        return
+        raise ValueError("Invalid input")
 
     try:
+        # reset all calibration data
         if initial_answers["reset"]:
-            log.warning("Resetting calibration data")
-            mc = MotorController()
-            asyncio.run(mc.calibrate(reset=True))
+            reset = True
         else:
-            followup_questions = [
-                inquirer.Text("update", message="Calibrate individual motors? (Enter comma separated list)", default="")
-            ]
-
+            # prompt: reset individual motors?
+            followup_questions = [inquirer.Text("reset", message="Reset individual motors? (Enter comma separated list)", default="")]
             followup_answers = inquirer.prompt(followup_questions)
-
+            
+            # ensure valid input
             if followup_answers is None:
-                log.error("Invalid input")
-                return
+                raise ValueError("Invalid input")
 
             mc = MotorController()
-            updating_motors = [int(x) for x in followup_answers["update"].replace(" ", "").split(",")]
+            reset = [int(x) for x in followup_answers["reset"].replace(" ", "").split(",")]
 
-            if not all(motor in range(constants_old.n_motors) for motor in updating_motors):
-                log.error("Invalid motor channel")
-                return
-            
-            asyncio.run(mc.calibrate(update=updating_motors))
+            if not all(motor in range(config.get('n_motors')) for motor in reset):
+                raise ValueError("Invalid motor channel")
+
+        return await mc.calibrate(reset) # calibrate motors
     except Exception as e:
         log.error(f"An error occurred: {e}")
     finally:

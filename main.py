@@ -2,17 +2,17 @@ import argparse
 import asyncio
 import RPi.GPIO as GPIO
 from configuration.config import Config, Environments, config
-from modes import normal, manual
+from modes import normal, manual, scripts, testing
 from preflight import calibration
 from lib.utils import log
 
-#todo: integrate command line ui for selecting mode of operation (helpers, general) and sub-modes (calibration, normal, auto, etc)
+# todo: integrate command line ui for selecting mode of operation (helpers, general) and sub-modes (calibration, normal, auto, etc)
 # todo: all modes should be necessary pre-flights and (post-flights?)   
 
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
     parser.add_argument("-e", "--env", help="Select an environment", type=str, default='development') # development, testing, production
-    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual
+    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts, testing
     parser.add_argument("-c", "--calibration", help="Select calibration option", type=str, default='default') # default, prompt 
     args = parser.parse_args()
 
@@ -54,6 +54,10 @@ def main():
             manual.run()
         elif args.mode == "normal":
             normal.run()
+        elif args.mode == "scripts":
+            scripts.run()
+        elif args.mode == "testing":
+            testing.run()
         else:
             log.error(f"Invalid mode: {args.mode}")
 

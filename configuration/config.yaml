@@ -8,7 +8,7 @@ general:
   led_pin: 8
   up: -1
   down: 1
-  modes: [normal, manual]
+  modes: [normal, manual, scripts, testing]
 
 # base env configuration schema
 environment_specific_config: &default_env_config

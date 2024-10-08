@@ -1,11 +1,11 @@
 from enum import Enum
 import os
-import asyncio
-import random
 import time
+import random
 from datetime import datetime
-import RPi.GPIO as GPIO
+import asyncio
 import keyboard
+import RPi.GPIO as GPIO
 from configuration.config import config
 from lib.controller import MotorController
 from lib.sequence import Sequence

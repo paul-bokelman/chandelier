@@ -1,9 +1,9 @@
 from typing import Optional
 from store import SingularCalibrationData
-from adafruit_servokit import ContinuousServo
 import time
 import asyncio
 import RPi.GPIO as GPIO
+from adafruit_servokit import ContinuousServo
 from lib.utils import log
 from configuration.config import config
 

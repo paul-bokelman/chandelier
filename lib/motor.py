@@ -1,5 +1,4 @@
 from typing import Optional
-from lib.store import SingularCalibrationData
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo
@@ -515,19 +514,3 @@ class Motor:
             await self._find_cps()
 
         await self.to_home() # move back to home position for next calibration
-    
-    def get_calibration_data(self) -> SingularCalibrationData:
-        """
-        Get calibration data for this motor
-
-        Returns:
-            SingularCalibrationData: calibration data for this motor
-        """
-        return {
-            "cps_down": self.cps_down,
-            "cps_up": self.cps_up,
-            "lower_neutral": self.lower_neutral,
-            "upper_neutral": self.upper_neutral,
-            "throttle_down": self.throttle_down,
-            "throttle_up": self.throttle_up
-        }

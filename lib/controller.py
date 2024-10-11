@@ -2,7 +2,7 @@ from typing import Union, Optional
 import asyncio
 from adafruit_servokit import ServoKit
 from configuration.config import config
-from lib.store import CalibrationStore
+from lib.store import CalibrationStore, SingularCalibrationData
 from lib.motor import Motor
 from lib.utils import log
 
@@ -25,7 +25,6 @@ class MotorController:
     
     Parameters:
       throttle (Optional[float]): Throttle value for all motors
-    
     """
     await asyncio.gather(*[motor.to_home(throttle) for motor in self.motors])
 
@@ -105,7 +104,16 @@ class MotorController:
 
     # update all calibration data in store
     for motor in self.motors:
-      self.store.update_data(motor.channel, motor.get_calibration_data())
+      data: SingularCalibrationData = {
+        "cps_down": motor.cps_down,
+        "cps_up": motor.cps_up,
+        "lower_neutral": motor.lower_neutral,
+        "upper_neutral": motor.upper_neutral,
+        "throttle_down": motor.throttle_down,
+        "throttle_up": motor.throttle_up
+      }
+
+      self.store.update_data(motor.channel, data)
 
     log.info("Calibration data saved")
     log.success("Calibration complete")

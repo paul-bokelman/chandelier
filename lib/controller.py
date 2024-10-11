@@ -12,7 +12,7 @@ class MotorController:
     self.debug = debug
     self.store = CalibrationStore()
     self.kit = ServoKit(channels=16)
-    self.motors = [Motor(i,self.kit.continuous_servo[i]) for i in range(config.get('n_motors'))]
+    self.motors: list[Motor] = [Motor(i,self.kit.continuous_servo[i]) for i in range(config.get('n_motors'))]
 
   def stop_all_motors(self):
     """Stop all motors by calling stop_motor for each motor"""
@@ -57,9 +57,9 @@ class MotorController:
       raise ValueError("Throttles must be the same length as the number of motors")
     if len(positions) != len(self.motors):
       raise ValueError("Positions must be the same length as the number of motors")
-    
+
     # move each motor to its target position simultaneously
-    await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(self.motors, positions, throttles) ])
+    await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(self.motors, positions, throttles)])
 
   def load_calibration_data(self):
     """Load calibration data from store. This method is used when store is externally validated."""
@@ -77,12 +77,12 @@ class MotorController:
     if isinstance(reset, bool) and reset: 
       self.store.reset()
 
-    self.store.load(self.motors) # load calibration data into motors
-
     # reset calibration data for specific motors
     if isinstance(reset, list):
       for channel in reset:
         self.store.reset_entry(channel)
+
+    self.store.load(self.motors) # load calibration data into motors
 
     log.info("Calibrating motors...")
 

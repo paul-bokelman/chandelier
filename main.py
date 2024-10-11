@@ -1,20 +1,22 @@
 import argparse
 import asyncio
-import RPi.GPIO as GPIO
 from configuration.config import Config, Environments, config
 from modes import normal, manual, scripts, testing
 from preflight import calibration
 from lib.utils import log
 
-# todo: integrate command line ui for selecting mode of operation (helpers, general) and sub-modes (calibration, normal, auto, etc)
-# todo: all modes should be necessary pre-flights and (post-flights?)   
+# import GPIO library
+try:
+    import RPi.GPIO as GPIO # type: ignore
+except ImportError:
+    import Mock.GPIO as GPIO
 
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
     parser.add_argument("-e", "--env", help="Select an environment", type=str, default='development') # development, testing, production
     parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts, testing
     parser.add_argument("-c", "--calibration", help="Select calibration option", type=str, default='default') # default, prompt 
-    args = parser.parse_args()
+    args= parser.parse_args()
 
     # validate mode arg
     available_modes = config.get("modes")
@@ -29,7 +31,7 @@ def main():
     # validate calibration arg
     available_calibration_options = calibration.calibration_options
     if args.calibration not in available_calibration_options:
-        raise ValueError(f"Invalid calibration option: {args.preflight}, available calibration options: {available_calibration_options}")
+        raise ValueError(f"Invalid calibration option: {args.calibration}, available calibration options: {available_calibration_options}")
 
 
     try: 

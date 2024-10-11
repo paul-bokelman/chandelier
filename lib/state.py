@@ -5,12 +5,16 @@ import random
 from datetime import datetime
 import asyncio
 import keyboard
-import RPi.GPIO as GPIO
 from configuration.config import config
 from lib.controller import MotorController
 from lib.sequence import Sequence
 from lib.led import LED
 from lib.utils import log
+
+try:
+    import RPi.GPIO as GPIO # type: ignore
+except ImportError:
+    import Mock.GPIO as GPIO
 
 class State(Enum):
     IDLE = 0

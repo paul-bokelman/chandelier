@@ -3,7 +3,7 @@ Description=Update Repository on Wi-Fi Connection
 After=network-online.target
 
 [Service]
-ExecStart=sudo nano /home/chandelier2/Desktop/Chandelier/boot.sh
+ExecStart=sudo bash /home/chandelier2/Desktop/Chandelier/boot.sh
 User=chandelier2
 
 [Install]

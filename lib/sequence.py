@@ -32,7 +32,6 @@ class Sequence:
         throttles = self.default_throttles
         log.info(f"Wave positions: {positions}, Params: {amplitude, frequency, i, step}")
 
-        print(positions, [amplitude, frequency, i, step])
         return (positions, throttles)
         
     def wave(self, iterations: int = 5, amplitude: float = 0.1, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:

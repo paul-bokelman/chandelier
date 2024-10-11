@@ -19,6 +19,7 @@ importlib-metadata==4.13.0
 importlib-resources==5.13.0
 inquirer==3.4.0
 keyboard==0.13.5
+Mock.GPIO==0.1.8
 numpy==2.0.0
 pyftdi==0.55.4
 pyobjc==10.3.1

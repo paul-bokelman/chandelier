@@ -2,10 +2,14 @@ from typing import Optional
 from store import SingularCalibrationData
 import time
 import asyncio
-import RPi.GPIO as GPIO
 from adafruit_servokit import ContinuousServo
 from lib.utils import log
 from configuration.config import config
+
+try:
+    import RPi.GPIO as GPIO # type: ignore
+except ImportError:
+    import Mock.GPIO as GPIO
 
 # todo: all disabled functionality should be present here (don't run motor if disabled)
 
@@ -13,15 +17,13 @@ class Motor:
     """Motor class to control a single motor"""
     def __init__(self, channel: int, servo: ContinuousServo) -> None:
         self.channel = channel
-        self.last_read_time = None
         self.direction = config.get('down') # direction of motor (used in encoder callback)
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.servo = servo
         self.servo.set_pulse_width_range(1000, 2000) 
         self.disabled = False
 
-        # todo: counts should be none unless calibrated (position unknown)
-        self.counts = -1  # current count position, -1 indicates that the motor has not been calibrated
+        self.counts = -1  # current count position, -1 indicates that the motor position is unknown
 
         # calibration data
         self.lower_neutral = None
@@ -35,6 +37,7 @@ class Motor:
         # todo: use pigpio for better performance (https://chatgpt.com/share/67042694-7590-8009-ba97-8d07e8241e36)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
+        # disable motor if it is in the initial disabled list
         if self.channel in config.get('initial_disabled_motors'):
             self.disabled = True
             log.warning(f"M{self.channel} | Motor disabled")
@@ -42,7 +45,6 @@ class Motor:
     def _encoder_callback(self, _):
         """Callback function for encoder"""
         self.counts += self.direction * 1 # increment or decrement counts based on direction
-        self.last_read_time = time.time() # track last read time
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
@@ -50,30 +52,98 @@ class Motor:
 
     def _set_home_state(self):
         """Set motor to home state"""
-        self.last_read_time = None
         self.direction = config.get('down')
         self.counts = 0
 
     def _clm(self, function_name, **kwargs):
-        """Construct consistent log message for motor functions"""
+        """
+        Construct consistent log message for motor functions
+
+        Parameters:
+            function_name (str): name of the function
+            **kwargs: additional keyword arguments to include in the log message
+        """
         message = f"M{self.channel} | {function_name}"
         for key, value in kwargs.items():
             message += f" | {key}: {value}"
         return message
     
-    # todo: may need work related to motor recovery
     def _disable(self, reason: str = "Unknown"):
+        """
+        Disable the motor
+        
+        Parameters:
+            reason (str, optional): reason for disabling, defaults to "Unknown"
+        """
         log.error(self._clm("Disable", message="Disabling motor", reason=reason))
         self.disabled = True
-
-    def _notify_disabled(self, parent_function: str):
-        """Flag motor as disabled"""
-        log.warning(self._clm(parent_function, message="Motor is disabled"))
 
     def _is_home(self) -> bool:
         """Check if the motor is at the home position"""
         return self.counts == 0
 
+    def _find_home(self):
+        """Find the home position from an unknown starting position"""
+        log.info(self._clm("Find Home", message="Finding home"))
+
+        if config.get('skip_find_home'):
+            log.warning(self._clm("Find Home", message="Skipping find home"))
+            self._set_home_state()
+            return
+
+        # move up at default uncalibrated throttle
+        self.set(throttle=(config.get('uncalibrated_throttle') * config.get('up')))
+
+        # time encoder counts until max time between readings is reached
+        start_time = prev_time = time.time()
+        current_counts = self.counts
+        while True:
+
+            # track when counts are updated
+            if self.counts != current_counts:
+                prev_time = time.time()
+                current_counts = self.counts
+
+            # home not found within timeout window -> disable and exit
+            if time.time() - start_time > config.get('unknown_position_timeout'):
+                self._disable("Failed to find home from unknown starting position")
+                self.counts = -1
+                return
+            
+            # motor has stopped moving -> set home
+            if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
+                log.error(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
+                break
+
+        self._set_home_state()
+
+    # todo: recover from a disabled state
+    # todo: should not try to recover if initially disabled
+    # todo: should only try to recover twice before permanently disabling
+    def _recover(self):
+        """Recover from a disabled state"""
+        pass
+    
+    @staticmethod
+    def _handle_disabled(f):
+        """Decorator to check and properly handle disabled state"""
+        def wrapper(self: 'Motor', *args, **kwargs):
+            
+            # if the motor is disabled -> notify and abort
+            if self.disabled:
+                log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
+                return
+
+            # if the motor position is unknown -> disable and abort
+            if self.counts == -1:
+                self._disable("Motor position unknown, recalibrate independently")
+                return
+
+            # otherwise -> execute function
+            return f(self, *args, **kwargs)
+        return wrapper
+
+    @_handle_disabled #/ should never be called when disabled but just in case
     def set(self, throttle: Optional[float] = None , direction: Optional[int] = None):
         """Set the motor throttle and direction, no direction -> use offset from neutral (requires direction)"""
 
@@ -105,7 +175,8 @@ class Motor:
         log.info(self._clm("Stop"))
         self.servo._pwm_out.duty_cycle = 0  
 
-    async def to_home(self, throttle: Optional[float] = None) -> tuple[bool, float, bool]:
+    @_handle_disabled
+    async def to_home(self, throttle: Optional[float] = None) -> tuple[bool, float]:
         """
         Move the motor to the home position
 
@@ -113,26 +184,28 @@ class Motor:
             throttle (float, optional): throttle to move at, defaults to None
 
         Returns:
-            tuple(bool, float, bool): timed_out, time_elapsed, aborted
+            tuple(bool, float): timed_out, time_elapsed
         """
         log.info(self._clm("To Home", message="Moving Home"))
 
         # already home -> return early
         if self._is_home(): 
             log.success(self._clm("To Home", message="Motor already at home"))
-            return False, 0.0, False
+            return False, 0.0
 
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
         return await self.to(0.0, throttle, config.get('to_home_timeout'))
 
+    @_handle_disabled
     async def move(
         self, 
         n_counts: int,
         throttle: Optional[float] = None,
         direction: Optional[int] = None,
         timeout: int = config.get('to_position_timeout'),
-    ) -> tuple[bool, float, bool]:
+        disable_on_timeout: bool = True,
+    ) -> tuple[bool, float]:
         """
         Move the motor a specific number of counts at a specific throttle
         
@@ -143,13 +216,8 @@ class Motor:
             timeout (int, optional): max time to move, defaults to config.get('to_position_timeout')
 
         Returns:
-            tuple(bool, float, bool): timed_out, time_elapsed, aborted
+            tuple(bool, float, bool): timed_out, time_elapsed
         """
-
-        # motor is disabled -> abort
-        if self.disabled:
-            self._notify_disabled("Move")
-            return False, 0.0, True
 
         max_counts: int = config.get('max_counts')
         
@@ -177,6 +245,8 @@ class Motor:
             if time.time() - start_time > timeout:
                 log.error(self._clm("Move", message="Motor timed out"))
                 timed_out = True
+                if disable_on_timeout:
+                    self._disable("Timed out moving")
                 break
 
             await asyncio.sleep(0.01) # yield control back to event
@@ -184,14 +254,16 @@ class Motor:
         time_elapsed = time.time() - start_time
 
         self.stop()
-        return timed_out, time_elapsed, False
+        return timed_out, time_elapsed
     
+    @_handle_disabled
     async def to(
             self, 
             target: float, 
             throttle: Optional[float] = None,
             timeout: int = config.get('to_position_timeout'),
-    ) -> tuple[bool, float, bool]:
+            disable_on_timeout: bool = True,
+    ) -> tuple[bool, float]:
         """
         Move the motor to a specific position scaled between 0 and 1
         
@@ -202,7 +274,7 @@ class Motor:
             timeout (int, optional): max time to move, defaults to config.get('to_position_timeout')
 
         Returns:
-            tuple(bool, float, bool): timed_out, time_elapsed, aborted
+            tuple(bool, float): timed_out, time_elapsed
         """
         if target < 0 or target > 1:
             raise ValueError("Position must be between 0 and 1")
@@ -213,9 +285,10 @@ class Motor:
         self.direction = config.get('up') if n_counts < 0 else config.get('down')
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
-        return await self.move(n_counts, throttle, self.direction, timeout) # move to target position
+        return await self.move(n_counts, throttle, self.direction, timeout, disable_on_timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
+    @_handle_disabled 
     async def calibrate_relative_throttles(self, target_up_cps: float, target_down_cps: float):
         """
         Find and assign relative throttles based on global cps data (only configured for slow speed)
@@ -286,6 +359,7 @@ class Motor:
             found_throttle = False
             cps: float = config.get('calibration_counts') / time_elapsed # calculate cps
             error = target_cps - cps # calculate error
+            new_factor = factor 
 
             log.info(self._clm("CRT", message="Measuring and adjusting throttle", cps=cps, error=error))
 
@@ -309,7 +383,7 @@ class Motor:
         # move to calibration position and measure cps until within error
         while not found_down_throttle or not found_up_throttle:
             # move down into down position
-            down_timed_out, down_time_elapsed, aborted = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, timeout=config.get('calibration_timeout'))
+            down_timed_out, down_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, timeout=config.get('calibration_timeout'))
             
             # move timed out -> exit
             if down_timed_out:
@@ -317,7 +391,7 @@ class Motor:
                 raise ValueError("Motor timed out moving down")
         
             # move back to previous position to measure up cps
-            up_timed_out, up_time_elapsed, aborted = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibration_timeout'))
+            up_timed_out, up_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibration_timeout'))
 
             # move timed out -> exit
             if up_timed_out:
@@ -336,6 +410,7 @@ class Motor:
         self.throttle_up = up_throttle
         log.success(self._clm("CRT", throttle_down=self.throttle_down, throttle_up=self.throttle_up))
 
+    @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
         log.info(self._clm("Find CPS", message="Finding cps up and down"))
@@ -355,7 +430,7 @@ class Motor:
             log.info(self._clm("Find CPS", message="Finding cps down"))
 
             # move to down to calibration position and measure time
-            timed_out, time_elapsed, aborted = await self.move(
+            timed_out, time_elapsed = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('down'),
                 timeout=config.get('calibration_timeout')
@@ -373,7 +448,7 @@ class Motor:
             log.info(self._clm("Find CPS", message="Finding cps up"))
             
             # move to up to calibration position and measure time
-            timed_out, time_elapsed, aborted = await self.move(
+            timed_out, time_elapsed = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('up'),
                 timeout=config.get('calibration_timeout')
@@ -388,6 +463,7 @@ class Motor:
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
 
+    @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of motor"""
         log.info(self._clm("Find Neutrals", message="Finding neutral positions"))
@@ -403,7 +479,7 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
-            timed_out, time_elapsed, aborted = await self.move(n_counts=2, throttle=current_throttle, timeout=config.get("calibration_timeout"))
+            timed_out, time_elapsed = await self.move(n_counts=2, throttle=current_throttle, timeout=config.get("calibration_timeout"), disable_on_timeout=False)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:
@@ -421,9 +497,14 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
+    @_handle_disabled
     async def calibrate_independent(self):
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""
         log.info(self._clm("Calibrate Independent", message="Calibrating Motor"))
+
+        # find initial home position if not already found
+        if self.counts == -1:
+            self._find_home()
 
         # find neutrals if either is not present
         if self.lower_neutral is None or self.upper_neutral is None:
@@ -434,7 +515,7 @@ class Motor:
             await self._find_cps()
 
         await self.to_home() # move back to home position for next calibration
-        
+    
     def get_calibration_data(self) -> SingularCalibrationData:
         """
         Get calibration data for this motor

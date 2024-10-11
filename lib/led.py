@@ -1,5 +1,8 @@
-import RPi.GPIO as GPIO
 import asyncio
+try:
+    import RPi.GPIO as GPIO # type: ignore
+except ImportError:
+    import Mock.GPIO as GPIO
 
 class LED:
     def __init__(self, pin):

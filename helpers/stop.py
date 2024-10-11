@@ -1,6 +1,9 @@
 import asyncio
-import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
+try:
+    import RPi.GPIO as GPIO # type: ignore
+except ImportError:
+    import Mock.GPIO as GPIO
 
 async def emergency_stop():
     try: 

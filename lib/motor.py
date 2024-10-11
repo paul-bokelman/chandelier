@@ -1,5 +1,5 @@
 from typing import Optional
-from store import SingularCalibrationData
+from lib.store import SingularCalibrationData
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo

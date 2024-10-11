@@ -34,7 +34,7 @@ class Config:
         return cls._instance
 
     def load(self, env: Environments = Environments.DEVELOPMENT):
-        with open('config.yaml', 'r') as file:
+        with open('configuration/config.yaml', 'r') as file:
             configs: ConfigurationFileSchema = yaml.safe_load(file)
             env_configuration = configs.get(env.value)
             general_configuration = configs.get('general')

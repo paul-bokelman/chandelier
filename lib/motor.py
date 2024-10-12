@@ -383,6 +383,15 @@ class Motor:
             # adjust throttle based on error
             direction = 1 if cps < target_cps else -1 # determine direction
             new_throttle = throttle + (direction * new_factor * step_size) # adjust throttle
+
+            # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
+            if direction == config.get('down') and new_throttle < self.lower_neutral + config.get('throttle_offset'):
+                new_throttle = throttle
+                new_factor = factor * 0.90
+            if direction == config.get('up') and new_throttle >= self.upper_neutral - config.get('throttle_offset'):
+                new_throttle = throttle
+                new_factor = factor * 0.90
+
             log.info(self._clm("CRT", message=f"{'Reducing' if direction == -1 else 'Increasing'} {'down' if is_down else 'up'} throttle", new_throttle=new_throttle))
 
             # throttle is within error margin -> found throttle
@@ -492,7 +501,7 @@ class Motor:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
             direction = config.get('down') if self.upper_neutral is None else config.get('up') # move in opposite direction of whichever neutral is not found
-            
+
             timed_out, _ = await self.move(n_counts=2, direction=direction, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_timeout=False)
 
             # initial throttle has timed out -> found upper neutral

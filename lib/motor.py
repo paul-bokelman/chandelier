@@ -496,7 +496,7 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
-    @_handle_disabled
+    # @_handle_disabled #/ don't need to check disabled state here
     async def calibrate_independent(self):
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""
         log.info(self._clm("Calibrate Independent", message="Calibrating Motor"))

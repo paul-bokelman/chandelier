@@ -39,10 +39,10 @@ class StateMachine:
 
         # change state based on buttons and switches
         if not self.manual:
-            GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
-            GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, callback=self._handle_event, bouncetime=300)
+            self.safe_add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
+            self.safe_add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
+            self.safe_add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
+            self.safe_add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
 
             # reflect initial switch state
             if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -309,3 +309,11 @@ class StateMachine:
             # break back to main loop if state changed
             if self.state != State.SERVICE: break
             await asyncio.sleep(1) # sleep 1 second before next check
+
+    def safe_add_event_detect(self, pin, edge, callback, bouncetime):
+        try:
+            GPIO.add_event_detect(pin, edge, callback=callback, bouncetime=bouncetime)
+        except RuntimeError:
+            # Event detection already set up, remove it and add again
+            GPIO.remove_event_detect(pin)
+            GPIO.add_event_detect(pin, edge, callback=callback, bouncetime=bouncetime)

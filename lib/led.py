@@ -5,7 +5,7 @@ except ImportError:
     import Mock.GPIO as GPIO
 
 class LED:
-    def __init__(self, pin):
+    def __init__(self, pin: int):
         self.pin = pin
         self.state = False
         self.blinking = False

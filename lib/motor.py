@@ -33,7 +33,6 @@ class Motor:
         self.throttle_up = None # relative throttle for moving up at slow preset
 
         # detect when encoder is triggered (matches 0's)
-        # todo: use pigpio for better performance (https://chatgpt.com/share/67042694-7590-8009-ba97-8d07e8241e36)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
         # disable motor if it is in the initial disabled list

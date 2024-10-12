@@ -35,7 +35,6 @@ def main():
     if args.calibration not in available_calibration_options:
         raise ValueError(f"Invalid calibration option: {args.calibration}, available calibration options: {available_calibration_options}")
 
-
     try: 
         # set up GPIO pins
         GPIO.cleanup()  # clean up any existing GPIO pins
@@ -69,6 +68,7 @@ def main():
 
     except Exception as e:
         log.error(f"An error occurred: {e}")
+        print(e.__traceback__)
     finally:
         asyncio.run(emergency_stop()) # run emergency stop
         GPIO.cleanup()

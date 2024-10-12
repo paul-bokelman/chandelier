@@ -4,7 +4,7 @@ import time
 import random
 from datetime import datetime
 import asyncio
-# import keyboard
+import keyboard
 from configuration.config import config
 from lib.controller import MotorController
 from lib.sequence import Sequence
@@ -37,28 +37,28 @@ class StateMachine:
         self.switch_state = [False, False]
         self.manual = manual
 
-        # # add event detection for all relevant GPIO pins
-        # GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
-        # GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
-        # GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
-        # GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
+        # add event detection for all relevant GPIO pins
+        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
 
-        # # reflect initial switch state
-        # if not GPIO.input(config.get('wall_switch_pins')[0]):
-        #     self.switch_state[0] = True
-        #     self._change_state(State.RANDOM)
-        # elif not GPIO.input(config.get('wall_switch_pins')[1]):
-        #     self.switch_state[1] = True
-        #     self._change_state(State.SEQUENCE)
-        # else:
-        #     self._change_state(State.IDLE)
+        # reflect initial switch state
+        if not GPIO.input(config.get('wall_switch_pins')[0]):
+            self.switch_state[0] = True
+            self._change_state(State.RANDOM)
+        elif not GPIO.input(config.get('wall_switch_pins')[1]):
+            self.switch_state[1] = True
+            self._change_state(State.SEQUENCE)
+        else:
+            self._change_state(State.IDLE)
 
-        # # remove event detection if in manual mode
-        # if self.manual:
-        #     GPIO.remove_event_detect(config.get('service_button_pin'))
-        #     GPIO.remove_event_detect(config.get('reboot_button_pin'))
-        #     for pin in config.get('wall_switch_pins'):
-        #         GPIO.remove_event_detect(pin)
+        # remove event detection if in manual mode
+        if self.manual:
+            GPIO.remove_event_detect(config.get('service_button_pin'))
+            GPIO.remove_event_detect(config.get('reboot_button_pin'))
+            for pin in config.get('wall_switch_pins'):
+                GPIO.remove_event_detect(pin)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
@@ -115,22 +115,22 @@ class StateMachine:
         print(f"CURRENT STATE: {self.state}")
 
         # check for manual state changes (manual mode)
-        # if self.manual:
-        #     if keyboard.is_pressed('i'):
-        #         log.info("Pressed i, changing to idle")
-        #         self._change_state(State.IDLE)
-        #     elif keyboard.is_pressed('r'):
-        #         log.info("Pressed r, changing to random")
-        #         self._change_state(State.RANDOM)
-        #     elif keyboard.is_pressed('s'):
-        #         log.info("Pressed s, changing to sequence")
-        #         self._change_state(State.SEQUENCE)
-        #     elif keyboard.is_pressed('c'):
-        #         log.info("Pressed c, changing to service")
-        #         self._change_state(State.SERVICE)
-        #     elif keyboard.is_pressed('q'):
-        #         log.info("Pressed r, changing to reboot")
-        #         self._change_state(State.REBOOT)
+        if self.manual:
+            if keyboard.is_pressed('i'):
+                log.info("Pressed i, changing to idle")
+                self._change_state(State.IDLE)
+            elif keyboard.is_pressed('r'):
+                log.info("Pressed r, changing to random")
+                self._change_state(State.RANDOM)
+            elif keyboard.is_pressed('s'):
+                log.info("Pressed s, changing to sequence")
+                self._change_state(State.SEQUENCE)
+            elif keyboard.is_pressed('c'):
+                log.info("Pressed c, changing to service")
+                self._change_state(State.SERVICE)
+            elif keyboard.is_pressed('q'):
+                log.info("Pressed r, changing to reboot")
+                self._change_state(State.REBOOT)
 
         try: 
             if self.state == State.IDLE:

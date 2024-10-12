@@ -4,7 +4,7 @@ import time
 import random
 from datetime import datetime
 import asyncio
-import keyboard
+import sshkeyboard as keyboard
 from configuration.config import config
 from lib.controller import MotorController
 from lib.sequence import Sequence
@@ -61,11 +61,9 @@ class StateMachine:
             for pin in config.get('wall_switch_pins'):
                 GPIO.remove_event_detect(pin)
 
-            keyboard.on_press_key('i', lambda _: self._change_state(State.IDLE))
-            keyboard.on_press_key('r', lambda _: self._change_state(State.RANDOM))
-            keyboard.on_press_key('s', lambda _: self._change_state(State.SEQUENCE))
-            keyboard.on_press_key('c', lambda _: self._change_state(State.SERVICE))
-            keyboard.on_press_key('q', lambda _: self._change_state(State.REBOOT))
+            keyboard.listen_keyboard(
+                on_press=self._handle_keypress,
+            )
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
@@ -74,6 +72,23 @@ class StateMachine:
             raise Exception("Invalid calibration data")
 
         self.mc.load_calibration_data() # load calibration data
+
+    def _handle_keypress(self, key: str):
+        """Handle keypresses"""
+        state = self.state
+
+        if key == 'i':
+            state = State.IDLE
+        elif key == 's':
+            state = State.SEQUENCE
+        elif key == 'r':
+            state = State.RANDOM
+        elif key == 'c':
+            state = State.SERVICE
+        elif key == 'q':
+            state = State.REBOOT
+
+        self._change_state(state)
 
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""

@@ -380,9 +380,24 @@ class Motor:
                 log.info(self._clm("CRT", message=f"Reducing {'down' if is_down else 'up'} factor ({factor} -> {new_factor})"))
                 new_factor = factor * 0.75 #/ should be proportional to error
 
-            # adjust throttle based on error
-            direction = 1 if cps < target_cps else -1 # determine direction
-            new_throttle = throttle + (direction * new_factor * step_size) # adjust throttle
+
+            # Adjust throttle based on error and direction
+            if is_down:
+                # For down direction
+                if cps > target_cps:
+                    # CPS is too high, decrease throttle
+                    new_throttle = throttle + (new_factor * step_size)
+                else:
+                    # CPS is too low, increase throttle
+                    new_throttle = throttle - (new_factor * step_size)
+            else:
+                # For up direction
+                if cps > target_cps:
+                    # CPS is too high, decrease throttle
+                    new_throttle = throttle - (new_factor * step_size)
+                else:
+                    # CPS is too low, increase throttle
+                    new_throttle = throttle + (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
             if direction == config.get('down') and new_throttle < self.lower_neutral + config.get('throttle_offset'):

@@ -131,12 +131,12 @@ class Motor:
             # if the motor is disabled -> notify and abort
             if self.disabled:
                 log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
-                return
+                return lambda: None
 
             # if the motor position is unknown -> disable and abort
             if self.counts == -1:
                 self._disable("Motor position unknown, recalibrate independently")
-                return
+                return lambda: None
 
             # otherwise -> execute function
             return f(self, *args, **kwargs)

@@ -131,12 +131,12 @@ class Motor:
             # if the motor is disabled -> notify and abort
             if self.disabled:
                 log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
-                return lambda: None
+                return asyncio.sleep(0)
 
             # if the motor position is unknown -> disable and abort
             if self.counts == -1:
                 self._disable("Motor position unknown, recalibrate independently")
-                return lambda: None
+                return asyncio.sleep(0)
 
             # otherwise -> execute function
             return f(self, *args, **kwargs)

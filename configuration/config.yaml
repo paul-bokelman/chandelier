@@ -34,7 +34,9 @@ environment_specific_config: &default_env_config
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
   to_position_timeout: 180 # max timeout (seconds) for trying to move to a position (disables motor if reached)
-  calibration_timeout: 30 # max timeout (seconds) when calibrating
+  calibrate_relative_throttle_timeout: 20 # max timeout (seconds) when calibrating
+  calibrate_cps_timeout: 30 # max timeout (seconds) when calibrating cps
+  calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
   unknown_position_timeout: 60 # max timeout (seconds) when trying to find home from unknown position
   max_time_between_encoder_readings: 10 # max time (seconds) between encoder readings before disabling
   unknown_max_time_between_encoder_readings: 3 # max time (seconds) between encoder readings when trying to find home from unknown position

@@ -12,7 +12,8 @@ ConfigurationKeys = Literal[
     'encoder_pins', 'wall_switch_pins', 'service_button_pin', 'reboot_button_pin', 'charging_pin', 'led_pin', 'up', 'down', 'modes',
     'debug', 'max_counts', 'n_motors', 'suppress_count_logging', 'initial_disabled_motors', 'random_state_duration', 'sequence_state_duration',
     'candles_per_charge_cycle', 'charge_cycle_time', 'available_charging_hours', 'throttle_offset', 'uncalibrated_throttle', 'to_home_timeout',
-    'to_position_timeout', 'max_time_between_encoder_readings', 'calibration_counts', 'calibration_file_path', "calibration_timeout", "unknown_position_timeout", "unknown_max_time_between_encoder_readings", "skip_find_home"
+    'to_position_timeout', 'max_time_between_encoder_readings', 'calibration_counts', 'calibration_file_path', "unknown_position_timeout", "unknown_max_time_between_encoder_readings", "skip_find_home",
+    "calibrate_relative_throttle_timeout", "calibrate_neutral_timeout", "calibrate_cps_timeout"
 ]
 
 class ConfigurationFileSchema(TypedDict):

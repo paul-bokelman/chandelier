@@ -131,12 +131,12 @@ class Motor:
             # if the motor is disabled -> notify and abort
             if self.disabled:
                 log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
-                return asyncio.sleep(0)
+                return asyncio.sleep(0) #/ hacky way to make asyncio happy
 
             # if the motor position is unknown -> disable and abort
             if self.counts == -1:
                 self._disable("Motor position unknown, recalibrate independently")
-                return asyncio.sleep(0)
+                return asyncio.sleep(0) #/ hacky way to make asyncio happy
 
             # otherwise -> execute function
             return f(self, *args, **kwargs)
@@ -382,7 +382,7 @@ class Motor:
         # move to calibration position and measure cps until within error
         while not found_down_throttle or not found_up_throttle:
             # move down into down position
-            down_timed_out, down_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, timeout=config.get('calibration_timeout'))
+            down_timed_out, down_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, timeout=config.get('calibrate_relative_throttle_timeout'))
             
             # move timed out -> exit
             if down_timed_out:
@@ -390,7 +390,7 @@ class Motor:
                 raise ValueError("Motor timed out moving down")
         
             # move back to previous position to measure up cps
-            up_timed_out, up_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibration_timeout'))
+            up_timed_out, up_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibrate_relative_throttle_timeout'))
 
             # move timed out -> exit
             if up_timed_out:
@@ -432,7 +432,7 @@ class Motor:
             timed_out, time_elapsed = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('down'),
-                timeout=config.get('calibration_timeout')
+                timeout=config.get('calibrate_cps_timeout')
             ) 
 
             if timed_out:
@@ -450,7 +450,7 @@ class Motor:
             timed_out, time_elapsed = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('up'),
-                timeout=config.get('calibration_timeout')
+                timeout=config.get('calibrate_cps_timeout')
             )
 
             if timed_out:
@@ -478,7 +478,7 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
-            timed_out, time_elapsed = await self.move(n_counts=2, throttle=current_throttle, timeout=config.get("calibration_timeout"), disable_on_timeout=False)
+            timed_out, time_elapsed = await self.move(n_counts=2, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_timeout=False)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:

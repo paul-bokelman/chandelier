@@ -7,7 +7,10 @@ from configuration.config import config
 CalibrationOptions = Literal["default", "prompt"]
 calibration_options: List[CalibrationOptions] = list(get_args(CalibrationOptions))
 
-async def preflight(option: CalibrationOptions = "default") -> None:
+async def preflight(option: CalibrationOptions = "default", skip: bool = False) -> None:
+    if skip:
+        return
+
     log.info("Running calibration preflight")
 
     if option not in calibration_options:

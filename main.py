@@ -48,8 +48,10 @@ def main():
         config.__new__(Config)
         config.load(env=Environments[args.env.upper()]) # load configuration
 
+        skip_calibration = args.mode == "scripts" # skip calibration for scripts mode (calibration not needed)
+
         # preflight
-        asyncio.run(calibration.preflight(args.calibration))
+        asyncio.run(calibration.preflight(option=args.calibration, skip=skip_calibration))
 
         # execute mode
         if args.mode == "manual":

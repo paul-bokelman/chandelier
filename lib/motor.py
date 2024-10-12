@@ -91,7 +91,7 @@ class Motor:
             return
 
         # move up at default uncalibrated throttle
-        self.set(throttle=(config.get('uncalibrated_up_throttle')))
+        self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
 
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
@@ -143,31 +143,41 @@ class Motor:
         return wrapper
 
     @_handle_disabled #/ should never be called when disabled but just in case
-    def set(self, throttle: Optional[float] = None , direction: Optional[int] = None):
-        """Set the motor throttle and direction, no direction -> use offset from neutral (requires direction)"""
+    def set(self, direction: int, throttle: Optional[float] = None ):
+        """
+        Start the motor with a specific throttle and direction
 
-        # specific value -> set throttle to that value and ignore direction
+        Parameters:
+            throttle (float, optional): throttle to set, defaults to None
+            direction (int): direction to set
+
+        Permutations:
+            direction only -> use directional calibrated throttle (if present) or offset throttle
+            direction with throttle -> set throttle
+        """
+        # check for valid direction
+        if direction not in [config.get('up'), config.get('down')]:
+            raise ValueError("Direction must be up or down")
+
+        self.direction = direction # set direction for counts
+
+        # specific value -> set throttle to that value
         if throttle is not None:
             if not (-1 <= throttle <= 1):
                 raise ValueError("Throttle must be between -1 and 1")
             self.servo.throttle = throttle
             return
         
-        # check for direction
-        if direction is None:
-            raise ValueError("Direction must be set when using offset throttle")
-        
-        # check for valid direction
-        if direction not in [config.get('up'), config.get('down')]:
-            raise ValueError("Direction must be up or down for preset throttle")
-        
-        # neutral positions must be calibrated and set for present throttles
+        # neutral positions must be calibrated and set for offset throttle
         if self.lower_neutral is None and self.upper_neutral is None:
             raise ValueError("Neutral positions not found, can't set offset throttle")
-        
-        self.direction = direction # set direction for counts
 
-        # set throttle based on direction
+        # set calibrated throttle if possible
+        if self.throttle_down and self.throttle_up:
+            self.servo.throttle = self.throttle_down if direction == config.get('down') else self.throttle_up
+            return
+
+        # otherwise -> set offset throttle based on neutral and direction
         neutral = self.lower_neutral if direction == config.get('up') else self.upper_neutral
         self.servo.throttle = neutral + (direction * config.get('throttle_offset'))
 
@@ -194,8 +204,6 @@ class Motor:
             log.success(self._clm("To Home", message="Motor already at home"))
             return False, 0.0
 
-        self.direction = config.get('up') # set direction for counts
-
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
         return await self.to(0.0, throttle, config.get('to_home_timeout'))
@@ -204,8 +212,8 @@ class Motor:
     async def move(
         self, 
         n_counts: int,
+        direction: int,
         throttle: Optional[float] = None,
-        direction: Optional[int] = None,
         timeout: int = config.get('to_position_timeout'),
         disable_on_timeout: bool = True,
     ) -> tuple[bool, float]:
@@ -214,8 +222,8 @@ class Motor:
         
         Parameters:
             n_counts (int): number of counts to move
+            direction (int): direction to move in
             throttle (float, optional): throttle to move at, defaults to None
-            direction (int, optional): direction to move in, defaults to None
             timeout (int, optional): max time to move, defaults to config.get('to_position_timeout')
 
         Returns:
@@ -230,13 +238,13 @@ class Motor:
         if n_counts < 0:
             raise ValueError("Counts must be greater than 0")
 
-        log.info(self._clm("Move", start_counts=self.counts, n_counts=n_counts, direction=self.direction, throttle=throttle))
+        log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle))
 
         start_time = time.time() # track time
         start_counts = self.counts # track start position
         timed_out = False
 
-        self.set(throttle, direction) # start motor
+        self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
             # check if the motor has reached the target position
@@ -285,11 +293,11 @@ class Motor:
         max_counts: int = config.get('max_counts')
         target_counts = int(target * max_counts)
         n_counts = target_counts - self.counts
-        self.direction: int = config.get('up') if n_counts < 0 else config.get('down')
+        direction = config.get('up') if n_counts < 0 else config.get('down')
         n_counts = abs(n_counts) # use absolute value
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
-        return await self.move(n_counts, throttle, self.direction, timeout, disable_on_timeout) # move to target position
+        return await self.move(n_counts, direction, throttle, timeout, disable_on_timeout) # move to target position
     
     # -------------------------------- CALIBRATION ------------------------------- #
     @_handle_disabled 
@@ -358,7 +366,6 @@ class Motor:
                 tuple(float, float, float, bool): cps, new_throttle, new_factor, found_throttle
             
             """
-            self.direction = direction # set direction for counts
             is_down = direction == config.get('down')
             target_cps = target_down_cps if is_down else target_up_cps
             found_throttle = False
@@ -387,15 +394,15 @@ class Motor:
 
         # move to calibration position and measure cps until within error
         while not found_down_throttle or not found_up_throttle:
-            # move down into down position
-            down_timed_out, down_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, timeout=config.get('calibrate_relative_throttle_timeout'))
+            # move down to measure time
+            down_timed_out, down_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, direction=config.get('down'), timeout=config.get('calibrate_relative_throttle_timeout'))
             
             # move timed out -> exit
             if down_timed_out:
                 log.error(self._clm("CRT", message="Motor timed out moving down", throttle=down_throttle, time_elapsed=down_time_elapsed))
                 raise ValueError("Motor timed out moving down")
         
-            # move back to previous position to measure up cps
+            # move back to previous position to measure time
             up_timed_out, up_time_elapsed = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibrate_relative_throttle_timeout'))
 
             # move timed out -> exit
@@ -484,7 +491,9 @@ class Motor:
         while self.upper_neutral is None or self.lower_neutral is None:
             current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
-            timed_out, time_elapsed = await self.move(n_counts=2, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_timeout=False)
+            direction = config.get('down') if self.upper_neutral is None else config.get('up') # move in opposite direction of whichever neutral is not found
+            
+            timed_out, _ = await self.move(n_counts=2, direction=direction, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_timeout=False)
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and timed_out:

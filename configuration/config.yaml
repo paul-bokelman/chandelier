@@ -16,7 +16,7 @@ environment_specific_config: &default_env_config
   max_counts: 30
   n_motors: 16
   suppress_count_logging: false
-  initial_disabled_motors: [] # todo: used?
+  initial_disabled_motors: []
 
   # states
   random_state_duration: 3600 # 1 hour
@@ -35,7 +35,7 @@ environment_specific_config: &default_env_config
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
   to_position_timeout: 180 # max timeout (seconds) for trying to move to a position (disables motor if reached)
-  calibrate_relative_throttle_timeout: 20 # max timeout (seconds) when calibrating
+  calibrate_relative_throttle_timeout: 30 # max timeout (seconds) when calibrating
   calibrate_cps_timeout: 30 # max timeout (seconds) when calibrating cps
   calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
   unknown_position_timeout: 60 # max timeout (seconds) when trying to find home from unknown position
@@ -51,6 +51,7 @@ development:
   <<: *default_env_config
   calibration_file_path: calibrations_dev.json # file to store calibration data
   initial_disabled_motors: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  calibrate_neutral_timeout: 3
   skip_find_home: true
 production:
   <<: *default_env_config

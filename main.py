@@ -5,6 +5,7 @@ from configuration.config import Config, Environments, config
 from modes import normal, manual, scripts, testing
 from preflight import calibration
 from lib.utils import log
+from helpers.stop import emergency_stop
 
 # import GPIO library
 try:
@@ -69,7 +70,7 @@ def main():
     except Exception as e:
         log.error(f"An error occurred: {e}")
     finally:
-        os.system("bash scripts/kill.sh") # run kill script
+        asyncio.run(emergency_stop()) # run emergency stop
         GPIO.cleanup()
 
 

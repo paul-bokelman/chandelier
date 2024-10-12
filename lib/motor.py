@@ -405,13 +405,15 @@ class Motor:
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
             if is_down and new_throttle <= self.upper_neutral + config.get('throttle_offset'):
+                log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
             if not is_down and new_throttle >= self.lower_neutral - config.get('throttle_offset'):
+                log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90
 
-            log.info(self._clm("CRT", message=f"{'Down' if is_down else 'Up'} throttle ({throttle} -> {new_throttle})"))
+            log.info(self._clm("CRT", message=f"{'Down' if is_down else 'Up'} throttle ({throttle} -> {new_throttle})", factor=new_factor))
 
             return cps, new_throttle, new_factor, found_throttle
 

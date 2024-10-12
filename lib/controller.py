@@ -29,7 +29,7 @@ class MotorController:
     await asyncio.gather(*[motor.to_home(throttle) for motor in self.motors])
 
   # todo: convert to use throttle as none (offset throttle)
-  async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float]] = None):
+  async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None):
     """Move all motors to specific positions with specific throttles"""
 
     # singular value -> convert to list of that value
@@ -37,6 +37,10 @@ class MotorController:
       if not (0 <= throttles <= 1):
         raise ValueError(f"Position must be between 0 and 1, received {throttles}")
       throttles = [throttles] * len(self.motors)
+
+    # None -> convert to list of None
+    if throttles is None:
+      throttles = [None] * len(self.motors)
 
     # singular value -> convert to list of that value
     if isinstance(positions, float):
@@ -46,10 +50,10 @@ class MotorController:
 
     # ensure both are lists
     if not isinstance(throttles, list):
-      raise ValueError("Speed must be a list of Throttle")
+      raise ValueError("Throttles must be a list")
     
     if not isinstance(positions, list):
-      raise ValueError("Positions must be a list of floats")
+      raise ValueError("Positions must be a list")
 
     # ensure lengths are the same
     if len(throttles) != len(self.motors):

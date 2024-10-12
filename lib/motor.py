@@ -370,15 +370,22 @@ class Motor:
             target_cps = target_down_cps if is_down else target_up_cps
             found_throttle = False
             cps: float = config.get('calibration_counts') / time_elapsed # calculate cps
-            error = target_cps - cps # calculate error
+            error = target_cps - cps # calculate error (negative if cps is greater than target, positive if less)
             new_factor = factor 
 
             log.info(self._clm("CRT", direction=f"{'down' if is_down else 'up'}", cps=cps, error=error))
 
+            # throttle is within error margin -> found throttle -> exit 
+            if abs(error) <= error_margin:
+                log.success(self._clm("CRT", message="Throttle found", throttle=throttle))
+                found_throttle = True
+
+                return cps, throttle, factor, found_throttle
+
             # target in between previous and current cps -> reduce scale factor
             if previous_cps < target_cps < cps or previous_cps > target_cps > cps:
-                log.info(self._clm("CRT", message=f"Reducing {'down' if is_down else 'up'} factor ({factor} -> {new_factor})"))
                 new_factor = factor * 0.75 #/ should be proportional to error
+                log.info(self._clm("CRT", message=f"Reducing {'down' if is_down else 'up'} factor ({factor} -> {new_factor})"))
 
             # adjust throttle based on error and direction
             if is_down:
@@ -397,19 +404,14 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if direction == config.get('down') and new_throttle < self.lower_neutral + config.get('throttle_offset'):
-                new_throttle = throttle
+            if is_down and new_throttle <= self.upper_neutral + config.get('throttle_offset'):
+                new_throttle = throttle 
                 new_factor = factor * 0.90
-            if direction == config.get('up') and new_throttle >= self.upper_neutral - config.get('throttle_offset'):
+            if not is_down and new_throttle >= self.lower_neutral - config.get('throttle_offset'):
                 new_throttle = throttle
                 new_factor = factor * 0.90
 
-            log.info(self._clm("CRT", message=f"{'Reducing' if direction == -1 else 'Increasing'} {'down' if is_down else 'up'} throttle ({throttle} -> {new_throttle})"))
-
-            # throttle is within error margin -> found throttle
-            if abs(error) <= error_margin:
-                log.success(self._clm("CRT", message="Throttle found", throttle=new_throttle))
-                found_throttle = True
+            log.info(self._clm("CRT", message=f"{'Down' if is_down else 'Up'} throttle ({throttle} -> {new_throttle})"))
 
             return cps, new_throttle, new_factor, found_throttle
 

@@ -1,3 +1,4 @@
+import os
 import argparse
 import asyncio
 from configuration.config import Config, Environments, config
@@ -68,7 +69,9 @@ def main():
     except Exception as e:
         log.error(f"An error occurred: {e}")
     finally:
+        os.system("bash scripts/kill.sh") # run kill script
         GPIO.cleanup()
+
 
 if __name__ == "__main__":
     try:

@@ -16,7 +16,7 @@ class Motor:
     """Motor class to control a single motor"""
     def __init__(self, channel: int, servo: ContinuousServo) -> None:
         self.channel = channel
-        self.direction = config.get('down') # direction of motor (used in encoder callback)
+        self.direction: int = config.get('down') # direction of motor (used in encoder callback)
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.servo = servo
         self.servo.set_pulse_width_range(1000, 2000) 
@@ -192,6 +192,8 @@ class Motor:
             log.success(self._clm("To Home", message="Motor already at home"))
             return False, 0.0
 
+        self.direction = config.get('up') # set direction for counts
+
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
         return await self.to(0.0, throttle, config.get('to_home_timeout'))
@@ -280,8 +282,9 @@ class Motor:
         
         max_counts: int = config.get('max_counts')
         target_counts = int(target * max_counts)
-        n_counts = abs(target_counts - self.counts)
-        self.direction = config.get('up') if n_counts < 0 else config.get('down')
+        n_counts = target_counts - self.counts
+        self.direction: int = config.get('up') if n_counts < 0 else config.get('down')
+        n_counts = abs(n_counts) # use absolute value
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
         return await self.move(n_counts, throttle, self.direction, timeout, disable_on_timeout) # move to target position
@@ -353,6 +356,7 @@ class Motor:
                 tuple(float, float, float, bool): cps, new_throttle, new_factor, found_throttle
             
             """
+            self.direction = direction # set direction for counts
             is_down = direction == config.get('down')
             target_cps = target_down_cps if is_down else target_up_cps
             found_throttle = False
@@ -445,6 +449,8 @@ class Motor:
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"))
+
+            self.direction = config.get('up') # set direction for counts
             
             # move to up to calibration position and measure time
             timed_out, time_elapsed = await self.move(

@@ -4,7 +4,7 @@ import time
 import random
 from datetime import datetime
 import asyncio
-from pynput import keyboard
+import keyboard
 from configuration.config import config
 from lib.controller import MotorController
 from lib.sequence import Sequence
@@ -61,30 +61,6 @@ class StateMachine:
             for pin in config.get('wall_switch_pins'):
                 GPIO.remove_event_detect(pin)
 
-            # check for manual state changes (manual mode)
-            def on_press(key):
-                try:
-                    if key.char == 'i':
-                        log.info("Pressed i, changing to idle")
-                        self._change_state(State.IDLE)
-                    elif key.char == 'r':
-                        log.info("Pressed r, changing to random")
-                        self._change_state(State.RANDOM)
-                    elif key.char == 's':
-                        log.info("Pressed s, changing to sequence")
-                        self._change_state(State.SEQUENCE)
-                    elif key.char == 'c':
-                        log.info("Pressed c, changing to service")
-                        self._change_state(State.SERVICE)
-                    elif key.char == 'q':
-                        log.info("Pressed q, changing to reboot")
-                        self._change_state(State.REBOOT)
-                except AttributeError:
-                    pass  # Ignore special keys
-
-            with keyboard.Listener(on_press=on_press) as listener:
-                listener.join()
-
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
         if not self.mc.store._validate():
@@ -130,7 +106,7 @@ class StateMachine:
     def _charger_off(self):
         """Turn off charging"""
         GPIO.output(config.get('charging_pin'), GPIO.LOW)
-    
+
     def _charger_on(self):
         """Turn on charging"""
         GPIO.output(config.get('charging_pin'), GPIO.HIGH)
@@ -138,6 +114,23 @@ class StateMachine:
     async def check(self):
         """Check current state and run appropriate state"""
         print(f"CURRENT STATE: {self.state}")
+
+        if self.manual:
+            if keyboard.is_pressed('i'):
+                log.info("Pressed i, changing to idle")
+                self._change_state(State.IDLE)
+            elif keyboard.is_pressed('r'):
+                log.info("Pressed r, changing to random")
+                self._change_state(State.RANDOM)
+            elif keyboard.is_pressed('s'):
+                log.info("Pressed s, changing to sequence")
+                self._change_state(State.SEQUENCE)
+            elif keyboard.is_pressed('c'):
+                log.info("Pressed c, changing to service")
+                self._change_state(State.SERVICE)
+            elif keyboard.is_pressed('q'):
+                log.info("Pressed q, changing to reboot")
+                self._change_state(State.REBOOT)
 
         try: 
             if self.state == State.IDLE:

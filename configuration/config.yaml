@@ -53,6 +53,7 @@ development:
   initial_disabled_motors: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
   calibrate_neutral_timeout: 3
   skip_find_home: true
+  suppress_count_logging: true
 production:
   <<: *default_env_config
   debug: false

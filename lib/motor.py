@@ -373,11 +373,11 @@ class Motor:
             error = target_cps - cps # calculate error
             new_factor = factor 
 
-            log.info(self._clm("CRT", message="Measuring and adjusting throttle", cps=cps, error=error))
+            log.info(self._clm("CRT", direction=f"{'down' if is_down else 'up'}", cps=cps, error=error))
 
             # target in between previous and current cps -> reduce scale factor
             if previous_cps < target_cps < cps or previous_cps > target_cps > cps:
-                log.info(self._clm("CRT", message=f"Reducing {'down' if is_down else 'up'} factor"))
+                log.info(self._clm("CRT", message=f"Reducing {'down' if is_down else 'up'} factor ({factor} -> {new_factor})"))
                 new_factor = factor * 0.75 #/ should be proportional to error
 
             # adjust throttle based on error
@@ -392,7 +392,7 @@ class Motor:
                 new_throttle = throttle
                 new_factor = factor * 0.90
 
-            log.info(self._clm("CRT", message=f"{'Reducing' if direction == -1 else 'Increasing'} {'down' if is_down else 'up'} throttle", new_throttle=new_throttle))
+            log.info(self._clm("CRT", message=f"{'Reducing' if direction == -1 else 'Increasing'} {'down' if is_down else 'up'} throttle ({throttle} -> {new_throttle})"))
 
             # throttle is within error margin -> found throttle
             if abs(error) <= error_margin:

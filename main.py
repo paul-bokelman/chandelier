@@ -74,15 +74,14 @@ def main():
             log.error(f"An error occurred: {e}")
             return
 
-        tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-        log.error(f"An error occurred: {e}\n\nFull traceback:\n{tb_str}")
+        if config.get("debug"):
+            tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            log.error(f"An error occurred: {e}\n\nFull traceback:\n{tb_str}")
+
         log.error(f"Exception type: {exc_type.__name__}")
         log.error(f"Exception value: {exc_value}")
         log.error(f"Exception occurred in file: {exc_traceback.tb_frame.f_code.co_filename}")
         log.error(f"Exception occurred on line: {exc_traceback.tb_lineno}")
-        log.error(f"Local variables at the point of exception:")
-        for key, value in exc_traceback.tb_frame.f_locals.items():
-            log.error(f"    {key}: {value}")
     finally:
         asyncio.run(emergency_stop()) # run emergency stop
         GPIO.cleanup()

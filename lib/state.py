@@ -37,24 +37,28 @@ class StateMachine:
         self.switch_state = [False, False]
         self.manual = manual
 
-        # change state based on buttons and switches
-        if not self.manual:
-            self.safe_add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
-            self.safe_add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
-            self.safe_add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
-            self.safe_add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
+        # add event detection for all relevant GPIO pins
+        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
 
-            # reflect initial switch state
-            if not GPIO.input(config.get('wall_switch_pins')[0]):
-                self.switch_state[0] = True
-                self._change_state(State.RANDOM)
-            elif not GPIO.input(config.get('wall_switch_pins')[1]):
-                self.switch_state[1] = True
-                self._change_state(State.SEQUENCE)
-            else:
-                self._change_state(State.IDLE)
-        else: 
+        # reflect initial switch state
+        if not GPIO.input(config.get('wall_switch_pins')[0]):
+            self.switch_state[0] = True
             self._change_state(State.RANDOM)
+        elif not GPIO.input(config.get('wall_switch_pins')[1]):
+            self.switch_state[1] = True
+            self._change_state(State.SEQUENCE)
+        else:
+            self._change_state(State.IDLE)
+
+        # remove event detection if in manual mode
+        if self.manual:
+            GPIO.remove_event_detect(config.get('service_button_pin'))
+            GPIO.remove_event_detect(config.get('reboot_button_pin'))
+            for pin in config.get('wall_switch_pins'):
+                GPIO.remove_event_detect(pin)
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
@@ -309,11 +313,3 @@ class StateMachine:
             # break back to main loop if state changed
             if self.state != State.SERVICE: break
             await asyncio.sleep(1) # sleep 1 second before next check
-
-    def safe_add_event_detect(self, pin, edge, callback, bouncetime):
-        try:
-            GPIO.add_event_detect(pin, edge, callback=callback, bouncetime=bouncetime)
-        except RuntimeError:
-            # Event detection already set up, remove it and add again
-            GPIO.remove_event_detect(pin)
-            GPIO.add_event_detect(pin, edge, callback=callback, bouncetime=bouncetime)

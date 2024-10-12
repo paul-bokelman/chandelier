@@ -165,6 +165,8 @@ class Motor:
         if self.lower_neutral is None and self.upper_neutral is None:
             raise ValueError("Neutral positions not found, can't set offset throttle")
         
+        self.direction = direction # set direction for counts
+
         # set throttle based on direction
         neutral = self.lower_neutral if direction == config.get('up') else self.upper_neutral
         self.servo.throttle = neutral + (direction * config.get('throttle_offset'))
@@ -426,7 +428,7 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        await self.to(0.1, throttle=config.get('uncalibrated_down_throttle')) # move to buffer position 
+        await self.to(0.1) # move to buffer position 
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
@@ -450,8 +452,6 @@ class Motor:
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"))
 
-            self.direction = config.get('up') # set direction for counts
-            
             # move to up to calibration position and measure time
             timed_out, time_elapsed = await self.move(
                 n_counts=config.get('calibration_counts'),
@@ -495,10 +495,6 @@ class Motor:
             if self.lower_neutral is None and not timed_out and self.upper_neutral is not None:
                 log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
-
-        # ensure both neutral positions were found
-        if self.lower_neutral is None or self.upper_neutral is None:
-            raise ValueError("Neutral positions calibrated incorrectly")
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 

@@ -91,7 +91,7 @@ class Motor:
             return
 
         # move up at default uncalibrated throttle
-        self.set(throttle=(config.get('uncalibrated_throttle') * config.get('up')))
+        self.set(throttle=(config.get('uncalibrated_up_throttle')))
 
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
@@ -420,9 +420,9 @@ class Motor:
 
         # move back home if not already
         if not self._is_home():
-            await self.to_home(config.get('uncalibrated_throttle'))
+            await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        await self.to(0.1) # move to buffer position 
+        await self.to(0.1, throttle=config.get('uncalibrated_down_throttle')) # move to buffer position 
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:
@@ -469,7 +469,7 @@ class Motor:
 
         # ensure motor is at home position
         if not self._is_home():
-            await self.to_home(config.get('uncalibrated_throttle'))
+            await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
         step = 0.01 
         current_throttle = 0.35

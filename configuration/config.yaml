@@ -29,7 +29,8 @@ environment_specific_config: &default_env_config
 
   # motors
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
-  uncalibrated_throttle: 0.2 # throttle to use when not calibrated
+  uncalibrated_up_throttle: 0 # uncalibrated throttle when moving up
+  uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
 
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)

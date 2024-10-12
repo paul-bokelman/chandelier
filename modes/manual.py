@@ -1,8 +1,9 @@
 import asyncio
 from lib.state import StateMachine
 from lib.utils import log
+from lib.controller import MotorController
 
-def run():
+def run(controller: MotorController):
     log.info("""
     Running manual mode
     Controls (press button): 
@@ -14,7 +15,7 @@ def run():
     """)
 
 
-    sm = StateMachine(manual=True)
+    sm = StateMachine(controller=controller, manual=True)
 
     # run state machine forever
     while True:

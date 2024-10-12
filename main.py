@@ -52,18 +52,18 @@ def main():
 
         skip_calibration = args.mode == "scripts" # skip calibration for scripts mode (calibration not needed)
 
-        # preflight
-        asyncio.run(calibration.preflight(option=args.calibration, skip=skip_calibration))
+        # preflight and get calibrated motor controller
+        mc = asyncio.run(calibration.preflight(option=args.calibration, skip=skip_calibration))
 
         # execute mode
         if args.mode == "manual":
-            manual.run()
+            manual.run(controller=mc)
         elif args.mode == "normal":
-            normal.run()
+            normal.run(controller=mc)
         elif args.mode == "scripts":
             scripts.run()
         elif args.mode == "testing":
-            testing.run()
+            testing.run(controller=mc)
         else:
             log.error(f"Invalid mode: {args.mode}")
 
@@ -86,7 +86,6 @@ def main():
     finally:
         asyncio.run(emergency_stop()) # run emergency stop
         GPIO.cleanup()
-
 
 if __name__ == "__main__":
     try:

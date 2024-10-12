@@ -1,10 +1,11 @@
 import asyncio
 from lib.state import StateMachine
+from lib.controller import MotorController
 from lib.utils import log
 
-def run():
+def run(controller: MotorController):
     log.info("Running normal mode")
-    sm = StateMachine()
+    sm = StateMachine(controller=controller)
 
     # run state machine forever
     while True:

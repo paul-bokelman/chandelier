@@ -30,10 +30,10 @@ class ChargeState(Enum):
 
 class StateMachine:
     """State machine for managing states"""
-    def __init__(self, manual = False) -> None:
+    def __init__(self, controller: MotorController, manual = False) -> None:
         self.state = State.IDLE
         self.led = LED(config.get("led_pin"))
-        self.mc = MotorController()
+        self.mc = controller
         self.switch_state = [False, False]
         self.manual = manual
 

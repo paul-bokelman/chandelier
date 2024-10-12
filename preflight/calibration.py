@@ -7,20 +7,21 @@ from configuration.config import config
 CalibrationOptions = Literal["default", "prompt"]
 calibration_options: List[CalibrationOptions] = list(get_args(CalibrationOptions))
 
-async def preflight(option: CalibrationOptions = "default", skip: bool = False) -> None:
+async def preflight(option: CalibrationOptions = "default", skip: bool = False) -> MotorController:
+    mc = MotorController()
+
     if skip:
-        return
+        return mc
 
     log.info("Running calibration preflight")
 
     if option not in calibration_options:
         raise ValueError("Invalid calibration option")
 
-    mc = MotorController()
-
     # calibrate all motors with no resets or prompts
     if option == 'default':
-        return await mc.calibrate()
+        await mc.calibrate()
+        return mc
     
     reset: Union[bool, list[int]] = False
     
@@ -45,15 +46,15 @@ async def preflight(option: CalibrationOptions = "default", skip: bool = False) 
             if followup_answers is None:
                 raise ValueError("Invalid input")
 
-            mc = MotorController()
             reset = [int(x) for x in followup_answers["reset"].replace(" ", "").split(",")]
 
             if not all(motor in range(config.get('n_motors')) for motor in reset):
                 raise ValueError("Invalid motor channel")
 
-        return await mc.calibrate(reset) # calibrate motors
+        await mc.calibrate(reset) # calibrate motors
     except Exception as e:
         log.error(f"An error occurred: {e}")
     finally:
         mc.stop_all_motors()
         log.info("Calibrations mode complete")
+        return mc

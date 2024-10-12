@@ -4,6 +4,7 @@ import time
 import random
 from datetime import datetime
 import asyncio
+import threading
 import sshkeyboard as keyboard
 from configuration.config import config
 from lib.controller import MotorController
@@ -61,9 +62,9 @@ class StateMachine:
             for pin in config.get('wall_switch_pins'):
                 GPIO.remove_event_detect(pin)
 
-            keyboard.listen_keyboard(
-                on_press=self._handle_keypress,
-            )
+            # Start keyboard listening in a separate thread
+            self.keyboard_thread = threading.Thread(target=self._start_keyboard_listener, daemon=True)
+            self.keyboard_thread.start()
 
         log.info(f"State machine initialized, initial state is {self.state}", override=True)
 
@@ -72,6 +73,12 @@ class StateMachine:
             raise Exception("Invalid calibration data")
 
         self.mc.load_calibration_data() # load calibration data
+
+    def _start_keyboard_listener(self):
+        """Start keyboard listener in a separate thread"""
+        keyboard.listen_keyboard(
+            on_press=self._handle_keypress,
+        )
 
     def _handle_keypress(self, key: str):
         """Handle keypresses"""
@@ -88,6 +95,7 @@ class StateMachine:
         elif key == 'q':
             state = State.REBOOT
 
+        # Use asyncio.run_coroutine_threadsafe to call _change_state from this thread
         self._change_state(state)
 
     def _change_state(self, new_state: State):

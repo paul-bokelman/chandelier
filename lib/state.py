@@ -207,6 +207,9 @@ class StateMachine:
                 charge_state = ChargeState.CHARGING
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
 
+                # attempt to recover motors from disabled state
+                await self.mc.recover_all()
+
                 # place candles in correct position start charging
                 await self.mc.move_all_home()
                 await self.mc.move_all(6 / config.get('max_counts'))
@@ -215,7 +218,6 @@ class StateMachine:
 
                 self._charger_on() # turn on charging power
 
-            # todo: requires attentions -> check if everything works logically
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
                 log.info("CHARGING", override=True)

@@ -121,3 +121,7 @@ class MotorController:
 
     log.info("Calibration data saved")
     log.success("Calibration complete")
+
+  async def recover_all(self):
+    """Attempt to recover all disabled motors"""
+    await asyncio.gather(*[motor.recover() for motor in self.motors if motor.disabled])

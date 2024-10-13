@@ -31,6 +31,8 @@ environment_specific_config: &default_env_config
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
   uncalibrated_up_throttle: 0 # uncalibrated throttle when moving up
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
+  max_recover_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
+  recover_counts: 8 # number of counts to move when attempting to recover
 
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)

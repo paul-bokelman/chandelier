@@ -10,18 +10,22 @@ try:
 except ImportError:
     import Mock.GPIO as GPIO
 
-# todo: all disabled functionality should be present here (don't run motor if disabled)
-
 class Motor:
     """Motor class to control a single motor"""
     def __init__(self, channel: int, servo: ContinuousServo) -> None:
+        # general data
         self.channel = channel
         self.direction: int = config.get('down') # direction of motor (used in encoder callback)
-        self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.servo = servo
         self.servo.set_pulse_width_range(1000, 2000) 
-        self.disabled = False
 
+        # state data
+        self.disabled = False # if the motor is disabled
+        self.dead = False # if the motor is dead
+        self.recover_attempts = 0 # number of times the motor has attempted to recover
+
+        # encoder data
+        self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.counts = -1  # current count position, -1 indicates that the motor position is unknown
 
         # calibration data
@@ -35,10 +39,11 @@ class Motor:
         # detect when encoder is triggered (matches 0's)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
-        # disable motor if it is in the initial disabled list
+        # mark motor as dead if it is in the initial disabled list
         if self.channel in config.get('initial_disabled_motors'):
             self.disabled = True
-            log.warning(f"M{self.channel} | Motor disabled")
+            self.dead = True
+            log.warning(f"M{self.channel} | Motor dead")
 
     def _encoder_callback(self, _):
         """Callback function for encoder"""
@@ -114,13 +119,6 @@ class Motor:
                 break
 
         self._set_home_state()
-
-    # todo: recover from a disabled state
-    # todo: should not try to recover if initially disabled
-    # todo: should only try to recover twice before permanently disabling
-    def _recover(self):
-        """Recover from a disabled state"""
-        pass
     
     @staticmethod
     def _handle_disabled(f):
@@ -297,6 +295,38 @@ class Motor:
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
         return await self.move(n_counts, direction, throttle, timeout, disable_on_timeout) # move to target position
+
+    async def recover(self):
+        """Attempt to recover from a disabled state"""
+
+        # if motor is not disabled or dead -> do nothing
+        if not self.disabled or self.dead:
+            return
+
+        # if motor has attempted to recover twice -> mark as dead
+        if self.recover_attempts >= config.get('max_recover_attempts'):
+            self.dead = True
+            return
+
+        self.recover_attempts += 1 # increment recover attempts
+        self.disabled = False # temporarily enable motor
+
+        # move down to verify down movement is working
+        down_timed_out, _ = await self.move(direction=config.get('down'), n_counts=config.get('recover_counts'))
+
+        # timed out -> disable motor
+        if down_timed_out:
+            self._disable("Failed to recover")
+
+        # move up to verify up movement is working
+        up_timed_out, _ = await self.move(direction=config.get('up'), n_counts=config.get('recover_counts'))
+
+        # timed out -> disable motor
+        if up_timed_out:
+            self._disable("Failed to recover")
+
+        # success -> leave motor enabled and reset recover attempts
+        self.recover_attempts = 0
     
     # -------------------------------- CALIBRATION ------------------------------- #
     @_handle_disabled 

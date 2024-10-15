@@ -104,6 +104,7 @@ class Motor:
             return f(self, *args, **kwargs)
         return wrapper
 
+    @_handle_disabled
     async def _find_home(self):
         """Find the home position from an unknown starting position"""
         log.info(self._clm("Find Home", message="Finding home"))

@@ -3,7 +3,7 @@ import argparse
 import traceback
 import asyncio
 from configuration.config import Config, Environments, config
-from modes import normal, manual, scripts, testing
+from modes import normal, manual, scripts
 from preflight import calibration
 from lib.utils import log
 from helpers.stop import emergency_stop
@@ -17,7 +17,7 @@ except ImportError:
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
     parser.add_argument("-e", "--env", help="Select an environment", type=str, default='development') # development, testing, production
-    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts, testing
+    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts
     parser.add_argument("-c", "--calibration", help="Select calibration option", type=str, default='default') # default, prompt 
     args= parser.parse_args()
 
@@ -62,8 +62,6 @@ def main():
             normal.run(controller=mc)
         elif args.mode == "scripts":
             scripts.run()
-        elif args.mode == "testing":
-            testing.run(controller=mc)
         else:
             log.error(f"Invalid mode: {args.mode}")
 

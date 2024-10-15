@@ -28,7 +28,6 @@ class MotorController:
     """
     await asyncio.gather(*[motor.to_home(throttle) for motor in self.motors])
 
-  # todo: convert to use throttle as none (offset throttle)
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None):
     """Move all motors to specific positions with specific throttles"""
 

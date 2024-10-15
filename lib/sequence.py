@@ -8,8 +8,6 @@ from lib.utils import log
 IteratorReturnValue = tuple[list[float], Optional[float]]
 GeneratedSequence = Generator[IteratorReturnValue, None, None]
 
-# todo: sequences should always return a throttle value (should never be used without calibration)
-
 class Sequence:
     """Generates sequences for all motors"""
     def __init__(self) -> None:

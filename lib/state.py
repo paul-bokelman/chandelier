@@ -18,6 +18,7 @@ except ImportError:
     import Mock.GPIO as GPIO
 
 class State(Enum):
+    __order__ = 'IDLE RANDOM SEQUENCE SERVICE REBOOT'
     IDLE = 0
     RANDOM = 1
     SEQUENCE = 2

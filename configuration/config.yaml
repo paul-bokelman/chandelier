@@ -8,7 +8,7 @@ general:
   led_pin: 8
   up: -1
   down: 1
-  modes: [normal, manual, scripts, testing]
+  modes: [normal, manual, scripts]
 
 # base env configuration schema
 environment_specific_config: &default_env_config
@@ -25,7 +25,7 @@ environment_specific_config: &default_env_config
   # charging
   candles_per_charge_cycle: 2
   charge_cycle_time: 600
-  available_charging_hours: [1] # 1 o'clock (24hr) # todo: will likely be removed (new system)
+  available_charging_hours: [1] # 1 o'clock (24hr)
 
   # motors
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)

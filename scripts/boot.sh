@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 cd $(dirname $0)
+cd ..
 
 # attempt to update the repo
 isOnline=$(ping -q -c1 google.com &>/dev/null && echo online || echo offline)

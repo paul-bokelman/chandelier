@@ -84,7 +84,27 @@ class Motor:
     def _is_home(self) -> bool:
         """Check if the motor is at the home position"""
         return self.counts == 0
+    
+    @staticmethod
+    def _handle_disabled(f):
+        """Decorator to check and properly handle disabled state"""
+        def wrapper(self: 'Motor', *args, **kwargs):
+            
+            # if the motor is disabled -> notify and abort
+            if self.disabled:
+                log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
+                return asyncio.sleep(0) #/ hacky way to make asyncio happy
 
+            # if the motor position is unknown -> disable and abort
+            if self.counts == -1:
+                self._disable("Motor position unknown, recalibrate independently")
+                return asyncio.sleep(0) #/ hacky way to make asyncio happy
+
+            # otherwise -> execute function
+            return f(self, *args, **kwargs)
+        return wrapper
+
+    @_handle_disabled
     async def _find_home(self):
         """Find the home position from an unknown starting position"""
         log.info(self._clm("Find Home", message="Finding home"))
@@ -119,25 +139,6 @@ class Motor:
                 break
 
         self._set_home_state()
-    
-    @staticmethod
-    def _handle_disabled(f):
-        """Decorator to check and properly handle disabled state"""
-        def wrapper(self: 'Motor', *args, **kwargs):
-            
-            # if the motor is disabled -> notify and abort
-            if self.disabled:
-                log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
-                return asyncio.sleep(0) #/ hacky way to make asyncio happy
-
-            # if the motor position is unknown -> disable and abort
-            if self.counts == -1:
-                self._disable("Motor position unknown, recalibrate independently")
-                return asyncio.sleep(0) #/ hacky way to make asyncio happy
-
-            # otherwise -> execute function
-            return f(self, *args, **kwargs)
-        return wrapper
 
     @_handle_disabled #/ should never be called when disabled but just in case
     async def set(self, direction: int, throttle: Optional[float] = None ):

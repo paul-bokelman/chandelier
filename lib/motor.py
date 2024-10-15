@@ -104,7 +104,6 @@ class Motor:
             return f(self, *args, **kwargs)
         return wrapper
 
-    @_handle_disabled
     async def _find_home(self):
         """Find the home position from an unknown starting position"""
         log.info(self._clm("Find Home", message="Finding home"))
@@ -562,7 +561,6 @@ class Motor:
 
         log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
-    @_handle_disabled #/ don't need to check disabled state here
     async def calibrate_independent(self):
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""
         log.info(self._clm("Calibrate Independent", message="Calibrating Motor"))

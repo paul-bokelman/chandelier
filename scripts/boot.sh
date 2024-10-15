@@ -15,5 +15,4 @@ fi
 
 # start the process
 source env/bin/activate
-bash ./scripts/kill.sh # kill existing process
 python main.py  

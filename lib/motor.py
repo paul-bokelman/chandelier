@@ -115,7 +115,7 @@ class Motor:
             
             # motor has stopped moving -> set home
             if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
-                log.error(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
+                log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
                 break
 
         self._set_home_state()

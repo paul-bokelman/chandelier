@@ -85,7 +85,7 @@ class Motor:
         """Check if the motor is at the home position"""
         return self.counts == 0
 
-    def _find_home(self):
+    async def _find_home(self):
         """Find the home position from an unknown starting position"""
         log.info(self._clm("Find Home", message="Finding home"))
 
@@ -95,7 +95,7 @@ class Motor:
             return
 
         # move up at default uncalibrated throttle
-        self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
+        await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
 
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
@@ -140,7 +140,7 @@ class Motor:
         return wrapper
 
     @_handle_disabled #/ should never be called when disabled but just in case
-    def set(self, direction: int, throttle: Optional[float] = None ):
+    async def set(self, direction: int, throttle: Optional[float] = None ):
         """
         Start the motor with a specific throttle and direction
 
@@ -241,7 +241,7 @@ class Motor:
         start_counts = self.counts # track start position
         timed_out = False
 
-        self.set(direction=direction, throttle=throttle) # start motor
+        await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
             # check if the motor has reached the target position
@@ -568,7 +568,7 @@ class Motor:
 
         # find initial home position if not already found
         if self.counts == -1:
-            self._find_home()
+            await self._find_home()
 
         # find neutrals if either is not present
         if self.lower_neutral is None or self.upper_neutral is None:

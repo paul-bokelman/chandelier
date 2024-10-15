@@ -9,11 +9,11 @@ def run():
 
     # prompt: should reset all calibration data?
     question = [inquirer.List("script", message="What script would you like to run?", choices=script_choices)]
-    script = inquirer.prompt(question)
+    answer = inquirer.prompt(question)
 
     # ensure valid input
-    if script is None:
+    if answer is None:
         raise ValueError("Invalid input")
 
     # run script
-    os.system(f"bash scripts/{script}.sh")
+    os.system(f"bash scripts/{answer['script']}.sh")

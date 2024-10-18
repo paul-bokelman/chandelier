@@ -63,6 +63,7 @@ production:
   suppress_count_logging: true
 testing:
   <<: *default_env_config
+  initial_disabled_motors: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
   calibration_file_path: calibrations_test.json # file to store calibration data
   random_state_duration: 60 # 1 minute
   sequence_state_duration: 60 # 1 minute

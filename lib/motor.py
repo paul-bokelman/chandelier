@@ -145,6 +145,13 @@ class Motor:
             
             await asyncio.sleep(0.01) # yield control back to event
 
+        timed_out, _ = await self.move(n_counts=1, direction=config.get('down')) # move down single count to account for cinching
+
+        # timed out moving down -> disable and exit
+        if timed_out:
+            self._disable("Failed to apply buffer count when finding home")
+            return
+
         self._set_home_state()
 
     @_handle_disabled #/ should never be called when disabled but just in case

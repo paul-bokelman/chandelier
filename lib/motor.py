@@ -145,7 +145,8 @@ class Motor:
             
             await asyncio.sleep(0.01) # yield control back to event
 
-        timed_out, _ = await self.move(n_counts=1, direction=config.get('down')) # move down single count to account for cinching
+        # move down single count to account for cinching
+        timed_out, _ = await self.move(n_counts=1, direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
 
         # timed out moving down -> disable and exit
         if timed_out:

@@ -48,6 +48,7 @@ environment_specific_config: &default_env_config
   calibration_counts: 8 # distance to move for calibration (in counts)
   calibration_file_path: calibrations.json # file to store calibration data
   skip_find_home: false # don't attempt to find home, assume already found (should only be used when candles are disconnected)
+  find_home_buffer_counts: 3 # number of counts to move after finding home to ensure candles can properly move to home
 
 development:
   <<: *default_env_config

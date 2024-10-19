@@ -146,7 +146,7 @@ class Motor:
             await asyncio.sleep(0.01) # yield control back to event
 
         # move down single count to account for cinching
-        timed_out, _ = await self.move(n_counts=1, direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
+        timed_out, _ = await self.move(n_counts=config.get('find_home_buffer_counts'), direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
 
         # timed out moving down -> disable and exit
         if timed_out:
@@ -505,7 +505,8 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        await self.to(0.1) # move to buffer position 
+        # move to buffer position
+        await self.move(n_counts=4, direction=config.get('down'))
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:

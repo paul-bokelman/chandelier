@@ -97,3 +97,7 @@ if __name__ == "__main__":
         log.error(f"An error occurred: {e}")
         GPIO.cleanup()
         exit()
+    finally:
+        GPIO.cleanup()
+        sshkeyboard.stop_listening() # stop listening for ssh keyboard input
+        exit()

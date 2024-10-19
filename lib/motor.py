@@ -420,8 +420,10 @@ class Motor:
 
             log.info(self._clm("CRT", direction=f"{'down' if is_down else 'up'}", cps=cps, error=error))
 
-            # throttle is within error margin -> found throttle -> exit 
-            if abs(error) <= error_margin:
+            # throttle is within error margin or factor is really low -> found throttle -> exit 
+            if abs(error) <= error_margin or factor < 0.05:
+                if factor < 0.05:
+                    log.warning(self._clm("CRT", message="Factor is too low, taking current throttle"))
                 log.success(self._clm("CRT", message="Throttle found", throttle=throttle))
                 found_throttle = True
 

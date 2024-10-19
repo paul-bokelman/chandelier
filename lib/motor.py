@@ -115,7 +115,7 @@ class Motor:
             return
 
         # move up at default uncalibrated throttle
-        await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
+        self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
 
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
@@ -141,7 +141,7 @@ class Motor:
         self._set_home_state()
 
     @_handle_disabled #/ should never be called when disabled but just in case
-    async def set(self, direction: int, throttle: Optional[float] = None ):
+    def set(self, direction: int, throttle: Optional[float] = None):
         """
         Start the motor with a specific throttle and direction
 
@@ -242,7 +242,7 @@ class Motor:
         start_counts = self.counts # track start position
         timed_out = False
 
-        await self.set(direction=direction, throttle=throttle) # start motor
+        self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
             # check if the motor has reached the target position

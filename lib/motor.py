@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo
@@ -449,11 +449,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= self.upper_neutral + config.get('throttle_offset'):
+            if is_down and new_throttle <= cast(float, self.upper_neutral):
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= self.lower_neutral - config.get('throttle_offset'):
+            if not is_down and new_throttle >= cast(float, self.lower_neutral):
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90

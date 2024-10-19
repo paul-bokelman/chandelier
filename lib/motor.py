@@ -107,6 +107,11 @@ class Motor:
 
     async def _find_home(self):
         """Find the home position from an unknown starting position"""
+
+        # disabled handling
+        if self.disabled or self.dead:
+            return
+
         log.info(self._clm("Find Home", message="Finding home"))
 
         if config.get('skip_find_home'):

@@ -115,7 +115,7 @@ class Motor:
             return
 
         # move up at default uncalibrated throttle
-        self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
+        await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
 
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
@@ -137,11 +137,13 @@ class Motor:
             if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
                 log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
                 break
+            
+            await asyncio.sleep(0.01) # yield control back to event
 
         self._set_home_state()
 
     @_handle_disabled #/ should never be called when disabled but just in case
-    def set(self, direction: int, throttle: Optional[float] = None):
+    async def set(self, direction: int, throttle: Optional[float] = None):
         """
         Start the motor with a specific throttle and direction
 
@@ -242,7 +244,7 @@ class Motor:
         start_counts = self.counts # track start position
         timed_out = False
 
-        self.set(direction=direction, throttle=throttle) # start motor
+        await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
             # check if the motor has reached the target position

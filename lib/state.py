@@ -75,6 +75,8 @@ class StateMachine:
 
         self.mc.load_calibration_data() # load calibration data
 
+        asyncio.run(self.mc.move_all_home()) # move all candles to home position
+
     def _start_keyboard_listener(self):
         """Start keyboard listener in a separate thread"""
         keyboard.listen_keyboard(

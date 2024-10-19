@@ -2,6 +2,7 @@ import sys
 import argparse
 import traceback
 import asyncio
+import sshkeyboard
 from configuration.config import Config, Environments, config
 from modes import normal, manual, scripts
 from preflight import calibration
@@ -82,6 +83,7 @@ def main():
         log.error(f"Exception occurred on line: {exc_traceback.tb_lineno}")
     finally:
         asyncio.run(emergency_stop()) # run emergency stop
+        sshkeyboard.stop_listening() # stop listening for ssh keyboard input
         GPIO.cleanup()
 
 if __name__ == "__main__":
@@ -94,4 +96,8 @@ if __name__ == "__main__":
     except Exception as e:
         log.error(f"An error occurred: {e}")
         GPIO.cleanup()
+        exit()
+    finally:
+        GPIO.cleanup()
+        sshkeyboard.stop_listening() # stop listening for ssh keyboard input
         exit()

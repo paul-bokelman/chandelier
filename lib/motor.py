@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo
@@ -107,6 +107,11 @@ class Motor:
 
     async def _find_home(self):
         """Find the home position from an unknown starting position"""
+
+        # disabled handling
+        if self.disabled or self.dead:
+            return
+
         log.info(self._clm("Find Home", message="Finding home"))
 
         if config.get('skip_find_home'):
@@ -137,11 +142,21 @@ class Motor:
             if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
                 log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
                 break
+            
+            await asyncio.sleep(0.01) # yield control back to event
+
+        # move down single count to account for cinching
+        timed_out, _ = await self.move(n_counts=config.get('find_home_buffer_counts'), direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
+
+        # timed out moving down -> disable and exit
+        if timed_out:
+            self._disable("Failed to apply buffer count when finding home")
+            return
 
         self._set_home_state()
 
     @_handle_disabled #/ should never be called when disabled but just in case
-    async def set(self, direction: int, throttle: Optional[float] = None ):
+    async def set(self, direction: int, throttle: Optional[float] = None):
         """
         Start the motor with a specific throttle and direction
 
@@ -405,8 +420,10 @@ class Motor:
 
             log.info(self._clm("CRT", direction=f"{'down' if is_down else 'up'}", cps=cps, error=error))
 
-            # throttle is within error margin -> found throttle -> exit 
-            if abs(error) <= error_margin:
+            # throttle is within error margin or factor is really low -> found throttle -> exit 
+            if abs(error) <= error_margin or factor < 0.05:
+                if factor < 0.05:
+                    log.warning(self._clm("CRT", message="Factor is too low, taking current throttle"))
                 log.success(self._clm("CRT", message="Throttle found", throttle=throttle))
                 found_throttle = True
 
@@ -434,11 +451,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= self.upper_neutral + config.get('throttle_offset'):
+            if is_down and new_throttle <= cast(float, self.upper_neutral):
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= self.lower_neutral - config.get('throttle_offset'):
+            if not is_down and new_throttle >= cast(float, self.lower_neutral):
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90
@@ -490,7 +507,8 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        await self.to(0.1) # move to buffer position 
+        # move to buffer position
+        await self.move(n_counts=4, direction=config.get('down'))
 
          # ------------------------------- find cps down ------------------------------ #
         if self.cps_down is None:

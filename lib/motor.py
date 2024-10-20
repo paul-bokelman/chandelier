@@ -118,6 +118,8 @@ class Motor:
             log.warning(self._clm("Find Home", message="Skipping find home"))
             self._set_home_state()
             return
+        
+        max_time_between_encoder_readings = config.get('unknown_max_time_between_encoder_readings') if not self.cps_up else (1 / self.cps_up) * 1.10
 
         # move up at default uncalibrated throttle
         await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
@@ -125,12 +127,15 @@ class Motor:
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
         current_counts = self.counts
+        recorded_counts = 0
+        startup_counts = 2 # number of counts to ignore timeouts
         while True:
 
             # track when counts are updated
             if self.counts != current_counts:
                 prev_time = time.time()
                 current_counts = self.counts
+                recorded_counts += 1
 
             # home not found within timeout window -> disable and exit
             if time.time() - start_time > config.get('unknown_position_timeout'):
@@ -139,7 +144,7 @@ class Motor:
                 return
             
             # motor has stopped moving -> set home
-            if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
+            if time.time() - prev_time > max_time_between_encoder_readings and recorded_counts > startup_counts:
                 log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
                 self.stop()
                 break

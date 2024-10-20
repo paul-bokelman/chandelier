@@ -42,7 +42,7 @@ environment_specific_config: &default_env_config
   calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
   unknown_position_timeout: 120 # max timeout (seconds) when trying to find home from unknown position
   max_time_between_encoder_readings: 10 # max time (seconds) between encoder readings before disabling
-  unknown_max_time_between_encoder_readings: 1 # max time (seconds) between encoder readings when trying to find home from unknown position
+  unknown_max_time_between_encoder_readings: 2 # max time (seconds) between encoder readings when trying to find home from unknown position
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)

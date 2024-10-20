@@ -171,7 +171,7 @@ class StateMachine:
         log.warning("Rebooting system")
         self.mc.stop_all_motors()
         GPIO.cleanup()
-        os.system(f"bash {os.getcwd()}/scripts/reboot.sh > reboot.log") # reboot system
+        os.system(f"bash {os.getcwd()}/scripts/reboot.sh") # reboot system
 
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""

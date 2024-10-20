@@ -9,10 +9,5 @@ else
     echo "Wi-Fi not connected. Skipping repo update."
 fi
 
-
-# start the process
-# source env/bin/activate
-# python main.py  
-
 # reboot the pi
 sudo reboot

@@ -27,6 +27,9 @@ class Motor:
         # encoder data
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.counts = -1  # current count position, -1 indicates that the motor position is unknown
+        self.reading = False # if the encoder is currently being read
+        self.previous_read = time.time() # previous time the encoder was read
+        self.current_cps = 0 # current counts per second
 
         # calibration data
         self.lower_neutral = None
@@ -47,11 +50,18 @@ class Motor:
 
     def _encoder_callback(self, _):
         """Callback function for encoder"""
+        if not self.reading:
+            self.reading = True
+
         self.counts += self.direction * 1 # increment or decrement counts based on direction
+        current_time = time.time() # get current time
+        time_elapsed = current_time - self.previous_read # calculate time elapsed
+        self.current_cps = 1 / time_elapsed # calculate counts per second
+        self.previous_read = current_time # update previous read time
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
-            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'}")
+            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps}")
 
     def _set_home_state(self):
         """Set motor to home state"""
@@ -204,6 +214,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(self._clm("Stop"))
+        self.reading = False
         self.servo._pwm_out.duty_cycle = 0  
 
     @_handle_disabled
@@ -247,7 +258,7 @@ class Motor:
             timeout (int, optional): max time to move, defaults to config.get('to_position_timeout')
 
         Returns:
-            tuple(bool, float, bool): timed_out, time_elapsed
+            tuple(bool, float): timed_out, time_elapsed
         """
 
         max_counts: int = config.get('max_counts')
@@ -265,7 +276,6 @@ class Motor:
         timed_out = False
 
         await self.set(direction=direction, throttle=throttle) # start motor
-
         while True:
             # check if the motor has reached the target position
             if abs(self.counts - start_counts) == n_counts:

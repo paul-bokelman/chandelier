@@ -141,6 +141,7 @@ class Motor:
             # motor has stopped moving -> set home
             if time.time() - prev_time > config.get('unknown_max_time_between_encoder_readings'):
                 log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
+                self.stop()
                 break
             
             await asyncio.sleep(0.01) # yield control back to event
@@ -152,7 +153,8 @@ class Motor:
         if timed_out:
             self._disable("Failed to apply buffer count when finding home")
             return
-
+        
+        await asyncio.sleep(3) # wait for motor to settle
         self._set_home_state()
 
     @_handle_disabled #/ should never be called when disabled but just in case

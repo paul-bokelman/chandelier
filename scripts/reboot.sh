@@ -1,8 +1,5 @@
 #!/bin/bash
 
-cd $(dirname $0)
-cd ..
-
 # attempt to update the repo
 isOnline=$(ping -q -c1 google.com &>/dev/null && echo online || echo offline)
 if [ "$isOnline" = "online" ]; then
@@ -16,3 +13,6 @@ fi
 # start the process
 # source env/bin/activate
 # python main.py  
+
+# reboot the pi
+sudo reboot

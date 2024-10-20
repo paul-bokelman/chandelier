@@ -62,7 +62,7 @@ class Motor:
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
-            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps}")
+            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps if self.measure_cps else 'N/A'}")
 
     def _reset_cps_readings(self):
         """Reset cps readings (Doesn't stop measuring)"""

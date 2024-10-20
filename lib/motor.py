@@ -562,6 +562,9 @@ class Motor:
 
             # compute average cps down
             buffered_readings = self.cps_readings[cps_readings_buffer:len(self.cps_readings) - cps_readings_buffer]
+
+            log.info(self._clm("Find CPS", cps_readings=self.cps_readings, buffered_readings=buffered_readings))
+
             self.cps_down = sum(buffered_readings) / len(buffered_readings) # compute average cps down
 
             log.info(self._clm("Find CPS", cps_down=self.cps_down))
@@ -585,6 +588,9 @@ class Motor:
             
               # compute average cps down
             buffered_readings = self.cps_readings[cps_readings_buffer:len(self.cps_readings) - cps_readings_buffer]
+
+            log.info(self._clm("Find CPS", cps_readings=self.cps_readings, buffered_readings=buffered_readings))
+
             self.cps_up = sum(buffered_readings) / len(buffered_readings) # compute average cps down
 
             log.info(self._clm("Find CPS", cps_up=self.cps_up))

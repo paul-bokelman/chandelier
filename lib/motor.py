@@ -27,9 +27,10 @@ class Motor:
         # encoder data
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.counts = -1  # current count position, -1 indicates that the motor position is unknown
-        self.reading = False # if the encoder is currently being read
+        self.measure_cps = False # if the encoder is currently being read
         self.previous_read = time.time() # previous time the encoder was read
-        self.current_cps = 0 # current counts per second
+        self.current_cps: float = 0 # current counts per second
+        self.cps_readings: list[float] = [] # list of cps readings for current read
 
         # calibration data
         self.lower_neutral = None
@@ -50,18 +51,32 @@ class Motor:
 
     def _encoder_callback(self, _):
         """Callback function for encoder"""
-        if not self.reading:
-            self.reading = True
-
         self.counts += self.direction * 1 # increment or decrement counts based on direction
-        current_time = time.time() # get current time
-        time_elapsed = current_time - self.previous_read # calculate time elapsed
-        self.current_cps = 1 / time_elapsed # calculate counts per second
-        self.previous_read = current_time # update previous read time
+
+        if self.measure_cps:
+            current_time = time.time() # get current time
+            time_elapsed = current_time - self.previous_read # calculate time elapsed
+            self.current_cps = 1 / time_elapsed # calculate counts per second
+            self.previous_read = current_time # update previous read time
+            self.cps_readings.append(self.current_cps) # append cps to readings
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
             log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps}")
+
+    def _reset_cps_readings(self):
+        """Reset cps readings (Doesn't stop measuring)"""
+        self.cps_readings = []
+        self.current_cps = 0
+
+    def _start_measuring_cps(self):
+        """Start measuring cps"""
+        self._reset_cps_readings()
+        self.measure_cps = True
+
+    def _stop_measuring_cps(self):
+        """Stop measuring cps"""
+        self.measure_cps = False
 
     def _set_home_state(self):
         """Set motor to home state"""
@@ -129,7 +144,7 @@ class Motor:
             self._set_home_state()
             return
         
-        max_time_between_encoder_readings = config.get('unknown_max_time_between_encoder_readings') if not self.cps_up else (1 / self.cps_up) * 1.20
+        max_time_between_encoder_readings = config.get('unknown_max_time_between_encoder_readings') if not self.cps_up else (1 / self.cps_up) * 1.30
 
         # move up at default uncalibrated throttle
         await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))
@@ -137,8 +152,6 @@ class Motor:
         # time encoder counts until max time between readings is reached
         start_time = prev_time = time.time()
         current_counts = self.counts
-        recorded_counts = 0
-        startup_counts = 2 # number of counts to ignore timeouts
         while True:
 
             # track when counts are updated
@@ -154,7 +167,7 @@ class Motor:
                 return
             
             # motor has stopped moving -> set home
-            if time.time() - prev_time > max_time_between_encoder_readings and recorded_counts > startup_counts:
+            if time.time() - prev_time > max_time_between_encoder_readings:
                 log.success(self._clm("Find Initial Home", message="Max time between readings reached, setting home"))
                 self.stop()
                 break
@@ -214,7 +227,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(self._clm("Stop"))
-        self.reading = False
+        self._stop_measuring_cps()
         self.servo._pwm_out.duty_cycle = 0  
 
     @_handle_disabled
@@ -276,6 +289,7 @@ class Motor:
         timed_out = False
 
         await self.set(direction=direction, throttle=throttle) # start motor
+
         while True:
             # check if the motor has reached the target position
             if abs(self.counts - start_counts) == n_counts:
@@ -387,7 +401,7 @@ class Motor:
         if not self._is_home():
             await self.to_home()
 
-        await self.to(0.1) # move to buffer position (avoid hitting top on up)
+        await self.move(n_counts=3, direction=config.get('down')) # move to buffer position (avoid hitting top on up)
 
         # descent configuration
         error_margin = 0.03
@@ -524,6 +538,8 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
+        cps_readings_buffer = 2 # padding for cps readings
+
         # move to buffer position
         await self.move(n_counts=4, direction=config.get('down'))
 
@@ -531,8 +547,10 @@ class Motor:
         if self.cps_down is None:
             log.info(self._clm("Find CPS", message="Finding cps down"))
 
-            # move to down to calibration position and measure time
-            timed_out, time_elapsed = await self.move(
+            self._start_measuring_cps() # start down measuring cps
+ 
+            # move to down to calibration position and measure time (automatically stops measuring cps when done)
+            timed_out, _ = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('down'),
                 timeout=config.get('calibrate_cps_timeout')
@@ -542,15 +560,20 @@ class Motor:
                 log.error(self._clm("Find CPS", message="Motor timed out finding cps down"))
                 raise ValueError("Motor timed out finding cps down")
 
-            self.cps_down = config.get('calibration_counts') / time_elapsed # compute cps down
+            # compute average cps down
+            buffered_readings = self.cps_readings[cps_readings_buffer:len(self.cps_readings) - cps_readings_buffer]
+            self.cps_down = sum(buffered_readings) / len(buffered_readings) # compute average cps down
+
             log.info(self._clm("Find CPS", cps_down=self.cps_down))
 
         # -------------------------------- find cps up ------------------------------- #
         if self.cps_up is None:
             log.info(self._clm("Find CPS", message="Finding cps up"))
 
+            self._start_measuring_cps() # start up measuring cps
+
             # move to up to calibration position and measure time
-            timed_out, time_elapsed = await self.move(
+            timed_out, _ = await self.move(
                 n_counts=config.get('calibration_counts'),
                 direction=config.get('up'),
                 timeout=config.get('calibrate_cps_timeout')
@@ -560,7 +583,10 @@ class Motor:
                 log.error(self._clm("Find CPS", message="Motor timed out finding cps up"))
                 raise ValueError("Motor timed out finding cps up")
             
-            self.cps_up = config.get('calibration_counts') / time_elapsed # compute cps up
+              # compute average cps down
+            buffered_readings = self.cps_readings[cps_readings_buffer:len(self.cps_readings) - cps_readings_buffer]
+            self.cps_up = sum(buffered_readings) / len(buffered_readings) # compute average cps down
+
             log.info(self._clm("Find CPS", cps_up=self.cps_up))
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))

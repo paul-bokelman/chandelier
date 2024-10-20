@@ -1,10 +1,10 @@
 [Unit]
-Description=Update Repository on Wi-Fi Connection
+Description=Run Boot on Wifi Connection
 After=network-online.target
+Wants=network-online.target
 
 [Service]
-ExecStart=sudo bash /home/chandelier2/Desktop/Chandelier/boot.sh
-User=chandelier2
+ExecStart=~/Desktop/chandelier/scripts/boot.sh
 
 [Install]
 WantedBy=multi-user.target

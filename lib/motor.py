@@ -147,12 +147,12 @@ class Motor:
             await asyncio.sleep(0.01) # yield control back to event
 
         # move down single count to account for cinching
-        timed_out, _ = await self.move(n_counts=config.get('find_home_buffer_counts'), direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
+        # timed_out, _ = await self.move(n_counts=config.get('find_home_buffer_counts'), direction=config.get('down'), throttle=config.get('uncalibrated_down_throttle')) 
 
-        # timed out moving down -> disable and exit
-        if timed_out:
-            self._disable("Failed to apply buffer count when finding home")
-            return
+        # # timed out moving down -> disable and exit
+        # if timed_out:
+        #     self._disable("Failed to apply buffer count when finding home")
+        #     return
         
         await asyncio.sleep(3) # wait for motor to settle
         self._set_home_state()

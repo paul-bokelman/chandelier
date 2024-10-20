@@ -4,7 +4,9 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=~/Desktop/chandelier/scripts/boot.sh
+ExecStart=/home/chandelier2/Desktop/chandelier/scripts/boot.sh
+WorkingDirectory=/home/chandelier2/Desktop/chandelier/scripts
+User=chandelier2
 
 [Install]
 WantedBy=multi-user.target

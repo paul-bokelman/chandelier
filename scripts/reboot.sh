@@ -15,4 +15,4 @@ fi
 # python main.py  
 
 # reboot the pi
-sudo reboot
+# sudo reboot

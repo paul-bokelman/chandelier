@@ -31,8 +31,9 @@ environment_specific_config: &default_env_config
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
   uncalibrated_up_throttle: 0 # uncalibrated throttle when moving up
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
-  max_recover_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
-  recover_counts: 8 # number of counts to move when attempting to recover
+  max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
+  recovery_counts: 8 # number of counts to move when attempting to recover
+  stall_threshold: 0.5 # cps difference threshold to determine if a motor is stalled
 
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
@@ -41,8 +42,7 @@ environment_specific_config: &default_env_config
   calibrate_cps_timeout: 30 # max timeout (seconds) when calibrating cps
   calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
   unknown_position_timeout: 120 # max timeout (seconds) when trying to find home from unknown position
-  max_time_between_encoder_readings: 10 # max time (seconds) between encoder readings before disabling
-  unknown_max_time_between_encoder_readings: 2 # max time (seconds) between encoder readings when trying to find home from unknown position
+  max_time_between_encoder_readings: 2.5 # max time (seconds) between encoder readings before disabling
 
   # calibration
   calibration_counts: 12 # distance to move for calibration (in counts)
@@ -53,7 +53,7 @@ environment_specific_config: &default_env_config
 development:
   <<: *default_env_config
   calibration_file_path: calibrations_dev.json # file to store calibration data
-  initial_disabled_motors: [2]
+  initial_disabled_motors: []
   available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
   calibrate_neutral_timeout: 3
   skip_find_home: false

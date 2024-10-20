@@ -119,7 +119,7 @@ class Motor:
             self._set_home_state()
             return
         
-        max_time_between_encoder_readings = config.get('unknown_max_time_between_encoder_readings') if not self.cps_up else (1 / self.cps_up) * 1.10
+        max_time_between_encoder_readings = config.get('unknown_max_time_between_encoder_readings') if not self.cps_up else (1 / self.cps_up) * 1.20
 
         # move up at default uncalibrated throttle
         await self.set(direction=config.get('up'), throttle=config.get('uncalibrated_up_throttle'))

@@ -158,7 +158,6 @@ class Motor:
             if self.counts != current_counts:
                 prev_time = time.time()
                 current_counts = self.counts
-                recorded_counts += 1
 
             # home not found within timeout window -> disable and exit
             if time.time() - start_time > config.get('unknown_position_timeout'):

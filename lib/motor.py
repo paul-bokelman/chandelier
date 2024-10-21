@@ -286,10 +286,12 @@ class Motor:
                     self._disable("Timed out moving")
                 break
             
-            # stall detection (triggered by large difference in cps readings)
+            # todo: if can't move -> won't even stall
+            # check if cps has changed -> add to readings
             if (prev_measured_cps != self.current_cps):
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
+                log.info(self._clm("Move", cps_readings=cps_readings))
                 
                 # more than 2 readings -> check for stall
                 if len(cps_readings) > 2:

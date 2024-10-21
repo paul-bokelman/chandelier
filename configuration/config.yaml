@@ -33,7 +33,7 @@ environment_specific_config: &default_env_config
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
-  stall_threshold: 0.5 # cps difference threshold to determine if a motor is stalled
+  stall_threshold: 0.15 # cps difference threshold to determine if a motor is stalled
 
   # timeouts
   to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
@@ -42,7 +42,7 @@ environment_specific_config: &default_env_config
   calibrate_cps_timeout: 30 # max timeout (seconds) when calibrating cps
   calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
   unknown_position_timeout: 120 # max timeout (seconds) when trying to find home from unknown position
-  max_time_between_encoder_readings: 2.2 # max time (seconds) between encoder readings before disabling
+  max_time_between_encoder_readings: 2.4 # max time (seconds) between encoder readings before disabling
 
   # calibration
   calibration_counts: 12 # distance to move for calibration (in counts)

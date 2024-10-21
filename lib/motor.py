@@ -261,10 +261,15 @@ class Motor:
         log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle))
 
         exception = None # store exception if any
-        start_time = time.time() # track time
+        start_time = time.time() # track total time
         start_counts = self.counts # track start position
-        cps_readings: list[float] = []
-        prev_measured_cps = self.current_cps
+        cps_readings: list[float] = [] # store cps readings for stall detection and average
+        prev_measured_cps = self.current_cps # store previous measured cps to track change
+        last_read_time: Union[float, None] = None # last time the encoder was read
+
+        #/ has a chance of using the opposite direction cps if direction is uncalibrated, but that case is impossible
+        calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
+
 
         self._start_measuring_cps() # start down measuring cps
         await self.set(direction=direction, throttle=throttle) # start motor
@@ -286,42 +291,46 @@ class Motor:
                     self._disable("Timed out moving")
                 break
             
-            # todo: if can't move -> won't even stall
-            # check if cps has changed -> add to readings
+            # cps has changed -> store and check reading for stall
             if (prev_measured_cps != self.current_cps):
+                last_read_time = time.time() #/ measured in encoder callback, use that value?
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
                 log.info(self._clm("Move", cps_readings=cps_readings))
                 
-                # more than 2 readings -> check for stall
+                # more than 2 readings -> check for stall (first couple ignore due to  acceleration)
                 if len(cps_readings) > 2:
-                    # check for large difference between readings
-                    if abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold'):
+                    # calibrated cps -> check for large difference between calibrated and current cps
+                    if calibrated_cps is not None:
+                        if abs(calibrated_cps - self.current_cps) > config.get('stall_threshold'):
+                            log.error(self._clm("Move", message="Stall detected"))
+                            exception = MoveException.STALLED
+                            break
+                    # no calibrated cps -> check for large difference between current cps readings
+                    elif abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold'):
                         log.error(self._clm("Move", message="Stall detected"))
-                        self._disable("Stall detected")
-
-                        # only disable on specific exceptions
-                        if MoveException.STALLED in disable_on_exceptions:
-                            self._disable("Stall detected")
-
                         exception = MoveException.STALLED
-                # otherwise -> check time between readings
-                else:
-                    if time.time() - self.previous_read > config.get('max_time_between_encoder_readings'):
-                        log.error(self._clm("Move", message="Stall detected"))
+                        break
+                    
+            if last_read_time is not None and time.time() - last_read_time > config.get('max_time_between_encoder_readings'):
+                log.error(self._clm("Move", message="Stall detected"))
+                exception = MoveException.STALLED
+                break
 
-                        # only disable on specific exceptions
-                        if MoveException.STALLED in disable_on_exceptions:
-                            self._disable("Stall detected")
-
-                        exception = MoveException.STALLED
+            # otherwise -> check time between readings
+            if time.time() - self.previous_read > config.get('max_time_between_encoder_readings'):
+                log.error(self._clm("Move", message="Stall detected"))
+                exception = MoveException.STALLED
 
             await asyncio.sleep(0.01) # yield control back to event
 
+        if exception is not None and exception in disable_on_exceptions:
+            self._disable(exception.value)
+        
         time_elapsed = time.time() - start_time
-
         self._reset_cps_readings() # reset global cps readings for next move
         self.stop()
+
         return exception, time_elapsed, cps_readings
     
     @_handle_disabled

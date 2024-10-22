@@ -638,7 +638,7 @@ class Motor:
         
         # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:
-            current_throttle = round(current_throttle - step, 2)
+            current_throttle = round(current_throttle - step, 3)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
             direction = config.get('down') if self.upper_neutral is None else config.get('up') # move in opposite direction of whichever neutral is not found
 

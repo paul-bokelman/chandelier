@@ -225,7 +225,7 @@ class Motor:
         # already home -> return early
         if self._is_home(): 
             log.success(self._clm("To Home", message="Motor already at home"))
-            return None, 0.0, []
+            return
 
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
@@ -296,11 +296,11 @@ class Motor:
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
                 
-                # more than 2 readings -> log info and check for stall
-                if len(cps_readings) > 2:
+                # more than 3 readings -> log info and check for stall
+                if len(cps_readings) > 3:
                     # large difference between current and previous cps -> stall detected
                     if(abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold')):
-                        log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between current cps readings (uncalibrated) ({abs(cps_readings[-1] - cps_readings[-2])})"))
+                        log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between cps readings ({abs(cps_readings[-1] - cps_readings[-2])})"))
                         exception = MoveException.STALLED
                         break
                     

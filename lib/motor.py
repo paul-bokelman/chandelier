@@ -583,8 +583,6 @@ class Motor:
         # move to down to calibration position and measure time (automatically stops measuring cps when done)
         down_exception, _, down_cps_readings = await self.move(n_counts=n_counts, throttle=down_throttle, direction=config.get('down')) 
 
-        print("down_cps_readings: ", down_cps_readings)
-
         if down_exception:
             log.error(self._clm("Measure CPS", message="Exception measuring down cps", exception=down_exception))
             raise ValueError("Exception measuring down cps")
@@ -598,8 +596,6 @@ class Motor:
 
         # move to up to calibration position and measure time
         up_exception, _, up_cps_readings = await self.move(n_counts=n_counts, throttle=up_throttle, direction=config.get('up'))
-
-        print("up_cps_readings: ", up_cps_readings)
 
         if up_exception:
             log.error(self._clm("Measure CPS", message="Exception measuring up cps", exception=up_exception))
@@ -637,8 +633,8 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        step = 0.01 
-        current_throttle = 0.35
+        step = 0.005 # step size for throttle
+        current_throttle = 0.32 # initial throttle 
         
         # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:

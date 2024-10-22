@@ -316,12 +316,7 @@ class Motor:
                 log.error(self._clm("Move", message="Stall detected"))
                 exception = MoveException.STALLED
                 break
-
-            # otherwise -> check time between readings
-            if time.time() - self.previous_read > config.get('max_time_between_encoder_readings'):
-                log.error(self._clm("Move", message="Stall detected"))
-                exception = MoveException.STALLED
-
+            
             await asyncio.sleep(0.01) # yield control back to event
 
         if exception is not None and exception in disable_on_exceptions:

@@ -276,7 +276,6 @@ class Motor:
         await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
-            print(last_read_time, cps_readings)
             # check if the motor has reached the target position
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
@@ -292,6 +291,7 @@ class Motor:
             
             # cps has changed -> store and check reading for stall
             if (prev_measured_cps != self.current_cps):
+                print(f"prev: {prev_measured_cps} | current: {self.current_cps}")
                 last_read_time = time.time() #/ measured in encoder callback, use that value?
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps

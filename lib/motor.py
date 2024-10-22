@@ -499,11 +499,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= cast(float, self.upper_neutral):
+            if is_down and new_throttle <= cast(float, self.upper_neutral) + 0.5: # apply padding to upper neutral
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= cast(float, self.lower_neutral):
+            if not is_down and new_throttle >= cast(float, self.lower_neutral) - 0.5: # apply padding to lower neutral
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90
@@ -633,12 +633,12 @@ class Motor:
         if not self._is_home():
             await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
 
-        step = 0.005 # step size for throttle
+        step = 0.01 # step size for throttle
         current_throttle = 0.32 # initial throttle 
         
         # continually decrease throttle until both neutral positions are found
         while self.upper_neutral is None or self.lower_neutral is None:
-            current_throttle = round(current_throttle - step, 3)
+            current_throttle = round(current_throttle - step, 2)
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
             direction = config.get('down') if self.upper_neutral is None else config.get('up') # move in opposite direction of whichever neutral is not found
 

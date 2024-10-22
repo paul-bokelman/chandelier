@@ -276,13 +276,14 @@ class Motor:
         await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
+            print(last_read_time, cps_readings)
             # check if the motor has reached the target position
             if abs(self.counts - start_counts) == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
             
             # hasn't reached target position before timeout -> exit
-            if time.time() - start_time > timeout:
+            if last_read_time is None and time.time() - start_time > timeout:
                 self._stop_measuring_cps()
                 log.error(self._clm("Move", message="Motor timed out"))
 

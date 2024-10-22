@@ -33,28 +33,25 @@ async def preflight(option: CalibrationOptions = "default", skip: bool = False) 
     if initial_answers is None:
         raise ValueError("Invalid input")
 
-    try:
-        # reset all calibration data
-        if initial_answers["reset"]:
-            reset = True
-        else:
-            # prompt: reset individual motors?
-            followup_questions = [inquirer.Text("reset", message="Reset individual motors? (Enter comma separated list)", default="")]
-            followup_answers = inquirer.prompt(followup_questions)
-            
-            # ensure valid input
-            if followup_answers is None:
-                raise ValueError("Invalid input")
+    # reset all calibration data
+    if initial_answers["reset"]:
+        reset = True
+    else:
+        # prompt: reset individual motors?
+        followup_questions = [inquirer.Text("reset", message="Reset individual motors? (Enter comma separated list)", default="")]
+        followup_answers = inquirer.prompt(followup_questions)
+        
+        # ensure valid input
+        if followup_answers is None:
+            raise ValueError("Invalid input")
 
-            reset = [int(x) for x in followup_answers["reset"].replace(" ", "").split(",")]
+        reset = [int(x) for x in followup_answers["reset"].replace(" ", "").split(",")]
 
-            if not all(motor in range(config.get('n_motors')) for motor in reset):
-                raise ValueError("Invalid motor channel")
+        if not all(motor in range(config.get('n_motors')) for motor in reset):
+            raise ValueError("Invalid motor channel")
 
-        await mc.calibrate(reset) # calibrate motors
-    except Exception as e:
-        log.error(f"An error occurred: {e}")
-    finally:
-        mc.stop_all_motors()
-        log.info("Calibrations mode complete")
-        return mc
+    await mc.calibrate(reset) # calibrate motors
+
+    mc.stop_all_motors()
+    log.info("Calibration mode complete")
+    return mc

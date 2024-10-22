@@ -34,21 +34,15 @@ environment_specific_config: &default_env_config
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
   stall_threshold: 0.15 # cps difference threshold to determine if a motor is stalled
-
-  # timeouts
-  to_home_timeout: 180 # max timeout (seconds) for trying to move home (disables motor if reached)
-  to_position_timeout: 180 # max timeout (seconds) for trying to move to a position (disables motor if reached)
-  calibrate_relative_throttle_timeout: 30 # max timeout (seconds) when calibrating
-  calibrate_cps_timeout: 30 # max timeout (seconds) when calibrating cps
-  calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
-  unknown_position_timeout: 120 # max timeout (seconds) when trying to find home from unknown position
+  general_timeout: 20 # max timeout (seconds) for general operations
   max_time_between_encoder_readings: 2.4 # max time (seconds) between encoder readings before disabling
 
   # calibration
-  calibration_counts: 12 # distance to move for calibration (in counts)
+  calibration_counts: 10 # distance to move for calibration (in counts)
   calibration_file_path: calibrations.json # file to store calibration data
   skip_find_home: false # don't attempt to find home, assume already found (should only be used when candles are disconnected)
   find_home_buffer_counts: 3 # number of counts to move after finding home to ensure candles can properly move to home
+  calibrate_neutral_timeout: 5 # max timeout (seconds) when calibrating
 
 development:
   <<: *default_env_config

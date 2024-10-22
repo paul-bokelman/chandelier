@@ -33,7 +33,7 @@ class Motor:
         # encoder data
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.counts = -1  # current count position, -1 indicates that the motor position is unknown
-        self.measure_cps = False # if the encoder is currently being read
+        self.measuring_cps = False # if the encoder is currently being read
         self.previous_read = time.time() # previous time the encoder was read
         self.current_cps: float = 0 # current counts per second
 
@@ -58,7 +58,7 @@ class Motor:
         """Callback function for encoder"""
         self.counts += self.direction * 1 # increment or decrement counts based on direction
 
-        if self.measure_cps:
+        if self.measuring_cps:
             current_time = time.time() # get current time
             time_elapsed = current_time - self.previous_read # calculate time elapsed
             self.current_cps = 1 / time_elapsed # calculate counts per second
@@ -66,7 +66,7 @@ class Motor:
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
-            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps if self.measure_cps else 'N/A'}")
+            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {self.current_cps if self.measuring_cps else 'N/A'}")
 
     def _reset_cps_readings(self):
         """Reset cps readings (Doesn't stop measuring)"""
@@ -75,11 +75,11 @@ class Motor:
     def _start_measuring_cps(self):
         """Start measuring cps"""
         self._reset_cps_readings()
-        self.measure_cps = True
+        self.measuring_cps = True
 
     def _stop_measuring_cps(self):
         """Stop measuring cps"""
-        self.measure_cps = False
+        self.measuring_cps = False
 
     def _set_home_state(self):
         """Set motor to home state"""
@@ -229,7 +229,7 @@ class Motor:
 
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
-        return await self.to(0.0, throttle, config.get('to_home_timeout'))
+        return await self.to(target=0.0, throttle=throttle)
 
     @_handle_disabled
     async def move(
@@ -237,7 +237,7 @@ class Motor:
         n_counts: int,
         direction: int,
         throttle: Optional[float] = None,
-        timeout: int = config.get('to_position_timeout'),
+        timeout: int = config.get('general_timeout'),
         disable_on_exceptions: list[MoveException] = [MoveException.TIMED_OUT, MoveException.STALLED],
     ) -> tuple[Union[MoveException, None], float, list[float]]:
         """
@@ -273,7 +273,7 @@ class Motor:
 
         self._start_measuring_cps() # start down measuring cps
         prev_measured_cps = self.current_cps # store previous measured cps to track change
-        
+
         await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:
@@ -282,9 +282,8 @@ class Motor:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
             
-            # hasn't reached target position before timeout -> exit
+            # no reading before timeout -> stop and exit
             if last_read_time is None and time.time() - start_time > timeout:
-                self._stop_measuring_cps()
                 log.error(self._clm("Move", message="Motor timed out"))
 
                 exception = MoveException.TIMED_OUT
@@ -292,7 +291,6 @@ class Motor:
             
             # cps has changed -> store and check reading for stall
             if (prev_measured_cps != self.current_cps):
-                print(f"prev: {prev_measured_cps} | current: {self.current_cps}")
                 last_read_time = time.time() #/ measured in encoder callback, use that value?
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
@@ -332,7 +330,7 @@ class Motor:
             self, 
             target: float, 
             throttle: Optional[float] = None,
-            timeout: int = config.get('to_position_timeout'),
+            timeout: int = config.get('general_timeout'),
             disable_on_exceptions: list[MoveException] = [MoveException.TIMED_OUT, MoveException.STALLED],
     ) -> tuple[Union[MoveException, None], float, list[float]]:
         """
@@ -439,7 +437,7 @@ class Motor:
 
         def measure_and_adjust_throttle(
                 direction: int, 
-                time_elapsed: float, 
+                cps: float,
                 throttle: float, 
                 previous_cps: float, 
                 factor: float
@@ -461,7 +459,6 @@ class Motor:
             is_down = direction == config.get('down')
             target_cps = target_down_cps if is_down else target_up_cps
             found_throttle = False
-            cps: float = config.get('calibration_counts') / time_elapsed # calculate cps
             error = target_cps - cps # calculate error (negative if cps is greater than target, positive if less)
             new_factor = factor 
 
@@ -513,33 +510,103 @@ class Motor:
 
         # move to calibration position and measure cps until within error
         while not found_down_throttle or not found_up_throttle:
-            # move down to measure time
-            down_exception, down_time_elapsed, _ = await self.move(n_counts=config.get('calibration_counts'), throttle=down_throttle, direction=config.get('down'), timeout=config.get('calibrate_relative_throttle_timeout'))
-            
-            # move timed out -> exit
-            if down_exception:
-                log.error(self._clm("CRT", message="Movement exception moving down", throttle=down_throttle, time_elapsed=down_time_elapsed, exception=down_exception))
-                raise ValueError("Movement exception moving down")
-        
-            # move back to previous position to measure time
-            up_exception, up_time_elapsed, _ = await self.move(n_counts=config.get('calibration_counts'), throttle=up_throttle, direction=config.get('up'), timeout=config.get('calibrate_relative_throttle_timeout'))
-
-            # move timed out -> exit
-            if up_exception:
-                log.error(self._clm("CRT", message="Movement exception moving up", throttle=up_throttle, time_elapsed=up_time_elapsed, exception=up_exception))
-                raise ValueError("Movement exception moving up")
+            down_cps, up_cps = await self._measure_cps(
+                n_counts=config.get('calibration_counts'), 
+                down_throttle=down_throttle,
+                up_throttle=up_throttle,
+                use_initial_buffer=True, 
+                move_home_prior=True
+            )
 
             # not found down throttle -> measure and adjust
             if not found_down_throttle:
-                previous_down_cps, down_throttle, down_factor, found_down_throttle = measure_and_adjust_throttle(direction=config.get('down'), time_elapsed=down_time_elapsed, throttle=down_throttle, previous_cps=previous_down_cps, factor=down_factor)
+                previous_down_cps, down_throttle, down_factor, found_down_throttle = measure_and_adjust_throttle(
+                    direction=config.get('down'), 
+                    cps=down_cps,
+                    throttle=down_throttle, 
+                    previous_cps=previous_down_cps, 
+                    factor=down_factor
+                )
 
             # not found up throttle -> measure and adjust
             if not found_up_throttle:
-                previous_up_cps, up_throttle, up_factor, found_up_throttle = measure_and_adjust_throttle(direction=config.get('up'), time_elapsed=up_time_elapsed, throttle=up_throttle, previous_cps=previous_up_cps, factor=up_factor)
+                previous_up_cps, up_throttle, up_factor, found_up_throttle = measure_and_adjust_throttle(
+                    direction=config.get('up'), 
+                    cps=up_cps, 
+                    throttle=up_throttle, 
+                    previous_cps=previous_up_cps, 
+                    factor=up_factor
+                )
 
         self.throttle_down = down_throttle
         self.throttle_up = up_throttle
         log.success(self._clm("CRT", throttle_down=self.throttle_down, throttle_up=self.throttle_up))
+
+    @_handle_disabled
+    async def _measure_cps(
+            self, 
+            n_counts: int, 
+            down_throttle: Optional[float] = None, 
+            up_throttle: Optional[float] = None,
+            use_initial_buffer = False, 
+            move_home_prior = False
+        ) -> tuple[float, float]:
+        """
+        Measure cps for a specific number of counts and throttle
+        
+        Parameters:
+            counts (int): number of counts to measure
+            throttle (float, optional): throttle to measure at, defaults to None
+
+        Returns:
+            tuple(float): cps_down, cps_up
+        """ 
+
+        if(n_counts < 6):
+            raise ValueError("Counts must be greater than 5")
+        
+        cps_readings_buffer = 2 # padding for cps readings (ignores acceleration)
+        
+        # move to home position if not already
+        if move_home_prior and not self._is_home():
+                await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
+
+        # move to buffer position if needed
+        if use_initial_buffer:
+            await self.move(n_counts=4, direction=config.get('down'))
+
+        # ----------------------------- measure cps down ----------------------------- #
+        log.info(self._clm("Measure CPS", message="Measuring cps down"))
+
+        # move to down to calibration position and measure time (automatically stops measuring cps when done)
+        down_exception, _, down_cps_readings = await self.move(n_counts=n_counts, throttle=down_throttle, direction=config.get('down')) 
+
+        if down_exception:
+            log.error(self._clm("Measure CPS", message="Exception measuring down cps", exception=down_exception))
+            raise ValueError("Exception measuring down cps")
+
+        # compute average cps down (ignoring leading and trailing readings)
+        down_buffered_readings = down_cps_readings[cps_readings_buffer: len(down_cps_readings) - cps_readings_buffer]
+        cps_down = sum(down_buffered_readings) / (len(down_cps_readings) - 2 * cps_readings_buffer)
+
+        # ------------------------------ measure cps up ------------------------------ #
+        log.info(self._clm("Measure CPS", message="Measuring cps up"))
+
+        # move to up to calibration position and measure time
+        up_exception, _, up_cps_readings = await self.move(n_counts=n_counts, throttle=up_throttle, direction=config.get('up'))
+
+        if up_exception:
+            log.error(self._clm("Measure CPS", message="Exception measuring up cps", exception=up_exception))
+            raise ValueError("Exception measuring up cps")
+        
+        # compute average up down
+        up_buffered_readings = up_cps_readings[cps_readings_buffer: len(up_cps_readings) - cps_readings_buffer]
+        cps_up = sum(up_buffered_readings) / (len(up_cps_readings) - 2 * cps_readings_buffer)
+
+        log.info(self._clm("Measure CPS", cps_down=cps_down, cps_up=cps_up))
+
+        return (cps_down, cps_up)
+
 
     @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_cps(self):
@@ -550,54 +617,8 @@ class Motor:
         if self.lower_neutral is None or self.upper_neutral is None:
             raise ValueError("Neutral positions not found")
 
-        # move back home if not already
-        if not self._is_home():
-            await self.to_home(throttle=config.get('uncalibrated_up_throttle'))
-
-        cps_readings_buffer = 2 # padding for cps readings
-
-        # move to buffer position
-        await self.move(n_counts=4, direction=config.get('down'))
-
-         # ------------------------------- find cps down ------------------------------ #
-        if self.cps_down is None:
-            log.info(self._clm("Find CPS", message="Finding cps down"))
- 
-            # move to down to calibration position and measure time (automatically stops measuring cps when done)
-            exception, _, cps_readings = await self.move(
-                n_counts=config.get('calibration_counts'),
-                direction=config.get('down'),
-                timeout=config.get('calibrate_cps_timeout'),
-            ) 
-
-            if exception:
-                log.error(self._clm("Find CPS", message="Exception finding down cps", exception=exception))
-                raise ValueError("Exception finding down cps")
-
-            # compute average cps down (ignoring leading and trailing readings)
-            buffered_readings = cps_readings[cps_readings_buffer: len(cps_readings) - cps_readings_buffer]
-            self.cps_down = sum(buffered_readings) / (len(cps_readings) - 2 * cps_readings_buffer)
-            log.info(self._clm("Find CPS", cps_down=self.cps_down))
-
-        # -------------------------------- find cps up ------------------------------- #
-        if self.cps_up is None:
-            log.info(self._clm("Find CPS", message="Finding cps up"))
-
-            # move to up to calibration position and measure time
-            exception, _, cps_readings = await self.move(
-                n_counts=config.get('calibration_counts'),
-                direction=config.get('up'),
-                timeout=config.get('calibrate_cps_timeout'),
-            )
-
-            if exception:
-                log.error(self._clm("Find CPS", message="Exception finding up cps", exception=exception))
-                raise ValueError("Exception finding up cps")
-            
-            # compute average up down
-            buffered_readings = cps_readings[cps_readings_buffer: len(cps_readings) - cps_readings_buffer]
-            self.cps_up = sum(buffered_readings) / (len(cps_readings) - 2 * cps_readings_buffer)
-            log.info(self._clm("Find CPS", cps_up=self.cps_up))
+        # measure cps for both directions
+        self.cps_down, self.cps_up = await self._measure_cps(n_counts=config.get('calibration_counts'), use_initial_buffer=True, move_home_prior=True)
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
 

@@ -67,20 +67,7 @@ def main():
             log.error(f"Invalid mode: {args.mode}")
 
     except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-
-        if exc_type is None or exc_value is None or exc_traceback is None:
-            log.error(f"An error occurred: {e}")
-            return
-
-        if config.get("debug"):
-            tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-            log.error(f"An error occurred: {e}\n\nFull traceback:\n{tb_str}")
-
-        log.error(f"Exception type: {exc_type.__name__}")
-        log.error(f"Exception value: {exc_value}")
-        log.error(f"Exception occurred in file: {exc_traceback.tb_frame.f_code.co_filename}")
-        log.error(f"Exception occurred on line: {exc_traceback.tb_lineno}")
+        log.error(f"An error occurred: {e}")
     finally:
         asyncio.run(emergency_stop()) # run emergency stop
         sshkeyboard.stop_listening() # stop listening for ssh keyboard input

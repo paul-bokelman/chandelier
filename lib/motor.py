@@ -300,7 +300,7 @@ class Motor:
 
                     # less than 2 readings -> increase allowable time (account for acceleration)
                     if(len(cps_readings) < 2):
-                        allowable_time = allowable_time * 1.3
+                        allowable_time = allowable_time * 1.5
 
                     # measured time exceeds max read time -> stall detected
                     if measured_time > config.get('max_read_time'):

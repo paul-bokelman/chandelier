@@ -289,29 +289,32 @@ class Motor:
                 exception = MoveException.TIMED_OUT
                 break
             
-            # cps has changed -> check for stall
-            if (prev_measured_cps != self.current_cps) and last_read_time is not None:
-                cps_readings.append(self.current_cps) # store current cps reading
+            # cps has changed -> add to readings and check stall
+            if (prev_measured_cps != self.current_cps):
                 current_time = time.time()
-                measured_time = current_time - last_read_time
-                allowable_time = (1 / calibrated_cps) * 1.10 if calibrated_cps else config.get('default_allowable_time')
 
-                # less than 2 readings -> increase allowable time (account for acceleration)
-                if(len(cps_readings) < 2):
-                    allowable_time = allowable_time * 1.5
+                # check for stall if readings are available
+                if last_read_time is not None:
+                    measured_time = current_time - last_read_time
+                    allowable_time = (1 / calibrated_cps) * 1.10 if calibrated_cps else config.get('default_allowable_time')
 
-                # measured time exceeds max read time -> stall detected
-                if measured_time > config.get('max_read_time'):
-                    log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded max read time"))
-                    exception = MoveException.STALLED
-                    break
-            
-                # measured time exceeds allowable time -> stall detected
-                if measured_time > allowable_time:
-                    log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded allowable time"))
-                    exception = MoveException.STALLED
-                    break
+                    # less than 2 readings -> increase allowable time (account for acceleration)
+                    if(len(cps_readings) < 2):
+                        allowable_time = allowable_time * 1.5
 
+                    # measured time exceeds max read time -> stall detected
+                    if measured_time > config.get('max_read_time'):
+                        log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded max read time"))
+                        exception = MoveException.STALLED
+                        break
+                
+                    # measured time exceeds allowable time -> stall detected
+                    if measured_time > allowable_time:
+                        log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded allowable time"))
+                        exception = MoveException.STALLED
+                        break
+
+                cps_readings.append(self.current_cps)
                 last_read_time = current_time
                 prev_measured_cps = self.current_cps
 

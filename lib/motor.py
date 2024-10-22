@@ -282,7 +282,7 @@ class Motor:
                 
                 # check for stall if readings are available
                 if self.last_read_time is not None and prev_read_time is not None:
-                    measured_time = prev_read_time - self.last_read_time # time taken between counts
+                    measured_time = self.last_read_time - prev_read_time # time taken between counts
                     print("measured time", measured_time)
                     cps_readings.append(1 / measured_time) # add cps reading
 

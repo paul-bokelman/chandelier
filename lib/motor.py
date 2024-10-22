@@ -268,7 +268,6 @@ class Motor:
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         last_read_time: Union[float, None] = None # last time the encoder was read
 
-        #/ has a chance of using the opposite direction cps if direction is uncalibrated, but that case is impossible
         calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
 
         self._start_measuring_cps() # start down measuring cps
@@ -296,23 +295,19 @@ class Motor:
                 prev_measured_cps = self.current_cps
                 
                 # more than 2 readings -> check for stall (first couple ignore due to  acceleration)
-                if len(cps_readings) > 2:
-                    # calibrated cps -> check for large difference between calibrated and current cps
-                    if calibrated_cps is not None:
-                        if abs(calibrated_cps - self.current_cps) > config.get('stall_threshold'):
-                            log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between calibrated and current cps ({abs(calibrated_cps - self.current_cps)})"))
-                            exception = MoveException.STALLED
-                            break
-                    # no calibrated cps -> check for large difference between current cps readings
-                    elif abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold'):
-                        log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between current cps readings (uncalibrated) ({abs(cps_readings[-1] - cps_readings[-2])})"))
-                        exception = MoveException.STALLED
-                        break
+                if len(cps_readings) > 2 and abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold'):
+                    log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between current cps readings (uncalibrated) ({abs(cps_readings[-1] - cps_readings[-2])})"))
+                    exception = MoveException.STALLED
+                    break
                     
             if last_read_time is not None and time.time() - last_read_time > config.get('max_time_between_encoder_readings'):
                 log.error(self._clm("Move", message="Stall detected", reason="No encoder readings for too long"))
                 exception = MoveException.STALLED
                 break
+
+            # inform if large difference between current and calibrated cps
+            if calibrated_cps is not None and abs(calibrated_cps - self.current_cps) > 0.5:
+                log.warning(self._clm("Move", message="Large difference between calibrated and current cps", calibrated_cps=calibrated_cps, current_cps=self.current_cps))
 
             await asyncio.sleep(0.01) # yield control back to event
 

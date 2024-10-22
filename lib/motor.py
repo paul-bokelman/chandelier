@@ -287,9 +287,7 @@ class Motor:
                 self._stop_measuring_cps()
                 log.error(self._clm("Move", message="Motor timed out"))
 
-                # only disable on specific exceptions
-                if MoveException.TIMED_OUT in disable_on_exceptions:
-                    self._disable("Timed out moving")
+                exception = MoveException.TIMED_OUT
                 break
             
             # cps has changed -> store and check reading for stall
@@ -316,7 +314,7 @@ class Motor:
                 log.error(self._clm("Move", message="Stall detected"))
                 exception = MoveException.STALLED
                 break
-            
+
             await asyncio.sleep(0.01) # yield control back to event
 
         if exception is not None and exception in disable_on_exceptions:

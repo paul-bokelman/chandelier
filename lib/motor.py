@@ -266,13 +266,14 @@ class Motor:
         start_time = time.time() # track total time
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
-        prev_measured_cps = self.current_cps # store previous measured cps to track change
         last_read_time: Union[float, None] = None # last time the encoder was read
 
         #/ has a chance of using the opposite direction cps if direction is uncalibrated, but that case is impossible
         calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
 
         self._start_measuring_cps() # start down measuring cps
+        prev_measured_cps = self.current_cps # store previous measured cps to track change
+        
         await self.set(direction=direction, throttle=throttle) # start motor
 
         while True:

@@ -264,7 +264,7 @@ class Motor:
 
         log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle))
 
-        exception = None # store exception if any
+        exception: Union[MoveException, None] = None # store exception if any
         start_time = time.time() # track total time
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
@@ -286,28 +286,32 @@ class Motor:
             # no reading before timeout -> stop and exit
             if last_read_time is None and time.time() - start_time > timeout:
                 log.error(self._clm("Move", message="Motor timed out"))
-
                 exception = MoveException.TIMED_OUT
                 break
             
-            # cps has changed -> store and check reading for stall
-            if (prev_measured_cps != self.current_cps):
-                # more than 3 readings -> log info and check for stall
-                if len(cps_readings) > 2:
-                    # large difference between current and previous cps -> stall detected
-                    cps_difference = abs(self.current_cps - calibrated_cps) if calibrated_cps else abs(self.current_cps - cps_readings[-1])
-                    if cps_difference > config.get('stall_threshold'):
-                        log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between cps readings ({cps_difference})"))
-                        exception = MoveException.STALLED
-                        break
+            # cps has changed -> check for stall
+            if (prev_measured_cps != self.current_cps) and last_read_time is not None:
+                current_time = time.time()
+                measured_time = current_time - last_read_time
+                allowable_time = (1 / calibrated_cps) * 1.10 if calibrated_cps else config.get('default_allowable_time')
 
-                # less than 3 readings -> check if time between readings is too long        
-                elif last_read_time is not None and time.time() - last_read_time > config.get('max_read_time'):
-                    log.error(self._clm("Move", message="Stall detected", reason="No encoder readings for too long"))
+                # less than 2 readings -> increase allowable time (account for acceleration)
+                if(len(cps_readings) < 2):
+                    allowable_time = allowable_time * 1.5
+
+                # measured time exceeds max read time -> stall detected
+                if measured_time > config.get('max_read_time'):
+                    log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded max read time"))
+                    exception = MoveException.STALLED
+                    break
+            
+                # measured time exceeds allowable time -> stall detected
+                if measured_time > allowable_time:
+                    log.error(self._clm("Move", message="Stall detected", reason="Measured time exceeded allowable time"))
                     exception = MoveException.STALLED
                     break
 
-                last_read_time = time.time() #/ measured in encoder callback, use that value?
+                last_read_time = current_time
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
 

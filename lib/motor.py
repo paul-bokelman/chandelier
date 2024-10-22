@@ -300,17 +300,17 @@ class Motor:
                     # calibrated cps -> check for large difference between calibrated and current cps
                     if calibrated_cps is not None:
                         if abs(calibrated_cps - self.current_cps) > config.get('stall_threshold'):
-                            log.error(self._clm("Move", message="Stall detected"))
+                            log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between calibrated and current cps ({abs(calibrated_cps - self.current_cps)})"))
                             exception = MoveException.STALLED
                             break
                     # no calibrated cps -> check for large difference between current cps readings
                     elif abs(cps_readings[-1] - cps_readings[-2]) > config.get('stall_threshold'):
-                        log.error(self._clm("Move", message="Stall detected"))
+                        log.error(self._clm("Move", message="Stall detected", reason=f"Large difference between current cps readings (uncalibrated) ({abs(cps_readings[-1] - cps_readings[-2])})"))
                         exception = MoveException.STALLED
                         break
                     
             if last_read_time is not None and time.time() - last_read_time > config.get('max_time_between_encoder_readings'):
-                log.error(self._clm("Move", message="Stall detected"))
+                log.error(self._clm("Move", message="Stall detected", reason="No encoder readings for too long"))
                 exception = MoveException.STALLED
                 break
 

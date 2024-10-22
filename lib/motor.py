@@ -291,6 +291,7 @@ class Motor:
             
             # cps has changed -> check for stall
             if (prev_measured_cps != self.current_cps) and last_read_time is not None:
+                cps_readings.append(self.current_cps) # store current cps reading
                 current_time = time.time()
                 measured_time = current_time - last_read_time
                 allowable_time = (1 / calibrated_cps) * 1.10 if calibrated_cps else config.get('default_allowable_time')
@@ -312,7 +313,6 @@ class Motor:
                     break
 
                 last_read_time = current_time
-                cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
 
             await asyncio.sleep(0.01) # yield control back to event
@@ -580,6 +580,8 @@ class Motor:
         # move to down to calibration position and measure time (automatically stops measuring cps when done)
         down_exception, _, down_cps_readings = await self.move(n_counts=n_counts, throttle=down_throttle, direction=config.get('down')) 
 
+        print("down_cps_readings: ", down_cps_readings)
+
         if down_exception:
             log.error(self._clm("Measure CPS", message="Exception measuring down cps", exception=down_exception))
             raise ValueError("Exception measuring down cps")
@@ -593,6 +595,8 @@ class Motor:
 
         # move to up to calibration position and measure time
         up_exception, _, up_cps_readings = await self.move(n_counts=n_counts, throttle=up_throttle, direction=config.get('up'))
+
+        print("up_cps_readings: ", up_cps_readings)
 
         if up_exception:
             log.error(self._clm("Measure CPS", message="Exception measuring up cps", exception=up_exception))

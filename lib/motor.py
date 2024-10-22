@@ -147,8 +147,8 @@ class Motor:
             self._set_home_state()
             return
         
-        # set throttle to uncalibrated up throttle if present, otherwise use default
-        throttle = self.throttle_up if self.throttle_up else config.get('uncalibrated_up_throttle')
+        # use uncalibrated unless throttle is set
+        throttle = None if self.throttle_up else config.get('uncalibrated_up_throttle')
 
         # move up as much as possible and check for stall
         exception, _, _ =  await self.move(n_counts=config.get('max_counts'), direction=config.get('up'), throttle=throttle, disable_on_exceptions=[MoveException.TIMED_OUT])
@@ -162,6 +162,8 @@ class Motor:
         # set home state after motor is settled
         await asyncio.sleep(3) 
         self._set_home_state()
+
+        log.success(self._clm("Find Home", message="Home found"))
 
     @_handle_disabled #/ should never be called when disabled but just in case
     async def set(self, direction: int, throttle: Optional[float] = None):
@@ -270,7 +272,6 @@ class Motor:
         #/ has a chance of using the opposite direction cps if direction is uncalibrated, but that case is impossible
         calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
 
-
         self._start_measuring_cps() # start down measuring cps
         await self.set(direction=direction, throttle=throttle) # start motor
 
@@ -296,7 +297,6 @@ class Motor:
                 last_read_time = time.time() #/ measured in encoder callback, use that value?
                 cps_readings.append(self.current_cps)
                 prev_measured_cps = self.current_cps
-                log.info(self._clm("Move", cps_readings=cps_readings))
                 
                 # more than 2 readings -> check for stall (first couple ignore due to  acceleration)
                 if len(cps_readings) > 2:

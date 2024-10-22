@@ -34,7 +34,7 @@ class Motor:
         self.encoder_pin = config.get('encoder_pins')[self.channel]
         self.counts = -1  # current count position, -1 indicates that the motor position is unknown
         self.measuring_cps = False # if the encoder is currently being read
-        self.previous_read = time.time() # previous time the encoder was read
+        self.last_read_time: Union[float, None] = time.time() # previous time the encoder was read
         self.current_cps: float = 0 # current counts per second
 
         # calibration data
@@ -71,6 +71,7 @@ class Motor:
     def _reset_cps_readings(self):
         """Reset cps readings (Doesn't stop measuring)"""
         self.current_cps = 0
+        self.last_read_time = None
 
     def _start_measuring_cps(self):
         """Start measuring cps"""
@@ -268,8 +269,6 @@ class Motor:
         start_time = time.time() # track total time
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
-        last_read_time: Union[float, None] = None # last time the encoder was read
-
         calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
 
         self._start_measuring_cps() # start down measuring cps
@@ -284,18 +283,16 @@ class Motor:
                 break
             
             # no reading before timeout -> stop and exit
-            if last_read_time is None and time.time() - start_time > timeout:
+            if self.last_read_time is None and time.time() - start_time > timeout:
                 log.error(self._clm("Move", message="Motor timed out"))
                 exception = MoveException.TIMED_OUT
                 break
             
             # cps has changed -> add to readings and check stall
             if (prev_measured_cps != self.current_cps):
-                current_time = time.time()
-
                 # check for stall if readings are available
-                if last_read_time is not None:
-                    measured_time = current_time - last_read_time
+                if self.last_read_time is not None:
+                    measured_time = 1 / self.current_cps # measured time for current cps
                     allowable_time = (1 / calibrated_cps) * 1.1 if calibrated_cps else config.get('default_allowable_time')
 
                     # less than 2 readings -> increase allowable time (account for acceleration)
@@ -315,7 +312,6 @@ class Motor:
                         break
 
                 cps_readings.append(self.current_cps)
-                last_read_time = current_time
                 prev_measured_cps = self.current_cps
 
             await asyncio.sleep(0.01) # yield control back to event

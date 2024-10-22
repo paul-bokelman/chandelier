@@ -282,12 +282,12 @@ class Motor:
                 break
             
             # hasn't reached target position before timeout -> exit
-            # if time.time() - start_time > timeout:
-            #     self._stop_measuring_cps()
-            #     log.error(self._clm("Move", message="Motor timed out"))
+            if time.time() - start_time > timeout:
+                self._stop_measuring_cps()
+                log.error(self._clm("Move", message="Motor timed out"))
 
-            #     exception = MoveException.TIMED_OUT
-            #     break
+                exception = MoveException.TIMED_OUT
+                break
             
             # cps has changed -> store and check reading for stall
             if (prev_measured_cps != self.current_cps):
@@ -617,10 +617,10 @@ class Motor:
             log.info(self._clm("Find Neutrals", current_throttle=current_throttle))
             direction = config.get('down') if self.upper_neutral is None else config.get('up') # move in opposite direction of whichever neutral is not found
 
-            exception, _, _ = await self.move(n_counts=2, direction=direction, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_exceptions=[MoveException.TIMED_OUT])
+            exception, _, _ = await self.move(n_counts=2, direction=direction, throttle=current_throttle, timeout=config.get("calibrate_neutral_timeout"), disable_on_exceptions=[MoveException.STALLED])
 
             # initial throttle has timed out -> found upper neutral
-            if self.upper_neutral is None and exception == MoveException.STALLED:
+            if self.upper_neutral is None and exception == MoveException.TIMED_OUT:
                 log.info(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"))
                 self.upper_neutral = current_throttle
 

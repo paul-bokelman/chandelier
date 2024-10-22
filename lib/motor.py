@@ -64,13 +64,9 @@ class Motor:
         if not config.get('suppress_count_logging'):
             log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | last_read: {self.last_read_time}")
 
-    def _reset_cps_readings(self):
-        """Reset cps readings (Doesn't stop measuring)"""
-        self.last_read_time = None
-
     def _start_measuring_cps(self):
         """Start measuring cps"""
-        self._reset_cps_readings()
+        self.last_read_time = None # reset reading
         self.measuring_cps = True
 
     def _stop_measuring_cps(self):
@@ -282,7 +278,7 @@ class Motor:
                 break
             
             # cps has changed -> add to readings and check stall
-            if (prev_read_time != self.last_read_time):
+            if self.last_read_time is not None and (prev_read_time != self.last_read_time):
                 
                 # check for stall if readings are available
                 if self.last_read_time is not None and prev_read_time is not None:

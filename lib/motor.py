@@ -278,17 +278,16 @@ class Motor:
         while True:
             # check if the motor has reached the target position
             if abs(self.counts - start_counts) == n_counts:
-                self._stop_measuring_cps()
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
             
             # hasn't reached target position before timeout -> exit
-            if time.time() - start_time > timeout:
-                self._stop_measuring_cps()
-                log.error(self._clm("Move", message="Motor timed out"))
+            # if time.time() - start_time > timeout:
+            #     self._stop_measuring_cps()
+            #     log.error(self._clm("Move", message="Motor timed out"))
 
-                exception = MoveException.TIMED_OUT
-                break
+            #     exception = MoveException.TIMED_OUT
+            #     break
             
             # cps has changed -> store and check reading for stall
             if (prev_measured_cps != self.current_cps):
@@ -321,7 +320,7 @@ class Motor:
             self._disable(exception.value)
         
         time_elapsed = time.time() - start_time
-        self._reset_cps_readings() # reset global cps readings for next move
+        self._stop_measuring_cps() # stop measuring cps
         self.stop()
 
         return exception, time_elapsed, cps_readings

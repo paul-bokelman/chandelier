@@ -210,7 +210,7 @@ class Motor:
         self.servo._pwm_out.duty_cycle = 0  
 
     @_handle_disabled
-    async def to_home(self, throttle: Optional[float] = None) -> tuple[Union[MoveException, None], float, list[float]]:
+    async def to_home(self, throttle: Optional[float] = None):
         """
         Move the motor to the home position
 
@@ -229,7 +229,9 @@ class Motor:
 
         # move to 0 count position with default throttle
         log.info(self._clm("To Home", message="Moving Home"))
-        return await self.to(target=0.0, throttle=throttle)
+
+        # ignore stall detection for home position
+        await self.to(target=0.0, throttle=throttle, disable_on_exceptions=[MoveException.TIMED_OUT])
 
     @_handle_disabled
     async def move(
@@ -311,7 +313,6 @@ class Motor:
                 log.error(self._clm("Move", message="Stall detected", reason="No encoder readings for too long"))
                 exception = MoveException.STALLED
                 break
-
 
             await asyncio.sleep(0.01) # yield control back to event
 
@@ -513,8 +514,6 @@ class Motor:
                 n_counts=config.get('calibration_counts'), 
                 down_throttle=down_throttle,
                 up_throttle=up_throttle,
-                use_initial_buffer=True, 
-                move_home_prior=True
             )
 
             # not found down throttle -> measure and adjust

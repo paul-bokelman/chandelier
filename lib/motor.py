@@ -499,11 +499,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= cast(float, self.upper_neutral) + 0.5: # apply padding to upper neutral
+            if is_down and new_throttle <= cast(float, self.upper_neutral): # apply padding to upper neutral
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= cast(float, self.lower_neutral) - 0.5: # apply padding to lower neutral
+            if not is_down and new_throttle >= cast(float, self.lower_neutral): # apply padding to lower neutral
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90

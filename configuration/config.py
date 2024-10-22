@@ -10,7 +10,7 @@ class Environments(Enum):
 
 ConfigurationKeys = Literal[
     'encoder_pins', 'wall_switch_pins', 'service_button_pin', 'reboot_button_pin', 'charging_pin', 'led_pin', 'up', 'down', 'modes', 'debug', 'max_counts', 'n_motors', 'suppress_count_logging', 'initial_disabled_motors', 'random_state_duration', 'sequence_state_duration',
-    'candles_per_charge_cycle', 'charge_cycle_time', 'available_charging_hours', 'throttle_offset', 'max_read_time', 'calibration_counts', 'calibration_file_path', "skip_find_home", "calibrate_neutral_timeout", "general_timeout", "uncalibrated_up_throttle", "uncalibrated_down_throttle", "max_recovery_attempts", "recovery_counts", "find_home_buffer_counts", "stall_threshold", "default_allowable_time"
+    'candles_per_charge_cycle', 'charge_cycle_time', 'available_charging_hours', 'throttle_offset', 'calibration_counts', 'calibration_file_path', "skip_find_home", "uncalibrated_up_throttle", "uncalibrated_down_throttle", "max_recovery_attempts", "recovery_counts", "find_home_buffer_counts", "stall_threshold", "default_allowable_time"
 ]
 
 class ConfigurationFileSchema(TypedDict):

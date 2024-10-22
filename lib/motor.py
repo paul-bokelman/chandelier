@@ -1,5 +1,4 @@
 from typing import Optional, Union, cast
-from enum import Enum
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo
@@ -18,7 +17,7 @@ class Motor:
         self.channel = channel
         self.direction: int = config.get('down') # direction of motor (used in encoder callback)
         self.servo = servo
-        self.servo.set_pulse_width_range(1000, 2000) 
+        # self.servo.set_pulse_width_range(1000, 2000) 
 
         # state data
         self.disabled = False # if the motor is disabled

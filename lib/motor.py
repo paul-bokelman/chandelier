@@ -296,11 +296,11 @@ class Motor:
                 # check for stall if readings are available
                 if last_read_time is not None:
                     measured_time = current_time - last_read_time
-                    allowable_time = (1 / calibrated_cps) * 1.10 if calibrated_cps else config.get('default_allowable_time')
+                    allowable_time = (1 / calibrated_cps) * 1.1 if calibrated_cps else config.get('default_allowable_time')
 
                     # less than 2 readings -> increase allowable time (account for acceleration)
                     if(len(cps_readings) < 2):
-                        allowable_time = allowable_time * 1.5
+                        allowable_time = allowable_time * 1.3
 
                     # measured time exceeds max read time -> stall detected
                     if measured_time > config.get('max_read_time'):

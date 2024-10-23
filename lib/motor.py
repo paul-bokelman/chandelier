@@ -277,6 +277,8 @@ class Motor:
             # more than 2 reads & before last 2 reads -> calculate allowable time to be average of previous cps values
             if len(cps_readings) >= 2 and n_counts - count_diff > 2:
                 # calculate allowable time based on all average of all previous cps readings, excluding leading
+                print('readings', cps_readings[1:])
+                print('expected cps', sum(cps_readings[1:]) / len(cps_readings[1:]))
                 allowable_time = 1 / (sum(cps_readings[1:]) / len(cps_readings[1:]))
 
             # time between readings exceeds allowable time -> stall detected

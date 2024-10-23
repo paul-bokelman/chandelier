@@ -34,7 +34,7 @@ environment_specific_config: &default_env_config
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
   stall_threshold: 0.18 # cps difference threshold to determine if a motor is stalled
-  default_allowable_time: 2.2 # default allowable time when checking for stalled motors (seconds)
+  default_allowable_cps: 0.6 # default allowable cps for a motor when determining if a motor is stalled
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)

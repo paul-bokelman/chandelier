@@ -193,7 +193,7 @@ class Motor:
     def stop(self):
         """Stop the motor"""
         log.info(self._clm("Stop"))
-        self.servo._pwm_out.duty_cycle = 0  
+        self.servo._pwm_out.duty_cycle = 0
 
     @_handle_disabled
     async def to_home(self, throttle: Optional[float] = None):
@@ -238,8 +238,6 @@ class Motor:
         """
         max_counts: int = config.get('max_counts')
 
-        # todo: update allowable time for last 2 counts
-        
         # ensure n_counts is within bounds
         if n_counts > max_counts:
             raise ValueError("Counts must be less than max counts")
@@ -251,8 +249,8 @@ class Motor:
         stalled = False
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
-        calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
-        base_allowable_time = 1 / calibrated_cps if calibrated_cps else config.get('default_allowable_time')
+        # calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
+        # base_allowable_time = calibrated_cps if calibrated_cps else config.get('default_allowable_time')
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps
@@ -270,13 +268,16 @@ class Motor:
                 cps_readings.append(1 / measured_time) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 
+            # ------------------------------ stall detection ----------------------------- #
+
             # calculate allowable and measured time based on data
-            allowable_time = base_allowable_time * 1.30
+            allowable_time = 1 / config.get('default_allowable_cps') # default allowable time (used for 0->2, and n-2->n counts)
             measured_time = time.time() - prev_read_time
 
-            # less than 2 readings or last 2 counts -> increase allowable time (account for acceleration)
-            if len(cps_readings) < 2 or n_counts - count_diff <= 2:
-                allowable_time = allowable_time * 1.40
+            # more than 2 reads & before last 2 reads -> calculate allowable time to be average of previous cps values
+            if len(cps_readings) >= 2 and n_counts - count_diff > 2:
+                # calculate allowable time based on all average of all previous cps readings, excluding leading
+                allowable_time = 1 / (sum(cps_readings[2:]) / len(cps_readings[2:]))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
@@ -466,11 +467,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= cast(float, self.upper_neutral) + 0.5: # apply padding to upper neutral
+            if is_down and new_throttle <= cast(float, self.upper_neutral): # apply padding to upper neutral
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= cast(float, self.lower_neutral) - 0.5: # apply padding to lower neutral
+            if not is_down and new_throttle >= cast(float, self.lower_neutral): # apply padding to lower neutral
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90

@@ -240,6 +240,8 @@ class Motor:
             tuple(bool, list[float]): stalled, cps_readings
         """
         max_counts: int = config.get('max_counts')
+
+        # todo: update allowable time for last 2 counts
         
         # ensure n_counts is within bounds
         if n_counts > max_counts:
@@ -260,8 +262,9 @@ class Motor:
         prev_read_time = time.time() # track previous read time
 
         while True:
+            count_diff = abs(self.counts - start_counts)
             # check if the motor has reached the target position
-            if abs(self.counts - start_counts) == n_counts:
+            if count_diff == n_counts:
                 log.success(self._clm("Move", message="Motor has reached target position"))
                 break
             
@@ -274,8 +277,8 @@ class Motor:
             allowable_time = base_allowable_time * 1.20
             measured_time = time.time() - prev_read_time
 
-            # less than 2 readings -> increase allowable time (account for acceleration)
-            if(len(cps_readings) < 2):
+            # less than 2 readings or last 2 counts -> increase allowable time (account for acceleration)
+            if len(cps_readings) < 2 or n_counts - count_diff <= 2:
                 allowable_time = allowable_time * 1.4
 
             # time between readings exceeds allowable time -> stall detected

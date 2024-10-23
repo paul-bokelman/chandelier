@@ -274,12 +274,12 @@ class Motor:
                 prev_read_time = self.last_read_time # update previous read time
 
             # calculate allowable and measured time based on data
-            allowable_time = base_allowable_time * 1.20
+            allowable_time = base_allowable_time * 1.30
             measured_time = time.time() - prev_read_time
 
             # less than 2 readings or last 2 counts -> increase allowable time (account for acceleration)
             if len(cps_readings) < 2 or n_counts - count_diff <= 2:
-                allowable_time = allowable_time * 1.4
+                allowable_time = allowable_time * 1.40
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:

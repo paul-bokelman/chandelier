@@ -467,11 +467,11 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= cast(float, self.upper_neutral): # apply padding to upper neutral
+            if is_down and new_throttle <= cast(float, self.upper_neutral) + 0.5: # apply padding to upper neutral
                 log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
                 new_throttle = throttle 
                 new_factor = factor * 0.90
-            if not is_down and new_throttle >= cast(float, self.lower_neutral): # apply padding to lower neutral
+            if not is_down and new_throttle >= cast(float, self.lower_neutral) - 0.5: # apply padding to lower neutral
                 log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
                 new_throttle = throttle
                 new_factor = factor * 0.90
@@ -615,15 +615,15 @@ class Motor:
 
             # initial throttle has timed out -> found upper neutral
             if self.upper_neutral is None and stalled:
-                log.info(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"))
+                log.success(self._clm("Find Neutrals", message=f"Upper neutral found: {current_throttle}"))
                 self.upper_neutral = current_throttle
 
             # upper neutral found and motor has not timed out -> found lower neutral
             if self.lower_neutral is None and not stalled and self.upper_neutral is not None:
-                log.info(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
+                log.success(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        log.info(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
+        log.success(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
 
     async def calibrate_independent(self):
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""

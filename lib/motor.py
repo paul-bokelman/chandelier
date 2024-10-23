@@ -279,8 +279,6 @@ class Motor:
                 # calculate allowable time based on all average of all previous cps readings, excluding leading
                 allowable_time = (1 / (sum(cps_readings[1:]) / len(cps_readings[1:]))) * 1.3 # add 30% buffer
 
-            print(f"Allowable Time: {allowable_time} | Measured Time: {measured_time}")
-
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
                 log.error(self._clm("Move", message="Stall detected"))

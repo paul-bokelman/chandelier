@@ -146,7 +146,7 @@ class Motor:
             return
 
         # set home state after motor is settled
-        await asyncio.sleep(3) 
+        await asyncio.sleep(2) 
         self._set_home_state()
 
         log.success(self._clm("Find Home", message="Home found"), override=True)

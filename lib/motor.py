@@ -271,7 +271,7 @@ class Motor:
                 prev_read_time = self.last_read_time # update previous read time
 
             # calculate allowable and measured time based on data
-            allowable_time = base_allowable_time * 1.10
+            allowable_time = base_allowable_time * 1.20
             measured_time = time.time() - prev_read_time
 
             # less than 2 readings -> increase allowable time (account for acceleration)

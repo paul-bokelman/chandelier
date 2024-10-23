@@ -56,7 +56,7 @@ class Motor:
 
         # log counts and direction
         if not config.get('suppress_count_logging'):
-            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | last_read: {self.last_read_time}")
+            log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'} | cps: {1 / self.last_read_time if self.last_read_time else 'N/A'}")
 
     def _start_measuring_cps(self):
         """Start measuring cps"""

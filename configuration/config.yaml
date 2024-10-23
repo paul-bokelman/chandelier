@@ -45,7 +45,7 @@ environment_specific_config: &default_env_config
 development:
   <<: *default_env_config
   debug: true
-  suppress_count_logging: true
+  suppress_count_logging: false
   calibration_file_path: calibrations_dev.json # file to store calibration data
   initial_disabled_motors: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
   available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]

@@ -126,7 +126,7 @@ class Motor:
         if self.disabled or self.dead:
             return
 
-        log.info(self._clm("Find Home", message="Finding home"))
+        log.info(self._clm("Find Home", message="Finding home"), override=True)
 
         if config.get('skip_find_home'):
             log.warning(self._clm("Find Home", message="Skipping find home"))
@@ -149,7 +149,7 @@ class Motor:
         await asyncio.sleep(3) 
         self._set_home_state()
 
-        log.success(self._clm("Find Home", message="Home found"))
+        log.success(self._clm("Find Home", message="Home found"), override=True)
 
     @_handle_disabled #/ should never be called when disabled but just in case
     async def set(self, direction: int, throttle: Optional[float] = None):
@@ -206,15 +206,12 @@ class Motor:
         Returns:
             tuple(bool, list[float]): stalled, cps_readings
         """
-        log.info(self._clm("To Home", message="Moving Home"))
+        log.info(self._clm("To Home", message="Moving Home"), override=True)
 
         # already home -> return early
         if self._is_home(): 
-            log.success(self._clm("To Home", message="Motor already at home"))
+            log.success(self._clm("To Home", message="Motor already at home"), override=True)
             return
-
-        # move to 0 count position with default throttle
-        log.info(self._clm("To Home", message="Moving Home"))
 
         # ignore stall detection for home position
         await self.to(target=0.0, throttle=throttle, disable_on_stall=False)
@@ -249,7 +246,7 @@ class Motor:
         if n_counts < 0:
             raise ValueError("Counts must be greater than 0")
 
-        log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle))
+        log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle), override=True)
 
         stalled = False
         start_counts = self.counts # track start position
@@ -265,7 +262,7 @@ class Motor:
             count_diff = abs(self.counts - start_counts)
             # check if the motor has reached the target position
             if count_diff == n_counts:
-                log.success(self._clm("Move", message="Motor has reached target position"))
+                log.success(self._clm("Move", message="Motor has reached target position"), override=True)
                 break
             
             # new reading -> update stall information
@@ -332,6 +329,8 @@ class Motor:
     async def recover(self):
         """Attempt to recover from a disabled state"""
 
+        log.info(self._clm("Recover", message="Attempting to recover"), override=True)
+
         # if motor is not disabled or dead -> do nothing
         if not self.disabled or self.dead:
             return
@@ -360,6 +359,7 @@ class Motor:
 
         # success -> leave motor enabled and reset recover attempts
         self.recover_attempts = 0
+        log.success(self._clm("Recover", message="Recovery successful"), override=True)
     
     # -------------------------------- CALIBRATION ------------------------------- #
     @_handle_disabled 
@@ -371,7 +371,6 @@ class Motor:
             target_up_cps (float): target cps moving up
             target_down_cps (float): target cps moving
         """
-        log.info(self._clm("CRT", message="Calibrating relative throttles"))
         
         # pre-checks
         if self.lower_neutral is None or self.upper_neutral is None:
@@ -382,6 +381,8 @@ class Motor:
         if self.throttle_down is not None and self.throttle_up is not None:
             log.info(self._clm("CRT", message="Throttles already calibrated"))
             return
+        
+        log.info(self._clm("CRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps))
 
         # move back home if not already 
         if not self._is_home():
@@ -404,8 +405,6 @@ class Motor:
         up_throttle = self.lower_neutral - (step_size * up_factor)
         found_down_throttle = False
         found_up_throttle = False
-
-        log.info(self._clm("CRT", target_down_cps=target_down_cps, target_up_cps=target_up_cps))
 
         def measure_and_adjust_throttle(
                 direction: int, 
@@ -510,7 +509,8 @@ class Motor:
 
         self.throttle_down = down_throttle
         self.throttle_up = up_throttle
-        log.success(self._clm("CRT", throttle_down=self.throttle_down, throttle_up=self.throttle_up))
+
+        log.success(self._clm("CRT", throttle_down=self.throttle_down, throttle_up=self.throttle_up), override=True)
 
     @_handle_disabled
     async def _measure_cps(
@@ -581,7 +581,7 @@ class Motor:
     @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
-        log.info(self._clm("Find CPS", message="Finding cps up and down"))
+        log.info(self._clm("Find CPS", message="Finding cps up and down"), override=True)
 
         # neutral positions must be calibrated and set for present throttles
         if self.lower_neutral is None or self.upper_neutral is None:
@@ -590,12 +590,12 @@ class Motor:
         # measure cps for both directions
         self.cps_down, self.cps_up = await self._measure_cps(n_counts=config.get('calibration_counts'), use_initial_buffer=True, move_home_prior=True)
 
-        log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up))
+        log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up), override=True)
 
     @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of motor"""
-        log.info(self._clm("Find Neutrals", message="Finding neutral positions"))
+        log.info(self._clm("Find Neutrals", message="Finding neutral positions"), override=True)
 
         # ensure motor is at home position
         if not self._is_home():
@@ -623,11 +623,11 @@ class Motor:
                 log.success(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
-        log.success(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral))
+        log.success(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
     async def calibrate_independent(self):
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""
-        log.info(self._clm("Calibrate Independent", message="Calibrating Motor"))
+        log.info(self._clm("Calibrate Independent", message="Calibrating Motor"), override=True)
 
         # find initial home position if not already found
         if self.counts == -1:

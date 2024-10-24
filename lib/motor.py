@@ -623,6 +623,9 @@ class Motor:
                 log.success(self._clm("Find Neutrals", message=f"Lower neutral found: {current_throttle}"))
                 self.lower_neutral = current_throttle + step # add step to account for last iteration
 
+        # apply buffer to neutral positions
+        self.lower_neutral = self.lower_neutral - step 
+        self.upper_neutral = self.upper_neutral + step 
         log.success(self._clm("Find Neutrals", lower_neutral=self.lower_neutral, upper_neutral=self.upper_neutral), override=True)
 
     async def calibrate_independent(self):

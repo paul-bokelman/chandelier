@@ -33,7 +33,7 @@ environment_specific_config: &default_env_config
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
-  default_allowable_cps: 0.3 # falls below this value, motor is considered stalled
+  default_allowable_cps: 0.2 # falls below this value, motor is considered stalled
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)
@@ -46,7 +46,7 @@ development:
   debug: true
   suppress_count_logging: false
   calibration_file_path: calibrations_dev.json # file to store calibration data
-  initial_disabled_motors: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  initial_disabled_motors: []
   available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
   skip_find_home: false
 production:

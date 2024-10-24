@@ -53,6 +53,7 @@ development:
 production:
   <<: *default_env_config
   debug: false
+  calibration_file_path: calibrations_dev.json # should change to calibrations.json for production
   suppress_count_logging: true
 testing:
   <<: *default_env_config

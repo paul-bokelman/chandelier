@@ -249,8 +249,6 @@ class Motor:
         stalled = False
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
-        # calibrated_cps = self.cps_down if direction == config.get('down') else self.cps_up
-        # base_allowable_time = calibrated_cps if calibrated_cps else config.get('default_allowable_time')
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps
@@ -272,7 +270,7 @@ class Motor:
 
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
-                log.info(self._clm("Move", cps=1 / measured_time)) # log cps reading
+                log.info(self._clm("Move", cps=round(1 / measured_time, 3))) # log cps reading
                 cps_readings.append(1 / measured_time) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 
@@ -280,11 +278,11 @@ class Motor:
             if len(cps_readings) >= 2 and n_counts - count_diff > 2:
                 # calculate allowable time based on all average of all previous cps readings, excluding leading
                 average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
-                allowable_time = (1 / average_cps) * 1.3 # add 30% buffer (account for acceleration)
+                allowable_time = (1 / average_cps) * 1.5 # add 30% buffer (account for acceleration)
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                log.error(self._clm("Move", message="Stall detected", measured_time=measured_time, allowable_time=allowable_time))
+                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
 
                 if disable_on_stall:
                     self._disable("Stalled")

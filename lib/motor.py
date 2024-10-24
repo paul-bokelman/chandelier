@@ -266,7 +266,8 @@ class Motor:
             # ------------------------------ stall detection ----------------------------- #
 
             # calculate allowable and measured time based on data
-            allowable_time = 1 / config.get('default_allowable_cps') # default allowable time (used for 0->2, and n-2->n counts)
+            allowable_time = 1 / (config.get('default_allowable_down_cps') if direction == config.get('down') else config.get('default_allowable_up_cps')) # default allowable time (used for 0->2, and n-2->n counts)
+            
             measured_time = time.time() - prev_read_time
 
             # new reading -> update stall information

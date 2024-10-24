@@ -212,7 +212,6 @@ class StateMachine:
                 await self.mc.recover_all()
 
                 # place candles in correct position start charging
-                await self.mc.calibrate_home_positions() # go home and recalibrate all home positions
                 await self.mc.move_all(0.1) # move all candles slightly past charger
 
                 returned_after_charging = False # reset returned after charging

@@ -278,7 +278,6 @@ class Motor:
             if len(cps_readings) >= 2 and n_counts - count_diff > 2:
                 # calculate allowable time based on all average of all previous cps readings, excluding leading
                 average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
-                log.info(self._clm("Move", message=f"Average cps: {average_cps}"))
                 allowable_time = (1 / average_cps) * 1.3 # add 30% buffer (account for acceleration)
 
             # time between readings exceeds allowable time -> stall detected
@@ -468,13 +467,9 @@ class Motor:
                 else:
                     new_throttle = throttle - (new_factor * step_size)
 
-            # check if throttle is within safe neutral bounds, if not -> set original throttle and reduce factor
-            if is_down and new_throttle <= cast(float, self.upper_neutral): # apply padding to upper neutral
-                log.info(self._clm("CRT", message="Throttle within upper neutral bounds, setting original throttle"))
-                new_throttle = throttle 
-                new_factor = factor * 0.90
-            if not is_down and new_throttle >= cast(float, self.lower_neutral): # apply padding to lower neutral
-                log.info(self._clm("CRT", message="Throttle within lower neutral bounds, setting original throttle"))
+            # requested throttle within neutral bounds -> set original throttle and reduce factor
+            if new_throttle >= cast(float, self.lower_neutral) and new_throttle <= cast(float, self.upper_neutral):
+                log.info(self._clm("CRT", message="Throttle within neutral bounds, setting original throttle", throttle=throttle))
                 new_throttle = throttle
                 new_factor = factor * 0.90
 

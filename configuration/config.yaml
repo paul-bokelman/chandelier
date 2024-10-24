@@ -33,7 +33,7 @@ environment_specific_config: &default_env_config
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
-  default_allowable_cps: 0.4 # falls below this value, motor is considered stalled
+  default_allowable_cps: 0.3 # falls below this value, motor is considered stalled
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)

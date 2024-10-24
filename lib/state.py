@@ -186,6 +186,8 @@ class StateMachine:
 
         returned_after_charging = False # track if candles have returned home this iteration
 
+        await self.mc.calibrate_home_positions() # initially calibrate home positions
+
         # check if state changed every second
         while True:
              # break back to main loop if state changed
@@ -196,7 +198,7 @@ class StateMachine:
                 log.info("CHARGED", override=True)
                 
                 if not returned_after_charging:
-                    await self.mc.calibrate_home_positions() # go home and recalibrate all home positions
+                    await self.mc.move_all_home() # go home and recalibrate all home positions
                     returned_after_charging = True
 
                 if datetime.now().time().hour in available_charging_hours:
@@ -231,7 +233,7 @@ class StateMachine:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
                         self._charger_off() # turn off charging power
-                        await asyncio.gather(*[motor.to(6 / config.get('max_counts')) for motor in self.mc.motors]) # move all candles to past charger
+                        await asyncio.gather(*[motor.to(0.1) for motor in self.mc.motors]) # move all candles to past charger
                         continue
                     
                     # bounds to slice motors to charge
@@ -253,7 +255,7 @@ class StateMachine:
                         currently_charging_motors = self.mc.motors[prev_lower_bound:prev_upper_bound]
 
                         # move previously charging candles to past charger (stop charging)
-                        await asyncio.gather(*[motor.to(0.2) for motor in currently_charging_motors])
+                        await asyncio.gather(*[motor.to(0.1) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
                     await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])

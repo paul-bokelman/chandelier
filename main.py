@@ -1,10 +1,8 @@
-import sys
 import argparse
-import traceback
 import asyncio
 import sshkeyboard
 from configuration.config import Config, Environments, config
-from modes import normal, manual, scripts
+from modes import normal, manual, testing, scripts
 from preflight import calibration
 from lib.utils import log
 from helpers.stop import emergency_stop
@@ -61,6 +59,8 @@ def main():
             manual.run(controller=mc)
         elif args.mode == "normal":
             normal.run(controller=mc)
+        elif args.mode == 'testing':
+            testing.run(controller=mc)
         elif args.mode == "scripts":
             scripts.run()
         else:

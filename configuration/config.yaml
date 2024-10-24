@@ -8,7 +8,7 @@ general:
   led_pin: 8
   up: -1
   down: 1
-  modes: [normal, manual, scripts]
+  modes: [normal, manual, testing, scripts]
 
 # base env configuration schema
 environment_specific_config: &default_env_config
@@ -21,6 +21,7 @@ environment_specific_config: &default_env_config
   # states
   random_state_duration: 3600 # 1 hour
   sequence_state_duration: 3600 # 1 hour
+  duration_before_recalibration: 900 # 15 minutes
 
   # charging
   candles_per_charge_cycle: 2

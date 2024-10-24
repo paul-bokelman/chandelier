@@ -17,7 +17,6 @@ class Motor:
         self.channel = channel
         self.direction: int = config.get('down') # direction of motor (used in encoder callback)
         self.servo = servo
-        # self.servo.set_pulse_width_range(1000, 2000) 
 
         # state data
         self.disabled = False # if the motor is disabled
@@ -38,7 +37,7 @@ class Motor:
         self.throttle_down = None # relative throttle for moving down at slow preset
         self.throttle_up = None # relative throttle for moving up at slow preset
 
-        # detect when encoder is triggered (matches 0's)
+        # detect when encoder is triggered (matches 1->0)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
         # mark motor as dead if it is in the initial disabled list
@@ -119,7 +118,7 @@ class Motor:
             return f(self, *args, **kwargs)
         return wrapper
 
-    async def _find_home(self):
+    async def calibrate_home(self):
         """Find the home position from an unknown starting position"""
 
         # disabled handling
@@ -632,7 +631,7 @@ class Motor:
 
         # find initial home position if not already found
         if self.counts == -1:
-            await self._find_home()
+            await self.calibrate_home()
 
         # find neutrals if either is not present
         if self.lower_neutral is None or self.upper_neutral is None:

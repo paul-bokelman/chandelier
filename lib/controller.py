@@ -63,6 +63,15 @@ class MotorController:
     # move each motor to its target position simultaneously
     await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(self.motors, positions, throttles)])
 
+  async def calibrate_home_positions(self):
+    """Calibrate home positions for all motors"""
+    log.info("Calibrating home positions...")
+
+    # calibrate home positions for all enabled motors
+    await asyncio.gather(*[motor.calibrate_home() for motor in self.motors if not motor.disabled and not motor.dead])
+
+    log.success("Calibrated home positions")
+
   def load_calibration_data(self):
     """Load calibration data from store. This method is used when store is externally validated."""
     self.store.load(self.motors)

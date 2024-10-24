@@ -196,7 +196,7 @@ class StateMachine:
                 log.info("CHARGED", override=True)
                 
                 if not returned_after_charging:
-                    await self.mc.move_all_home() # move all candles to home position
+                    await self.mc.calibrate_home_positions() # go home and recalibrate all home positions
                     returned_after_charging = True
 
                 if datetime.now().time().hour in available_charging_hours:
@@ -212,8 +212,8 @@ class StateMachine:
                 await self.mc.recover_all()
 
                 # place candles in correct position start charging
-                await self.mc.move_all_home()
-                await self.mc.move_all(6 / config.get('max_counts'))
+                await self.mc.calibrate_home_positions() # go home and recalibrate all home positions
+                await self.mc.move_all(0.1) # move all candles slightly past charger
 
                 returned_after_charging = False # reset returned after charging
 
@@ -269,8 +269,8 @@ class StateMachine:
         """Sequence state for running timed sequences"""
         log.info("Entering sequence state")
 
-        max_run_time = config.get('sequence_state_duration')
         elapsed_time = time.time() # time elapsed since sequence started 
+        elapsed_time_since_calibration = time.time() # time elapsed since last calibration
         seq = Sequence() # sequence generator
         current_generator = seq.alternating() # current generator for sequence
 
@@ -280,8 +280,13 @@ class StateMachine:
             if self.state != State.SEQUENCE: break
 
             # elapsed time is greater than max run time -> change to idle
-            if time.time() - elapsed_time >= max_run_time:
+            if time.time() - elapsed_time >= config.get('sequence_state_duration'):
                 self._change_state(State.IDLE)
+
+            # recalibrate home positions if time since last calibration is greater than duration before recalibration
+            if time.time() - elapsed_time_since_calibration  >= config.get('duration_before_recalibration'):
+                await self.mc.calibrate_home_positions()
+                elapsed_time_since_calibration = time.time() # reset elapsed time since calibration
 
             # run next iteration or get new generator
             try:
@@ -295,24 +300,26 @@ class StateMachine:
         """Random state for running random sequences"""
         log.info("Entering random state", override=True)
 
-        max_run_time = config.get('random_state_duration')
         elapsed_time = time.time() # time elapsed since sequence started 
+        elapsed_time_since_calibration = time.time() # time elapsed since last calibration
         seq = Sequence() # sequence generator
 
         # check if state changed every second
         while True:
-            log.info(f"Entering random state loop", override=True)
             # break back to main loop if state changed
             if self.state != State.RANDOM: break
-            else:
-                # elapsed time is greater than max run time -> change to idle
-                if time.time() - elapsed_time >= max_run_time:
-                    self._change_state(State.IDLE)
+
+            # elapsed time is greater than max run time -> change to idle
+            if time.time() - elapsed_time >= config.get('random_state_duration'):
+                self._change_state(State.IDLE)
+
+            # recalibrate home positions if time since last calibration is greater than duration before recalibration
+            if time.time() - elapsed_time_since_calibration >= config.get('duration_before_recalibration'):
+                await self.mc.calibrate_home_positions()
+                elapsed_time_since_calibration = time.time() # reset elapsed time since calibration
 
             # run next iteration
             positions, speeds = seq.random_iteration()
-
-            log.info(f"Moving to positions: {positions} with speeds: {speeds}")
             await self.mc.move_all(positions, speeds)
 
     async def service(self):

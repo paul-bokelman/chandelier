@@ -16,7 +16,7 @@ environment_specific_config: &default_env_config
   max_counts: 30
   n_motors: 16
   suppress_count_logging: false
-  initial_disabled_motors: []
+  initial_disabled_motors: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
   # states
   random_state_duration: 90 # time before switching to idle mode (seconds)

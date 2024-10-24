@@ -277,7 +277,9 @@ class Motor:
             # more than 2 reads & before last 2 reads -> calculate allowable time to be average of previous cps values
             if len(cps_readings) >= 2 and n_counts - count_diff > 2:
                 # calculate allowable time based on all average of all previous cps readings, excluding leading
-                allowable_time = (1 / (sum(cps_readings[1:]) / len(cps_readings[1:]))) * 1.3 # add 30% buffer
+                average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
+                log.info(self._clm("Move", message=f"Average cps: {average_cps}"))
+                allowable_time = (1 / average_cps) * 1.3 # add 30% buffer (account for acceleration)
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:

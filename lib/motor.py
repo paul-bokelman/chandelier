@@ -267,11 +267,12 @@ class Motor:
 
             # calculate allowable and measured time based on data
             allowable_time = 1 / (config.get('default_allowable_down_cps') if direction == config.get('down') else config.get('default_allowable_up_cps')) # default allowable time (used for 0->2, and n-2->n counts)
-            
+
             measured_time = time.time() - prev_read_time
 
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
+                log.info(self._clm("Move", cps=1 / measured_time)) # log cps reading
                 cps_readings.append(1 / measured_time) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 

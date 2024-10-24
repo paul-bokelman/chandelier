@@ -24,7 +24,7 @@ environment_specific_config: &default_env_config
 
   # charging
   candles_per_charge_cycle: 2
-  charge_cycle_time: 600
+  charge_cycle_time: 30 # charging time (in seconds)
   available_charging_hours: [1] # 1 o'clock (24hr)
 
   # motors

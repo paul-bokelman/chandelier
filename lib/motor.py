@@ -358,8 +358,11 @@ class Motor:
         if down_stall:
             self._disable("Failed to recover")
 
+        await self.calibrate_home() # recalibrate home position
+
         # success -> leave motor enabled and reset recover attempts
         self.recover_attempts = 0
+
         log.success(self._clm("Recover", message="Recovery successful"), override=True)
     
     # -------------------------------- CALIBRATION ------------------------------- #

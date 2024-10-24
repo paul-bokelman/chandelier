@@ -181,6 +181,7 @@ class StateMachine:
         self.led.on() # solid on for idle state
         charge_state = ChargeState.CHARGED # persistent charge state
 
+        recovery_attempted = False # track if recovery has been attempted
         completed_cycles = 0 # track current charge cycle
         current_cycle_elapsed_time = time.time() # track current cycle elapsed time
 
@@ -201,6 +202,11 @@ class StateMachine:
                     await self.mc.move_all_home() # go home and recalibrate all home positions
                     returned_after_charging = True
 
+                if not recovery_attempted:
+                    # attempt to recover motors from disabled state 
+                    await self.mc.recover_all()
+                    recovery_attempted = True
+
                 if datetime.now().time().hour in available_charging_hours:
                     charge_state = ChargeState.REQUIRES_CHARGE
 
@@ -210,11 +216,8 @@ class StateMachine:
                 charge_state = ChargeState.CHARGING
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
 
-                # attempt to recover motors from disabled state
-                await self.mc.recover_all()
-
                 # place candles in correct position start charging
-                await self.mc.move_all(0.1) # move all candles slightly past charger
+                await self.mc.move_all(0.2) # move all candles slightly past charger
 
                 returned_after_charging = False # reset returned after charging
 
@@ -233,7 +236,7 @@ class StateMachine:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
                         self._charger_off() # turn off charging power
-                        await asyncio.gather(*[motor.to(0.1) for motor in self.mc.motors]) # move all candles to past charger
+                        await asyncio.gather(*[motor.to(0.2) for motor in self.mc.motors]) # move all candles past charger
                         continue
                     
                     # bounds to slice motors to charge
@@ -255,7 +258,7 @@ class StateMachine:
                         currently_charging_motors = self.mc.motors[prev_lower_bound:prev_upper_bound]
 
                         # move previously charging candles to past charger (stop charging)
-                        await asyncio.gather(*[motor.to(0.1) for motor in currently_charging_motors])
+                        await asyncio.gather(*[motor.to(0.2) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
                     await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])

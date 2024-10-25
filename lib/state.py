@@ -169,7 +169,12 @@ class StateMachine:
         log.warning("Rebooting system")
         self.mc.stop_all_motors()
         GPIO.cleanup()
-        os.system(f"bash {os.getcwd()}/scripts/reboot.sh") # reboot system
+
+        # pull code from git
+        await asyncio.create_subprocess_shell(f"bash {os.getcwd()}/scripts/update-repo.sh")
+
+        # reboot system
+        os.system('sudo reboot')
 
     async def idle(self):
         """Idle state for charging and waiting for sequence to run"""

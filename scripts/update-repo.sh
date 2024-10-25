@@ -8,6 +8,3 @@ if [ "$isOnline" = "online" ]; then
 else
     echo "Wi-Fi not connected. Skipping repo update."
 fi
-
-# reboot the pi
-sudo reboot

@@ -305,7 +305,7 @@ class Motor:
             self, 
             target: float, 
             throttle: Optional[float] = None,
-            disable_on_stall = False,
+            disable_on_stall = True,
     ) -> tuple[bool, list[float]]:
         """
         Move the motor to a specific position scaled between 0 and 1

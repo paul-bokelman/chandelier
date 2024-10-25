@@ -33,12 +33,18 @@ class MotorController:
     await asyncio.gather(*[motor.to_home(throttle) for motor in self.get_enabled_motors()])
 
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None):
-    """Move all motors to specific positions with specific throttles"""
+    """
+    Move all motors to specific positions with specific throttles
+
+    Parameters:
+      positions (Union[float, list[float]]): Target positions for all motors
+      throttles (Union[None, float, list[float], list[None]]): Throttle values for all motors
+    """
 
     # singular value -> convert to list of that value
     if isinstance(throttles, float):
       if not (0 <= throttles <= 1):
-        raise ValueError(f"Position must be between 0 and 1, received {throttles}")
+        raise ValueError(f"Throttle must be between 0 and 1, received {throttles}")
       throttles = [throttles] * len(self.motors)
 
     # None -> convert to list of None
@@ -54,7 +60,6 @@ class MotorController:
     # ensure both are lists
     if not isinstance(throttles, list):
       raise ValueError("Throttles must be a list")
-    
     if not isinstance(positions, list):
       raise ValueError("Positions must be a list")
 
@@ -76,6 +81,52 @@ class MotorController:
     # move each enabled motor to its target position simultaneously
     await asyncio.gather(*[
       motor.to(position, throttle) for motor, position, throttle in zip(self.get_enabled_motors(), enabled_positions, enabled_throttles)
+    ])
+
+
+  async def move_all_counts(self, counts: Union[int, list[int]], directions: Union[int, list[int]]):
+    """
+    Move all motors to specific counts with calibrated throttles
+
+    Parameters:
+      counts (Union[int, list[int]]): Target counts for all motors
+      directions (Union[int, list[int]]): Direction for all motors
+    """
+
+    # singular value -> convert to list of that value
+    if isinstance(directions,  int):
+      if directions != config.get('up') and directions != config.get('down'):
+        raise ValueError(f"Direction is invalid, received: {directions}")
+      directions = [directions] * len(self.motors)
+
+    # singular value -> convert to list of that value
+    if isinstance(counts, int):
+      counts = [counts] * len(self.motors)
+
+    # ensure both are lists
+    if not isinstance(directions, list):
+      raise ValueError("Directions must be a list")
+    if not isinstance(counts, list):
+      raise ValueError("Counts must be a list")
+
+    # ensure lengths are the same
+    if len(directions) != len(self.motors):
+      raise ValueError("Directions must be the same length as the number of motors")
+    if len(counts) != len(self.motors):
+      raise ValueError("Counts must be the same length as the number of motors")
+    
+    enabled_counts: list[int] = []
+    enabled_directions: list[int] = []
+
+    # get enabled positions and throttles
+    for i in range(config.get('n_motors')):
+      if self.motors[i].status == MotorStatus.ENABLED:
+        enabled_counts.append(counts[i])
+        enabled_directions.append(directions[i])
+
+    # move each enabled motor to its target position simultaneously
+    await asyncio.gather(*[
+      motor.move(n_counts, direction) for motor, n_counts, direction in zip(self.get_enabled_motors(), enabled_counts, enabled_directions)
     ])
 
   async def calibrate_home_positions(self):

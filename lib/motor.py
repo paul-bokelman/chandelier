@@ -152,7 +152,7 @@ class Motor:
             self._disable("Failed to find home")
             return
 
-        # await asyncio.sleep(2) # wait for motor to settle (background processes can still run**)
+        await asyncio.sleep(2) # wait for motor to settle (background processes can still run**)
         self._set_home_state() # set home state after motor is settled
 
         log.success(self._clm("Find Home", message="Home found"), override=True)

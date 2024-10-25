@@ -3,7 +3,7 @@ import asyncio
 from adafruit_servokit import ServoKit
 from configuration.config import config
 from lib.store import CalibrationStore, SingularCalibrationData
-from lib.motor import Motor
+from lib.motor import Motor, Status as MotorStatus
 from lib.utils import log
 
 class MotorController:
@@ -13,6 +13,10 @@ class MotorController:
     self.store = CalibrationStore()
     self.kit = ServoKit(channels=16)
     self.motors: list[Motor] = [Motor(i,self.kit.continuous_servo[i]) for i in range(config.get('n_motors'))]
+
+  def _get_enabled_motors(self) -> list[Motor]:
+    """Get all enabled motors"""
+    return [motor for motor in self.motors if motor.status == MotorStatus.ENABLED]
 
   def stop_all_motors(self):
     """Stop all motors by calling stop_motor for each motor"""
@@ -26,7 +30,7 @@ class MotorController:
     Parameters:
       throttle (Optional[float]): Throttle value for all motors
     """
-    await asyncio.gather(*[motor.to_home(throttle) for motor in self.motors])
+    await asyncio.gather(*[motor.to_home(throttle) for motor in self._get_enabled_motors()])
 
   async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None):
     """Move all motors to specific positions with specific throttles"""
@@ -59,17 +63,27 @@ class MotorController:
       raise ValueError("Throttles must be the same length as the number of motors")
     if len(positions) != len(self.motors):
       raise ValueError("Positions must be the same length as the number of motors")
+    
+    enabled_positions: list[float] = []
+    enabled_throttles: list[Optional[float]] = []
 
-    # move each motor to its target position simultaneously
-    await asyncio.gather(*[motor.to(position, throttle) for motor, position, throttle in zip(self.motors, positions, throttles)])
+    # get enabled positions and throttles
+    for i in range(config.get('n_motors')):
+      if self.motors[i].status == MotorStatus.ENABLED:
+        enabled_positions.append(positions[i])
+        enabled_throttles.append(throttles[i])
+
+    # move each enabled motor to its target position simultaneously
+    await asyncio.gather(*[
+      motor.to(position, throttle) for motor, position, throttle in zip(self._get_enabled_motors(), enabled_positions, enabled_throttles)
+    ])
 
   async def calibrate_home_positions(self):
     """Calibrate home positions for all motors"""
     log.info("Calibrating home positions...")
 
     # calibrate home positions for all enabled motors
-    await asyncio.gather(*[motor.calibrate_home() for motor in self.motors if not motor.disabled and not motor.dead])
-
+    await asyncio.gather(*[motor.calibrate_home() for motor in self._get_enabled_motors()])
     log.success("Calibrated home positions")
 
   def load_calibration_data(self):
@@ -93,29 +107,30 @@ class MotorController:
       for channel in reset:
         self.store.reset_entry(channel)
 
-    self.store.load(self.motors) # load calibration data into motors
+    # load calibration data into motors (regardless of status)
+    self.store.load(self.motors)
 
     log.info("Calibrating motors...")
 
     # independently calibrate each motor (skips if already calibrated)
-    await asyncio.gather(*[motor.calibrate_independent() for motor in self.motors])
+    await asyncio.gather(*[motor.calibrate_independent() for motor in self._get_enabled_motors()])
 
     log.success("Completed independent calibrations")
     
-    # find max cps up and down from group -> used to calibrate relative throttles
+    # find max cps up and down from group (included previously calibrated) -> used to calibrate relative throttles
     max_cps_up = max([motor.cps_up for motor in self.motors if motor.cps_up is not None]) # get max cps up
     max_cps_down = max([motor.cps_down for motor in self.motors if motor.cps_down is not None]) # get max cps down
 
     log.info("Calibrating relative throttles")
 
     # calibrate all relative throttles 
-    await asyncio.gather(*[motor.calibrate_relative_throttles(max_cps_up, max_cps_down) for motor in self.motors])
+    await asyncio.gather(*[motor.calibrate_relative_throttles(max_cps_up, max_cps_down) for motor in self._get_enabled_motors()])
 
     log.info("Calibrated relative throttles")
     log.info("Saving calibration data...")
 
     # update all calibration data in store
-    for motor in self.motors:
+    for motor in self._get_enabled_motors():
       data: SingularCalibrationData = {
         "cps_down": motor.cps_down,
         "cps_up": motor.cps_up,
@@ -132,4 +147,5 @@ class MotorController:
 
   async def recover_all(self):
     """Attempt to recover all disabled motors"""
-    await asyncio.gather(*[motor.recover() for motor in self.motors if motor.disabled])
+    # recover all disabled motors, dead motors will not attempt to recover
+    await asyncio.gather(*[motor.recover() for motor in self.motors if motor.status == MotorStatus.DISABLED])

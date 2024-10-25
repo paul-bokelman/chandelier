@@ -1,4 +1,5 @@
 from typing import Optional, Union, cast
+from enum import Enum
 import time
 import asyncio
 from adafruit_servokit import ContinuousServo
@@ -10,6 +11,12 @@ try:
 except ImportError:
     import Mock.GPIO as GPIO
 
+class Status(Enum):
+    """Status enum for motor"""
+    ENABLED = 0
+    DISABLED = 1
+    DEAD = 2
+
 class Motor:
     """Motor class to control a single motor"""
     def __init__(self, channel: int, servo: ContinuousServo) -> None:
@@ -19,8 +26,7 @@ class Motor:
         self.servo = servo
 
         # state data
-        self.disabled = False # if the motor is disabled
-        self.dead = False # if the motor is dead
+        self.status = Status.ENABLED
         self.recover_attempts = 0 # number of times the motor has attempted to recover
 
         # encoder data
@@ -40,11 +46,13 @@ class Motor:
         # detect when encoder is triggered (matches 1->0)
         GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
 
-        # mark motor as dead if it is in the initial disabled list
-        if self.channel in config.get('initial_disabled_motors'):
-            self.disabled = True
-            self.dead = True
-            log.warning(f"M{self.channel} | Motor dead")
+        # set motors initial status based on configuration
+        if self.channel in config.get('disabled_motors'):
+            self.status = Status.DISABLED
+            log.warning(self._clm("init", status="Motor is disabled"))
+        if self.channel in config.get('dead_motors'):
+            self.status = Status.DEAD
+            log.warning(self._clm("init", status="Motor is dead"))
 
     def _encoder_callback(self, _):
         """Callback function for encoder"""
@@ -92,38 +100,38 @@ class Motor:
             reason (str, optional): reason for disabling, defaults to "Unknown"
         """
         log.error(self._clm("Disable", message="Disabling motor", reason=reason))
-        self.disabled = True
+
+        # set status to disabled if not already dead
+        if self.status is not Status.DEAD:
+            self.status = Status.DISABLED
+        else:
+            log.warning(self._clm("Disable", message="Motor is already dead"))
 
     def _is_home(self) -> bool:
         """Check if the motor is at the home position"""
         return self.counts == 0
     
-    @staticmethod
-    def _handle_disabled(f):
-        """Decorator to check and properly handle disabled state"""
-        def wrapper(self: 'Motor', *args, **kwargs):
-            
-            # if the motor is disabled -> notify and abort
-            if self.disabled:
-                log.warning(self._clm("Handle Disabled", message="Motor is disabled"))
-                return asyncio.sleep(0) #/ hacky way to make asyncio happy
-            
-            # todo: revisit this
-            # if the motor position is unknown -> disable and abort
-            # if self.counts == -1:
-            #     self._disable("Motor position unknown, recalibrate independently")
-            #     return asyncio.sleep(0) #/ hacky way to make asyncio happy
-
-            # otherwise -> execute function
-            return f(self, *args, **kwargs)
-        return wrapper
+    def _is_calibrated(self) -> bool:
+        """Check if the motor is calibrated"""
+        
+        # neutrals not calibrated
+        if self.lower_neutral is None or self.upper_neutral is None:
+            log.info(self._clm("Calibrated", message="Calibrated neutral positions not found"))
+            return False
+        
+        # cps not calibrated
+        if self.cps_down is None or self.cps_up is None:
+            log.info(self._clm("Calibrated", message="Calibrated cps not found"))
+            return False
+        
+        if self.throttle_down is None or self.throttle_up is None:
+            log.info(self._clm("Calibrated", message="Calibrated throttle not found"))
+            return False
+        
+        return True
 
     async def calibrate_home(self):
         """Find the home position from an unknown starting position"""
-
-        # disabled handling
-        if self.disabled or self.dead:
-            return
 
         log.info(self._clm("Find Home", message="Finding home"), override=True)
 
@@ -150,7 +158,6 @@ class Motor:
 
         log.success(self._clm("Find Home", message="Home found"), override=True)
 
-    @_handle_disabled #/ should never be called when disabled but just in case
     async def set(self, direction: int, throttle: Optional[float] = None):
         """
         Start the motor with a specific throttle and direction
@@ -194,7 +201,6 @@ class Motor:
         log.info(self._clm("Stop"))
         self.servo._pwm_out.duty_cycle = 0
 
-    @_handle_disabled
     async def to_home(self, throttle: Optional[float] = None):
         """
         Move the motor to the home position
@@ -215,7 +221,6 @@ class Motor:
         # ignore stall detection for home position
         await self.to(target=0.0, throttle=throttle, disable_on_stall=False)
 
-    @_handle_disabled
     async def move(
         self, 
         n_counts: int,
@@ -296,7 +301,6 @@ class Motor:
 
         return stalled, cps_readings
     
-    @_handle_disabled
     async def to(
             self, 
             target: float, 
@@ -329,44 +333,52 @@ class Motor:
 
     async def recover(self):
         """Attempt to recover from a disabled state"""
-
         log.info(self._clm("Recover", message="Attempting to recover"), override=True)
 
-        # if motor is not disabled or dead -> do nothing
-        if not self.disabled or self.dead:
+        # motor is enabled or dead -> return early and count attempt (should never happen)
+        if self.status != Status.DISABLED:
+            log.error(self._clm("Recover", message=f"Attempted to recover {self.status.name} motor"))
+            self.recover_attempts += 1
             return
 
         # if motor has attempted to recover twice -> mark as dead
         if self.recover_attempts >= config.get('max_recovery_attempts'):
-            self.dead = True
+            self.status = Status.DEAD
+            return
+        
+        # motor is not calibrated -> return early and count attempt 
+        if not self._is_calibrated():
+            log.info(self._clm("Recover", message="Motor is not calibrated, skipping recovery"))
+            self.recover_attempts += 1
             return
 
         self.recover_attempts += 1 # increment recover attempts
-        self.disabled = False # temporarily enable motor
 
         # move down to verify down movement is working
         up_stall, _ = await self.move(direction=config.get('down'), n_counts=config.get('recovery_counts'), disable_on_stall=False)
 
         # stalled on up -> disable motor
         if up_stall:
-            self._disable("Failed to recover")
+            log.info(self._clm("Recover", message="Failed to recover (stalled on up)"))
+            return
 
         # move up to verify up movement is working
         down_stall, _ = await self.move(direction=config.get('up'), n_counts=config.get('recovery_counts'))
 
         # stalled on down -> disable motor
         if down_stall:
-            self._disable("Failed to recover")
+            log.info(self._clm("Recover", message="Failed to recover (stalled on down)"))
+            return
 
         await self.calibrate_home() # recalibrate home position
 
         # success -> leave motor enabled and reset recover attempts
         self.recover_attempts = 0
+        self.status = Status.ENABLED
 
         log.success(self._clm("Recover", message="Recovery successful"), override=True)
     
     # -------------------------------- CALIBRATION ------------------------------- #
-    @_handle_disabled 
     async def calibrate_relative_throttles(self, target_up_cps: float, target_down_cps: float):
         """
         Find and assign relative throttles based on global cps data (only configured for slow speed)
@@ -512,7 +524,6 @@ class Motor:
 
         log.success(self._clm("CRT", throttle_down=self.throttle_down, throttle_up=self.throttle_up), override=True)
 
-    @_handle_disabled
     async def _measure_cps(
             self, 
             n_counts: int, 
@@ -578,7 +589,6 @@ class Motor:
         return (cps_down, cps_up)
 
 
-    @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_cps(self):
         """Find counts per second of the motor in both directions"""
         log.info(self._clm("Find CPS", message="Finding cps up and down"), override=True)
@@ -592,7 +602,6 @@ class Motor:
 
         log.success(self._clm("Find CPS", cps_down=self.cps_down, cps_up=self.cps_up), override=True)
 
-    @_handle_disabled #/ should never be called when disabled but just in case
     async def _find_neutrals(self):
         """Find the lower and upper neutral positions of motor"""
         log.info(self._clm("Find Neutrals", message="Finding neutral positions"), override=True)

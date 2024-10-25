@@ -16,7 +16,7 @@ except ImportError:
 def main():
     parser = argparse.ArgumentParser(description="chandelier")
     parser.add_argument("-e", "--env", help="Select an environment", type=str, default='development') # development, testing, production
-    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts
+    parser.add_argument("-m", "--mode", help="Select a mode", type=str, default='normal') # normal, manual, scripts, testing
     parser.add_argument("-c", "--calibration", help="Select calibration option", type=str, default='default') # default, prompt 
     args= parser.parse_args()
 
@@ -49,7 +49,8 @@ def main():
         config.__new__(Config)
         config.load(env=Environments[args.env.upper()]) # load configuration
 
-        skip_calibration = args.mode == "scripts" # skip calibration for scripts mode (calibration not needed)
+        # skip calibration for scripts mode (calibration not needed)
+        skip_calibration = args.mode == "scripts"
 
         # preflight and get calibrated motor controller
         mc = asyncio.run(calibration.preflight(option=args.calibration, skip=skip_calibration))

@@ -167,5 +167,3 @@ class CalibrationStore:
   def get(self) -> CalibrationData:
     """Get all calibration data"""
     return self.data
-
-  

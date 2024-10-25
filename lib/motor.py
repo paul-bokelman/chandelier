@@ -92,7 +92,7 @@ class Motor:
             message += f" | {key}: {value}"
         return message
     
-    def _disable(self, reason: str = "Unknown"):
+    def disable(self, reason: str = "Unknown"):
         """
         Disable the motor
         
@@ -106,6 +106,16 @@ class Motor:
             self.status = Status.DISABLED
         else:
             log.warning(self._clm("Disable", message="Motor is already dead"))
+
+    def enable(self):
+        """Enable the motor"""
+        log.info(self._clm("Enable", message="Enabling motor"))
+
+        # set status to enabled if not already dead
+        if self.status is not Status.DEAD:
+            self.status = Status.ENABLED
+        else:
+            log.warning(self._clm("Enable", message="Motor is dead"))
 
     def _is_home(self) -> bool:
         """Check if the motor is at the home position"""
@@ -149,7 +159,7 @@ class Motor:
         # didn't stall -> failed to find home
         if not stalled:
             log.error(self._clm("Find Home", message="Failed to find home"))
-            self._disable("Failed to find home")
+            self.disable("Failed to find home")
             return
 
         await asyncio.sleep(2) # wait for motor to settle (background processes can still run**)
@@ -288,7 +298,7 @@ class Motor:
                 log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
 
                 if disable_on_stall:
-                    self._disable("Stalled")
+                    self.disable("Stalled")
 
                 stalled = True
                 break

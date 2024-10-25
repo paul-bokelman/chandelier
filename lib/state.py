@@ -192,8 +192,6 @@ class StateMachine:
 
         returned_after_charging = False # track if candles have returned home this iteration
 
-        await self.mc.calibrate_home_positions() # initially calibrate home positions
-
         # check if state changed every second
         while True:
              # break back to main loop if state changed
@@ -220,6 +218,9 @@ class StateMachine:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
+                
+                # recalibrate home positions before charging (ensure candles are in correct position)
+                await self.mc.calibrate_home_positions()
 
                 # place candles in correct position start charging
                 await self.mc.move_all(0.2) # move all candles slightly past charger

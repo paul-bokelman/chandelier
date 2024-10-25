@@ -652,4 +652,5 @@ class Motor:
         if self.cps_down is None or self.cps_up is None:
             await self._find_cps()
 
-        await self.to_home() # move back to home position for next calibration
+        if not self._is_home():
+            await self.to_home() # move back to home position for next calibration

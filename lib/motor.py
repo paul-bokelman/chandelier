@@ -153,7 +153,6 @@ class Motor:
             return
 
         # set home state after motor is settled
-        await asyncio.sleep(2) 
         self._set_home_state()
 
         log.success(self._clm("Find Home", message="Home found"), override=True)
@@ -355,7 +354,7 @@ class Motor:
         self.recover_attempts += 1 # increment recover attempts
 
         # move down to verify down movement is working
-        up_stall, _ = await self.move(direction=config.get('down'), n_counts=config.get('recovery_counts'), disable_on_stall=False)
+        up_stall, _ = await self.move(direction=config.get('down'), n_counts=config.get('recovery_counts'))
 
         # stalled on up -> disable motor
         if up_stall:

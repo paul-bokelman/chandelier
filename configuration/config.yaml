@@ -20,9 +20,9 @@ environment_specific_config: &default_env_config
   dead_motors: [] # motors that are dead (cannot be recovered)
 
   # states
-  random_state_duration: 90 # time before switching to idle mode (seconds)
-  sequence_state_duration: 90 # time before switching back to idle mode (seconds)
-  duration_before_recalibration: 30 # time before recalibrating counts (seconds)
+  random_state_duration: 180 # time before switching to idle mode (seconds)
+  sequence_state_duration: 180 # time before switching back to idle mode (seconds)
+  duration_before_recalibration: 100 # time before recalibrating counts (seconds)
 
   # charging
   candles_per_charge_cycle: 2

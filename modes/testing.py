@@ -3,7 +3,7 @@ from lib.controller import MotorController
 import asyncio
 import inquirer as iq
 from lib.utils import log
-from configuration.config import config
+from configuration import config
 
 def apply_selective_controller(mc: MotorController) -> list[int]:
     """

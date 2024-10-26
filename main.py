@@ -51,7 +51,7 @@ def main():
 
 
         print(f"Environment: {args.env}")
-        print(config)
+        print(config.__dict__)
 
         # skip calibration for scripts mode (calibration not needed)
         skip_calibration = args.mode == "scripts"

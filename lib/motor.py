@@ -154,12 +154,12 @@ class Motor:
         throttle = None if self.throttle_up else config.get('uncalibrated_up_throttle')
 
         # move up as much as possible and check for stall
-        stalled, _ =  await self.move(n_counts=config.get('max_counts'), direction=config.get('up'), throttle=throttle, disable_on_stall=False)
+        stalled, _ =  await self.move(n_counts=(2 * config.get('max_counts')), direction=config.get('up'), throttle=throttle, disable_on_stall=False)
 
         # didn't stall -> failed to find home
         if not stalled:
-            log.error(self._clm("Find Home", message="Failed to find home"))
-            self.disable("Failed to find home")
+            log.error(self._clm("Find Home", message="Max counts reached before finding home"))
+            self.disable("Max counts reached before finding home")
             return
 
         await asyncio.sleep(2) # wait for motor to settle (background processes can still run**)
@@ -249,7 +249,7 @@ class Motor:
         Returns:
             tuple(bool, list[float]): stalled, cps_readings
         """
-        max_counts: int = config.get('max_counts')
+        # max_counts: int = config.get('max_counts')
 
         # if n_counts > max_counts:
         #     raise ValueError("Counts must be less than max counts")

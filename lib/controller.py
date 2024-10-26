@@ -194,6 +194,9 @@ class MotorController:
       self.store.update_data(motor.channel, data)
 
     log.info("Calibration data saved")
+
+    await self.move_all_home()
+
     log.success("Calibration complete")
 
   async def recover_all(self):

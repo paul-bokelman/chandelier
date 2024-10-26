@@ -195,7 +195,8 @@ class MotorController:
 
     log.info("Calibration data saved")
 
-    await self.move_all_home()
+    # calibrate home positions before entering next mode
+    await self.calibrate_home_positions()
 
     log.success("Calibration complete")
 

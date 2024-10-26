@@ -113,7 +113,7 @@ class StateMachine:
         # detect button presses
         if channel == config.get('service_button_pin'):
             new_state = State.SERVICE
-        if channel == config.get('reboot_button_pin'):
+        elif channel == config.get('reboot_button_pin'):
             new_state = State.REBOOT
 
         # detect switch changes

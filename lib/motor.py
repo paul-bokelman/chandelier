@@ -251,9 +251,9 @@ class Motor:
         """
         max_counts: int = config.get('max_counts')
 
-        # ensure n_counts is within bounds
-        if n_counts > max_counts:
-            raise ValueError("Counts must be less than max counts")
+        # if n_counts > max_counts:
+        #     raise ValueError("Counts must be less than max counts")
+        # ensure n_counts is positive
         if n_counts < 0:
             raise ValueError("Counts must be greater than 0")
 

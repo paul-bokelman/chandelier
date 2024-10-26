@@ -91,7 +91,7 @@ def run(controller: MotorController):
         "down➜up➜pause➜home": c1,
     }
 
-    question = iq.List("test_case", message="Select a test case", choices=[key for key in test_cases.keys()] + ["exit"])
+    question = [iq.List("test_case", message="Select a test case", choices=[key for key in test_cases.keys()] + ["exit"])]
 
     while True:
         answer = iq.prompt(question)

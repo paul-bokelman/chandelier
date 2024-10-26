@@ -10,7 +10,7 @@ general:
   modes: [normal, manual, testing, scripts]
 
 # test case specific configuration schema
-testing:
+testing_mode:
   c1: [8, 8, 3, 3] # down counts, up counts, times, pause duration
 
 # base env configuration schema

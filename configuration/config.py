@@ -36,7 +36,7 @@ class Config:
             configs: ConfigurationFileSchema = yaml.safe_load(file)
             env_configuration = configs.get(env.value)
             general_configuration = configs.get('general')
-            testing_configuration = configs.get('testing')
+            testing_configuration = configs.get('testing_mode')
 
             if env_configuration is None:
                 raise ValueError(f"Configuration for environment {env.value} not found")

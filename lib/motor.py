@@ -140,7 +140,7 @@ class Motor:
         
         return True
 
-    async def calibrate_home(self):
+    async def find_home(self):
         """Find the home position from an unknown starting position"""
 
         log.info(self._clm("Find Home", message="Finding home"), override=True)
@@ -379,7 +379,7 @@ class Motor:
             log.info(self._clm("Recover", message="Failed to recover (stalled on down)"))
             return
 
-        await self.calibrate_home() # recalibrate home position
+        await self.find_home() # recalibrate home position
 
         # success -> leave motor enabled and reset recover attempts
         self.recover_attempts = 0
@@ -652,7 +652,7 @@ class Motor:
 
         # find initial home position if not already found
         if self.counts == -1:
-            await self.calibrate_home()
+            await self.find_home()
 
         # find neutrals if either is not present
         if self.lower_neutral is None or self.upper_neutral is None:

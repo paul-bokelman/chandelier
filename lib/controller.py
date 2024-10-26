@@ -129,13 +129,13 @@ class MotorController:
       motor.move(n_counts, direction) for motor, n_counts, direction in zip(self.get_enabled_motors(), enabled_counts, enabled_directions)
     ])
 
-  async def calibrate_home_positions(self):
-    """Calibrate home positions for all motors"""
-    log.info("Calibrating home positions...")
+  async def find_home_positions(self):
+    """Find home positions for all motors"""
+    log.info("Finding home positions...")
 
     # calibrate home positions for all enabled motors
-    await asyncio.gather(*[motor.calibrate_home() for motor in self.get_enabled_motors()])
-    log.success("Calibrated home positions")
+    await asyncio.gather(*[motor.find_home() for motor in self.get_enabled_motors()])
+    log.success("Found home positions")
 
   def load_calibration_data(self):
     """Load calibration data from store. This method is used when store is externally validated."""
@@ -195,8 +195,8 @@ class MotorController:
 
     log.info("Calibration data saved")
 
-    # calibrate home positions before entering next mode
-    await self.calibrate_home_positions()
+    # move all home before completion
+    await self.move_all_home()
 
     log.success("Calibration complete")
 

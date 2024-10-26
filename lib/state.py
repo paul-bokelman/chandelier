@@ -218,9 +218,6 @@ class StateMachine:
                 log.info("REQUIRES CHARGE", override=True)
                 charge_state = ChargeState.CHARGING
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
-                
-                # recalibrate home positions before charging (ensure candles are in correct position)
-                await self.mc.calibrate_home_positions()
 
                 #/ should move all motors by counts instead of scaled position, this ensures no extreme positions when max counts is high
                 await self.mc.move_all(0.2) # move all candles slightly past charger (buffer)
@@ -296,7 +293,7 @@ class StateMachine:
 
             # recalibrate home positions if time since last calibration is greater than duration before recalibration
             if time.time() - elapsed_time_since_calibration  >= config.get('duration_before_recalibration'):
-                await self.mc.calibrate_home_positions()
+                await self.mc.find_home_positions()
                 elapsed_time_since_calibration = time.time() # reset elapsed time since calibration
 
             # run next iteration or get new generator
@@ -326,7 +323,7 @@ class StateMachine:
 
             # recalibrate home positions if time since last calibration is greater than duration before recalibration
             if time.time() - elapsed_time_since_calibration >= config.get('duration_before_recalibration'):
-                await self.mc.calibrate_home_positions()
+                await self.mc.find_home_positions()
                 elapsed_time_since_calibration = time.time() # reset elapsed time since calibration
 
             # run next iteration

@@ -257,12 +257,11 @@ class Motor:
 
         stalled = False
         cps_readings: list[float] = [] # store cps readings for stall detection and average
+        start_counts = self.counts # track start position
 
         # direction switches -> remove count if encoder is low
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
-            self.counts -= 1
-            
-        start_counts = self.counts # track start position
+            n_counts += 1
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps

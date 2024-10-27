@@ -49,7 +49,7 @@ environment_specific_config: &default_env_config
 
 development:
   <<: *default_env_config
-  debug: true
+  debug: false
   suppress_count_logging: true
   calibration_file_path: calibrations_dev.json
   disabled_motors: []

@@ -260,12 +260,12 @@ class Motor:
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         start_counts = self.counts # track start position
 
-        await self.set(direction=direction, throttle=throttle) # start motor
-
         # direction changed and off encoder -> increment counts (false reading)
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
-            log.info(self._clm("Move", message="Direction changed and off encoder, incrementing counts"))
+            log.info(self._clm("Move", message="Direction changed and off encoder, incrementing counts"), override=True)
             n_counts += 1
+
+        await self.set(direction=direction, throttle=throttle) # start motor
 
         self._start_measuring_cps() # start measuring cps
         prev_read_time = time.time() # track previous read time

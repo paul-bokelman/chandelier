@@ -261,7 +261,7 @@ class Motor:
 
         # direction switches -> remove count if encoder is low
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
-            start_counts += 1
+            n_counts += 1
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps

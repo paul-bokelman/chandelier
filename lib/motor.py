@@ -256,12 +256,13 @@ class Motor:
         log.info(self._clm("Move", counts=f"{self.counts} -> {self.counts + n_counts * direction}", throttle=throttle), override=True)
 
         stalled = False
-        start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
 
         # direction switches -> remove count if encoder is low
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
-            n_counts += 1
+            self.counts -= 1
+            
+        start_counts = self.counts # track start position
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps

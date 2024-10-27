@@ -56,6 +56,7 @@ class Motor:
 
     def _encoder_callback(self, _):
         """Callback function for encoder"""
+
         self.counts += self.direction * 1 # increment or decrement counts based on direction
 
         if self.measuring_cps:
@@ -259,11 +260,12 @@ class Motor:
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         start_counts = self.counts # track start position
 
-        # direction switches -> remove count if encoder is low
+        await self.set(direction=direction, throttle=throttle) # start motor
+
+        # direction changed and off encoder -> increment counts (false reading)
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
             n_counts += 1
 
-        await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps
         prev_read_time = time.time() # track previous read time
 

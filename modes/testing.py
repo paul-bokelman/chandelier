@@ -84,11 +84,46 @@ async def c1(mc: MotorController):
 
     log.success("Test case 1 complete")
 
+async def c2(mc: MotorController):
+    """
+    Test case 2
+        1. Move down configured distance
+        2. Pause for configured duration
+        3. Move up configured distance
+        4. Repeat configured number of times
+        5. Pause for configured duration
+        6. Move to home position
+
+    Parameters:
+        mc (MotorController): Motor controller instance
+    """
+    log.info("Running test case 2")
+
+    # apply selective controller (choose motors)
+    disabled_channels = apply_selective_controller(mc)
+
+    # run procedure
+    down_counts, up_counts, n_times, pause_duration = config.get('c2')
+
+    for _ in range(n_times):
+        await mc.move_all_counts(down_counts, directions=config.get('down'))
+        await asyncio.sleep(pause_duration)
+        await mc.move_all_counts(up_counts, directions=config.get('up'))
+        await asyncio.sleep(pause_duration)
+
+    await mc.move_all_home() # move to home position
+
+    # revert selective controller
+    revert_selective_controller(mc, disabled_channels)
+
+    log.success("Test case 2 complete")
+
 def run(controller: MotorController):
     log.info("Running testing mode")
 
     test_cases: dict[str, Callable[[MotorController]]] = {
         "down➜up➜pause➜home": c1,
+        "down➜pause➜up➜pause➜home": c2,
     }
 
     question = [iq.List("test_case", message="Select a test case", choices=[key for key in test_cases.keys()] + ["exit"])]

@@ -249,10 +249,6 @@ class Motor:
         Returns:
             tuple(bool, list[float]): stalled, cps_readings
         """
-        # max_counts: int = config.get('max_counts')
-
-        # if n_counts > max_counts:
-        #     raise ValueError("Counts must be less than max counts")
         # ensure n_counts is positive
         if n_counts < 0:
             raise ValueError("Counts must be greater than 0")
@@ -262,6 +258,10 @@ class Motor:
         stalled = False
         start_counts = self.counts # track start position
         cps_readings: list[float] = [] # store cps readings for stall detection and average
+
+        # direction switches -> remove count if encoder is low
+        if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
+            start_counts -= 1
 
         await self.set(direction=direction, throttle=throttle) # start motor
         self._start_measuring_cps() # start measuring cps

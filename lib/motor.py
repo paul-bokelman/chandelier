@@ -264,6 +264,7 @@ class Motor:
 
         # direction changed and off encoder -> increment counts (false reading)
         if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
+            log.info(self._clm("Move", message="Direction changed and off encoder, incrementing counts"))
             n_counts += 1
 
         self._start_measuring_cps() # start measuring cps

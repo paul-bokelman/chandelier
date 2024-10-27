@@ -19,7 +19,7 @@ environment_specific_config: &default_env_config
   debug: true # debug mode (suppresses  some logs)
   max_counts: 30 # max number of counts to move
   n_motors: 16 # number of motors
-  suppress_count_logging: true # suppresses count logging to console
+  suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
   dead_motors: [] # motors that are dead (cannot be recovered)
 
@@ -50,7 +50,7 @@ environment_specific_config: &default_env_config
 development:
   <<: *default_env_config
   debug: true
-  suppress_count_logging: false
+  suppress_count_logging: true
   calibration_file_path: calibrations_dev.json
   disabled_motors: []
   dead_motors: []

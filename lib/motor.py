@@ -44,8 +44,7 @@ class Motor:
         self.throttle_up = None # relative throttle for moving up at slow preset
 
         # detect when encoder edge is triggered (different edge for up and down)
-        GPIO.add_event_detect(self.encoder_pin, GPIO.RISING, callback=self._rising_encoder_callback, bouncetime=2)
-        GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._falling_encoder_callback, bouncetime=2)
+        GPIO.add_event_detect(self.encoder_pin, GPIO.BOTH, callback=self._encoder_callback, bouncetime=2)
 
         # set motors initial status based on configuration
         if self.channel in config.get('disabled_motors'):
@@ -56,7 +55,7 @@ class Motor:
             log.warning(self._clm("init", status="Motor is dead"))
 
     def _measure_counts(self):
-        """Callback function for encoder"""
+        """Measure the current count position of the motor"""
         self.counts += self.direction * 1 # increment or decrement counts based on direction
 
         if self.measuring_cps:
@@ -66,15 +65,17 @@ class Motor:
         if not config.get('suppress_count_logging'):
             log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'}")
 
-    def _rising_encoder_callback(self, _):
-        """Callback function for rising encoder (used for down direction)"""
-        if self.direction == config.get('down'):
-            self._measure_counts()
+    def _encoder_callback(self, _):
+        """Callback function for encoder edge detection"""
 
-    def _falling_encoder_callback(self, _):
-        """Callback function for falling encoder (used for up direction)"""
-        if self.direction == config.get('up'):
+        # direction is up -> measure counts falling
+        if self.direction == config.get('up') and GPIO.input(self.encoder_pin) == GPIO.LOW:
             self._measure_counts()
+        # direction is down -> measure counts rising
+        elif self.direction == config.get('down') and GPIO.input(self.encoder_pin) == GPIO.HIGH:
+            self._measure_counts()
+        else:
+            log.warning(self._clm("Encoder Callback", message="Invalid encoder edge detected"))
 
     def _start_measuring_cps(self):
         """Start measuring cps"""

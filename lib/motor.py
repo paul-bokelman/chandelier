@@ -74,8 +74,6 @@ class Motor:
         # direction is down -> measure counts rising
         elif self.direction == config.get('down') and GPIO.input(self.encoder_pin) == GPIO.HIGH:
             self._measure_counts()
-        else:
-            log.warning(self._clm("Encoder Callback", message="Invalid encoder edge detected"))
 
     def _start_measuring_cps(self):
         """Start measuring cps"""

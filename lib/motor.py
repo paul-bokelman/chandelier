@@ -43,8 +43,9 @@ class Motor:
         self.throttle_down = None # relative throttle for moving down at slow preset
         self.throttle_up = None # relative throttle for moving up at slow preset
 
-        # detect when encoder is triggered (matches 1->0)
-        GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._encoder_callback, bouncetime=2)
+        # detect when encoder edge is triggered (different edge for up and down)
+        GPIO.add_event_detect(self.encoder_pin, GPIO.RISING, callback=self._rising_encoder_callback, bouncetime=2)
+        GPIO.add_event_detect(self.encoder_pin, GPIO.FALLING, callback=self._falling_encoder_callback, bouncetime=2)
 
         # set motors initial status based on configuration
         if self.channel in config.get('disabled_motors'):
@@ -54,9 +55,8 @@ class Motor:
             self.status = Status.DEAD
             log.warning(self._clm("init", status="Motor is dead"))
 
-    def _encoder_callback(self, _):
+    def _measure_counts(self):
         """Callback function for encoder"""
-
         self.counts += self.direction * 1 # increment or decrement counts based on direction
 
         if self.measuring_cps:
@@ -65,6 +65,16 @@ class Motor:
         # log counts and direction
         if not config.get('suppress_count_logging'):
             log.info(f"M{self.channel} | count: {self.counts} | direction: {'down' if self.direction == config.get('down') else 'up'}")
+
+    def _rising_encoder_callback(self, _):
+        """Callback function for rising encoder (used for down direction)"""
+        if self.direction == config.get('down'):
+            self._measure_counts()
+
+    def _falling_encoder_callback(self, _):
+        """Callback function for falling encoder (used for up direction)"""
+        if self.direction == config.get('up'):
+            self._measure_counts()
 
     def _start_measuring_cps(self):
         """Start measuring cps"""
@@ -259,11 +269,6 @@ class Motor:
         stalled = False
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         start_counts = self.counts # track start position
-
-        # direction changed and off encoder -> increment counts (false reading)
-        if self.direction != direction and GPIO.input(self.encoder_pin) == GPIO.LOW:
-            log.info(self._clm("Move", message="Direction changed and off encoder, incrementing counts"), override=True)
-            n_counts += 1
 
         await self.set(direction=direction, throttle=throttle) # start motor
 

@@ -15,7 +15,8 @@ class Sequence:
 
     def random_iteration(self) -> IteratorReturnValue:
         """Generate a random sequence for all motors"""
-        positions = [rand.uniform(0.4, 0.6) for _ in range(config.get('n_motors'))]
+        min, max = config.get('random_params')
+        positions = [rand.uniform(min, max) for _ in range(config.get('n_motors'))]
         throttles = self.default_throttles
         return (positions, throttles)
 
@@ -24,27 +25,29 @@ class Sequence:
         for _ in range(iterations):
             yield self.random_iteration()
 
-    def wave_iteration(self, i: int, amplitude: float = 0.1, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> IteratorReturnValue:
+    def wave_iteration(self, i: int) -> IteratorReturnValue:
         """Generate a wave sequence for all motors"""
+        amplitude, translation, frequency, step = config.get('wave_params')
         positions = [amplitude * math.sin(math.pi * frequency * i + step * j) + translation + amplitude for j in range(config.get('n_motors'))]
         throttles = self.default_throttles
         log.info(f"Wave positions: {positions}, Params: {amplitude, frequency, i, step}")
 
         return (positions, throttles)
         
-    def wave(self, iterations: int = 5, amplitude: float = 0.1, translation: float = 0.2, frequency: float = 0.5, step: float = 0.5) -> GeneratedSequence:
+    def wave(self, iterations: int = 5) -> GeneratedSequence:
         """Generate a wave sequence for all motors"""
         for i in range(iterations):
-            yield self.wave_iteration(i, amplitude, translation, frequency, step)
+            yield self.wave_iteration(i)
 
-    def alternating_iteration(self, i: int, amplitude: float = 0.2, translation: float = 0.4) -> IteratorReturnValue:
+    def alternating_iteration(self, i: int) -> IteratorReturnValue:
         """Generate an alternating sequence for all motors"""
+        amplitude, translation = config.get('alternating_params')
         positions = [amplitude + translation if (i + j) % 2 == 0 else translation for j in range(config.get('n_motors'))]
         log.info(f"Alternating positions: {positions}, Params: {amplitude, translation}")
         throttles = self.default_throttles
         return (positions, throttles)
 
-    def alternating(self, iterations: int = 5, amplitude: float = 0.1, translation: float = 0.4) -> GeneratedSequence:
+    def alternating(self, iterations: int = 5) -> GeneratedSequence:
         """Generate an alternating sequence for all motors"""
         for i in range(iterations):
-            yield self.alternating_iteration(i, amplitude, translation)
+            yield self.alternating_iteration(i)

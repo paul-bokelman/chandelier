@@ -10,7 +10,7 @@ class Environments(Enum):
 
 ConfigurationKeys = Literal[
     'encoder_pins', 'wall_switch_pins', 'service_button_pin', 'reboot_button_pin', 'charging_pin', 'led_pin', 'up', 'down', 'modes', 'debug', 'max_counts', 'n_motors', 'suppress_count_logging', 'disabled_motors', 'random_state_duration', 'sequence_state_duration',
-    'candles_per_charge_cycle', 'charge_cycle_time', 'available_charging_hours', 'throttle_offset', 'calibration_counts', 'calibration_file_path', "skip_find_home", "uncalibrated_up_throttle", "uncalibrated_down_throttle", "max_recovery_attempts", "recovery_counts", "default_allowable_up_cps", 'default_allowable_down_cps', 'duration_before_recalibration', 'dead_motors', "c1", "c2"
+    'candles_per_charge_cycle', 'charge_cycle_time', 'available_charging_hours', 'throttle_offset', 'calibration_counts', 'calibration_file_path', "skip_find_home", "uncalibrated_up_throttle", "uncalibrated_down_throttle", "max_recovery_attempts", "recovery_counts", "default_allowable_up_cps", 'default_allowable_down_cps', 'duration_before_recalibration', 'dead_motors', "c1", "c2", "random_params", "wave_params", "alternating_params"
 ]
 
 class ConfigurationFileSchema(TypedDict):
@@ -37,6 +37,7 @@ class Config:
             env_configuration = configs.get(env.value)
             general_configuration = configs.get('general')
             testing_configuration = configs.get('testing_mode')
+            sequences_configuration = configs.get('sequences')
 
             if env_configuration is None:
                 raise ValueError(f"Configuration for environment {env.value} not found")
@@ -46,8 +47,11 @@ class Config:
             
             if testing_configuration is None:
                 raise ValueError("Testing configuration not found")
+            
+            if sequences_configuration is None:
+                raise ValueError("Sequences configuration not found")
 
-            self.config = {**general_configuration, **env_configuration, **testing_configuration}
+            self.config = {**general_configuration, **env_configuration, **testing_configuration, **sequences_configuration}
 
             for key in self.config.keys():
                 if key not in list(get_args(ConfigurationKeys)):

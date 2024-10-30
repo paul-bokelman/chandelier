@@ -296,7 +296,7 @@ class Motor:
                 prev_read_time = self.last_read_time # update previous read time
 
             # more than 2 reads -> calculate allowable time to be average of previous cps values
-            if len(cps_readings) >= 2:
+            if len(cps_readings) > 2:
                 # before last 2 counts -> measure and record average cps
                 if n_counts - count_diff > 2:
                     # calculate average cps based on all previous cps readings, excluding leading

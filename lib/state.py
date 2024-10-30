@@ -220,7 +220,7 @@ class StateMachine:
                 current_cycle_elapsed_time = time.time() # reset current cycle elapsed time
 
                 #/ should move all motors by counts instead of scaled position, this ensures no extreme positions when max counts is high
-                await self.mc.move_all(0.2) # move all candles slightly past charger (buffer)
+                await self.mc.move_all(config.get('charging_buffer_distance')) # move all candles slightly past charger (buffer)
 
                 returned_after_charging = False # reset returned after charging
 
@@ -240,7 +240,7 @@ class StateMachine:
                         charge_state = ChargeState.CHARGED
                         completed_cycles = 0
                         self._charger_off() # turn off charging power
-                        await asyncio.gather(*[motor.to(0.2) for motor in enabled_motors]) # move all candles past charger
+                        await asyncio.gather(*[motor.to(config.get('charging_buffer_distance')) for motor in enabled_motors]) # move all candles past charger
                         continue
                     
                     # bounds to slice motors to charge
@@ -262,7 +262,7 @@ class StateMachine:
                         currently_charging_motors = enabled_motors[prev_lower_bound:prev_upper_bound]
 
                         # move previously charging candles to past charger (stop charging)
-                        await asyncio.gather(*[motor.to(0.2) for motor in currently_charging_motors])
+                        await asyncio.gather(*[motor.to(config.get('charging_buffer_distance')) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
                     await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])

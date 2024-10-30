@@ -300,7 +300,7 @@ class Motor:
                 # before last 2 counts -> measure and record average cps
                 if n_counts - count_diff > 2:
                     # calculate average cps based on all previous cps readings, excluding leading
-                    average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
+                    average_cps = sum(cps_readings[2:]) / len(cps_readings[2:])
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
                 if average_cps is not None:

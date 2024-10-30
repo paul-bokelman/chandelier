@@ -306,7 +306,8 @@ class Motor:
                 if average_cps is not None:
                     allowable_time = (1 / average_cps) * 1.7 # add 70% buffer (account for acceleration)
 
-            log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
+            #/ include this to log cps readings each iteration
+            # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:

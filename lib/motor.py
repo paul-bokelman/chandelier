@@ -268,6 +268,7 @@ class Motor:
         stalled = False
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         start_counts = self.counts # track start position
+        average_cps = None # track current average cps
 
         await self.set(direction=direction, throttle=throttle) # start motor
 
@@ -294,11 +295,18 @@ class Motor:
                 cps_readings.append(1 / measured_time) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 
-            # more than 2 reads & before last 2 reads -> calculate allowable time to be average of previous cps values
-            if len(cps_readings) >= 2 and n_counts - count_diff > 2:
-                # calculate allowable time based on all average of all previous cps readings, excluding leading
-                average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
-                allowable_time = (1 / average_cps) * 1.7 # add 70% buffer (account for acceleration)
+            # more than 2 reads -> calculate allowable time to be average of previous cps values
+            if len(cps_readings) >= 2:
+                # before last 2 counts -> measure and record average cps
+                if n_counts - count_diff > 2:
+                    # calculate average cps based on all previous cps readings, excluding leading
+                    average_cps = sum(cps_readings[1:]) / len(cps_readings[1:])
+
+                # average cps is present -> calculate allowable time based on average cps (otherwise use default)
+                if average_cps is not None:
+                    allowable_time = (1 / average_cps) * 1.7 # add 70% buffer (account for acceleration)
+
+            log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:

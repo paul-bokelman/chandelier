@@ -171,7 +171,7 @@ class StateMachine:
         GPIO.cleanup()
 
         # pull code from git
-        await asyncio.create_subprocess_shell(f"bash {os.getcwd()}/scripts/update-repo.sh")
+        os.system(f"bash  {os.getcwd()}/scripts/update-repo.sh")
 
         # reboot system
         os.system('sudo reboot')

@@ -507,7 +507,7 @@ class Motor:
                     new_throttle = throttle - (new_factor * step_size)
 
             # requested throttle within neutral bounds -> set original throttle and reduce factor
-            if new_throttle >= cast(float, self.lower_neutral) - 0.1 and new_throttle <= cast(float, self.upper_neutral) + 0.1:
+            if new_throttle >= cast(float, self.lower_neutral) and new_throttle <= cast(float, self.upper_neutral):
                 log.info(self._clm("CRT", message="Throttle within neutral bounds, setting original throttle", throttle=throttle))
                 new_throttle = throttle
                 new_factor = factor * 0.90

@@ -8,6 +8,7 @@ general:
   up: -1
   down: 1
   modes: [normal, manual, testing, scripts]
+  button_wait_time: 5 # time to wait for button press (seconds)
 
 # test case specific configuration schema
 testing_mode:

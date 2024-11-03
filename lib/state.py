@@ -1,4 +1,3 @@
-from typing import Union
 from enum import Enum
 import os
 import time
@@ -44,8 +43,8 @@ class StateMachine:
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
         GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, asyncio.run(self._handle_switch_event()), 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, asyncio.run(self._handle_switch_event()), 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_switch_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_switch_event, 300)
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -101,18 +100,6 @@ class StateMachine:
         # Use asyncio.run_coroutine_threadsafe to call _change_state from this thread
         self._change_state(state)
 
-    def _determine_switch_state(self) -> State:
-        sw_matrix = [GPIO.input(config.get('wall_switch_pins')[0]) == GPIO.HIGH, GPIO.input(config.get('wall_switch_pins')[1]) == GPIO.HIGH]
-
-        if sw_matrix[0] and sw_matrix[1]:
-            return State.IDLE
-        elif sw_matrix[0]:
-            return State.RANDOM
-        elif sw_matrix[1]:
-            return State.SEQUENCE
-        
-        return State.IDLE
-
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
@@ -120,29 +107,26 @@ class StateMachine:
         self._charger_off() # turn off charging for new state
         self.state = new_state
 
-    async def _handle_switch_event(self):
+    def _handle_switch_event(self, channel):
         """Handle switch events from GPIO"""
-        # determine proposed switch state
-        proposed_switch_state = self._determine_switch_state()
-        switch_timer = time.time() # start switch timer
+        new_state = State.IDLE
 
-        log.info(f"Proposed switch state: {proposed_switch_state}")
-
-        # set switch timer if switch state changed, 5secs -> change to proposed
-        while True:
-            current_switch_state = self._determine_switch_state()
-            log.info(f"Current switch state: {current_switch_state}")
-
-            # switch state changed before timer -> do nothing
-            if current_switch_state != proposed_switch_state:
-                break
-
-            # x seconds since last change -> change to proposed state
-            if time.time() - switch_timer > config.get('switch_wait_time'):
-                self._change_state(proposed_switch_state)
-                break
-
-            await asyncio.sleep(0.1)
+        # detect switch changes
+        if channel in config.get('wall_switch_pins'):
+            # detect random and sequence switches
+            if channel == config.get('wall_switch_pins')[0]:
+                self.switch_state[0] = not self.switch_state[0]
+            if channel == config.get('wall_switch_pins')[1]:
+                self.switch_state[1] = not self.switch_state[1]
+            # set new state based on switch state
+            if self.switch_state[0] and self.switch_state[1]:
+                new_state = State.IDLE
+            elif self.switch_state[0]:
+                new_state = State.RANDOM
+            elif self.switch_state[1]:
+                new_state = State.SEQUENCE
+            
+        self._change_state(new_state)
 
     def _handle_button_event(self, channel):
         """Handle button events from GPIO"""

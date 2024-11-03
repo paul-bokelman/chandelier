@@ -44,8 +44,8 @@ class StateMachine:
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
         GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_button_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_switch_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_switch_event, 300)
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):

@@ -1,3 +1,4 @@
+from typing import Union
 from enum import Enum
 import os
 import time
@@ -39,13 +40,11 @@ class StateMachine:
         self.switch_state = [False, False]
         self.manual = manual
         self.button_timers: dict[str, float] = {} # button timers for each button
-        self.switch_timer: float = 0 # switch timers for each switch
+        self.switch_timer: Union[float, None]  = 0 # switch timers for each switch
 
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
         GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_switch_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_switch_event, 300)
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -120,10 +119,6 @@ class StateMachine:
         self._charger_off() # turn off charging for new state
         self.state = new_state
 
-    def _handle_switch_event(self, channel):
-        """Handle switch events from GPIO"""
-        self.switch_timer = time.time()
-
     def _handle_button_event(self, channel):
         """Handle button events from GPIO"""
         new_state = State.IDLE
@@ -157,13 +152,17 @@ class StateMachine:
         """Check current state and run appropriate state"""
         print(f"CURRENT STATE: {self.state}")
 
-        # x seconds since last change -> change state if proposed state is different
-        if time.time() - self.switch_timer > config.get('switch_wait_time'):
-            proposed_state = self._determine_switch_state()
-            if self.state != proposed_state:
-                self._change_state(proposed_state)
+        proposed_state = self._determine_switch_state()
 
+        # switch state changed -> start timer
+        if proposed_state != self.state:
+            self.switch_timer = time.time()
             
+        # x seconds since last change -> change state if proposed state is different
+        if self.switch_timer is not None and time.time() - self.switch_timer > config.get('switch_wait_time'):
+            self._change_state(proposed_state)
+            self.switch_timer = None
+
         try: 
             if self.state == State.IDLE:
                 await self.idle()

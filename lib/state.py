@@ -154,6 +154,7 @@ class StateMachine:
         print(f"CURRENT STATE: {self.state}")
 
         current_switch_state = self._determine_switch_state()
+        log.info(f"Current switch state: {current_switch_state}")
 
         # switch state changed -> start timer
         if current_switch_state != self.state:

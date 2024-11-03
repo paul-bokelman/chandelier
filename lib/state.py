@@ -40,12 +40,12 @@ class StateMachine:
         self.switch_state = [False, False]
         self.manual = manual
         self.button_timers: dict[str, float] = {} # button timers for each button
-        self.switch_timer: Union[float, None]  = 0 # switch timers for each switch
-        self.proposed_switch_state = State.IDLE
 
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
         GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_button_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_button_event, 300)
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -120,6 +120,28 @@ class StateMachine:
         self._charger_off() # turn off charging for new state
         self.state = new_state
 
+    async def _handle_switch_event(self, channel):
+        """Handle switch events from GPIO"""
+        # determine proposed switch state
+        proposed_switch_state = self._determine_switch_state()
+        switch_timer = time.time() # start switch timer
+
+        # set switch timer if switch state changed, 5secs -> change to proposed
+        while True:
+            current_switch_state = self._determine_switch_state()
+            log.info(f"Current switch state: {current_switch_state}")
+
+            # switch state changed before timer -> do nothing
+            if current_switch_state != proposed_switch_state:
+                break
+
+            # x seconds since last change -> change to proposed state
+            if switch_timer is not None and time.time() - switch_timer > config.get('switch_wait_time'):
+                self._change_state(proposed_switch_state)
+                break
+
+            await asyncio.sleep(0.1)
+
     def _handle_button_event(self, channel):
         """Handle button events from GPIO"""
         new_state = State.IDLE
@@ -152,19 +174,6 @@ class StateMachine:
     async def check(self):
         """Check current state and run appropriate state"""
         print(f"CURRENT STATE: {self.state}")
-
-        current_switch_state = self._determine_switch_state()
-        log.info(f"Current switch state: {current_switch_state}")
-
-        # switch state changed -> start timer
-        if current_switch_state != self.state:
-            self.switch_timer = time.time()
-            self.proposed_switch_state  = current_switch_state
-
-        # x seconds since last change -> change state if proposed state is different
-        if self.switch_timer is not None and time.time() - self.switch_timer > config.get('switch_wait_time'):
-            self._change_state(current_switch_state)
-            self.switch_timer = None
 
         try: 
             if self.state == State.IDLE:

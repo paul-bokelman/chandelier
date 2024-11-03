@@ -38,13 +38,12 @@ class StateMachine:
         self.mc = controller
         self.switch_state = [False, False]
         self.manual = manual
-        self.button_timers: dict[str, float] = {} # button timers for each button
 
         # add event detection for all relevant GPIO pins
-        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_switch_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_switch_event, 300)
+        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -107,9 +106,15 @@ class StateMachine:
         self._charger_off() # turn off charging for new state
         self.state = new_state
 
-    def _handle_switch_event(self, channel):
-        """Handle switch events from GPIO"""
+    def _handle_event(self, channel):
+        """Handle events from GPIO"""
         new_state = State.IDLE
+
+        # detect button presses
+        if channel == config.get('service_button_pin'):
+            new_state = State.SERVICE
+        elif channel == config.get('reboot_button_pin'):
+            new_state = State.REBOOT
 
         # detect switch changes
         if channel in config.get('wall_switch_pins'):
@@ -126,27 +131,6 @@ class StateMachine:
             elif self.switch_state[1]:
                 new_state = State.SEQUENCE
             
-        self._change_state(new_state)
-
-    def _handle_button_event(self, channel):
-        """Handle button events from GPIO"""
-        new_state = State.IDLE
-
-        # button is pressed -> start timer for channel
-        if GPIO.input(channel) == GPIO.HIGH:
-            self.button_timers[channel] = time.time()
-            return
-        
-        # button is released & time since press is greater than 5 seconds -> change state
-        if GPIO.input(channel) == GPIO.LOW and time.time() - self.button_timers[channel] > config.get("button_wait_time"):
-            if channel == config.get('service_button_pin'):
-                new_state = State.SERVICE
-            elif channel == config.get('reboot_button_pin'):
-                new_state = State.REBOOT
-        else: # otherwise, ignore button press and reset timer
-            self.button_timers[channel] = 0
-            return
-
         self._change_state(new_state)
 
     def _charger_off(self):

@@ -16,14 +16,14 @@ testing_mode:
 
 # sequence specific configuration schema
 sequences:
-  random_params: [0.4, 0.6] # [min (0-1), max (0-1)]
-  wave_params: [0.1, 0.2, 0.5, 0.5] # [amplitude (0-1), translation (0-1), frequency (0-1), step (0-1)]
-  alternating_params: [0.1, 0.4] # [amplitude (0-1), translation (0-1)]
+  random_params: [0.15, 0.5] # [min (0-1), max (0-1)]
+  wave_params: [0.3, 0.2, 0.5, 0.5] # [amplitude (0-1), translation (0-1), frequency (0-1), step (0-1)]
+  alternating_params: [0.3, 0.2] # [amplitude (0-1), translation (0-1)]
 
 # base env configuration schema
 environment_specific_config: &default_env_config
   debug: true # debug mode (suppresses  some logs)
-  max_counts: 80 # max number of counts to move
+  max_counts: 100 # max number of counts to move
   n_motors: 16 # number of motors
   suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
@@ -38,7 +38,7 @@ environment_specific_config: &default_env_config
   candles_per_charge_cycle: 2
   charge_cycle_time: 900 # charging time (in seconds: 900 = 15 min)
   available_charging_hours: [0] # Midnight (24hr)
-  charging_buffer_distance: 0.05 # distance (relative to max_counts) to move away from chargers
+  charging_buffer_distance: 0.03 # distance (relative to max_counts) to move away from chargers
 
   # motors
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
@@ -47,7 +47,7 @@ environment_specific_config: &default_env_config
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
   default_allowable_down_cps: 0.4 # falls below this value when moving down -> motor is considered stalled
-  default_allowable_up_cps: 0.3 # falls below this value when moving up -> motor is considered stalled
+  default_allowable_up_cps: 0.25 # falls below this value when moving up -> motor is considered stalled
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)
@@ -60,18 +60,18 @@ development:
   suppress_count_logging: false
   calibration_file_path: calibrations_dev.json
   disabled_motors: []
-  dead_motors: [9]
+  dead_motors: []
   available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
   skip_find_home: false
 production:
   <<: *default_env_config
   debug: false
-  dead_motors: [9]
+  dead_motors: []
   calibration_file_path: calibrations.json
   suppress_count_logging: true
 testing:
   <<: *default_env_config
-  disabled_motors: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  disabled_motors: []
   calibration_file_path: calibrations_test.json
   random_state_duration: 60 # 1 minute
   sequence_state_duration: 60 # 1 minute

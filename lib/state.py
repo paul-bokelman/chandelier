@@ -39,7 +39,7 @@ class StateMachine:
         self.switch_state = [False, False]
         self.manual = manual
         self.button_timers: dict[str, float] = {} # button timers for each button
-        self.switch_timer: float = {} # switch timers for each switch
+        self.switch_timer: float = 0 # switch timers for each switch
 
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)

@@ -136,7 +136,7 @@ class StateMachine:
                 break
 
             # x seconds since last change -> change to proposed state
-            if switch_timer is not None and time.time() - switch_timer > config.get('switch_wait_time'):
+            if time.time() - switch_timer > config.get('switch_wait_time'):
                 self._change_state(proposed_switch_state)
                 break
 

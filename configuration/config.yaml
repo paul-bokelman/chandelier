@@ -67,7 +67,7 @@ development:
   skip_find_home: false
 production:
   <<: *default_env_config
-  debug: false
+  debug: true
   dead_motors: []
   calibration_file_path: calibrations.json
   suppress_count_logging: true

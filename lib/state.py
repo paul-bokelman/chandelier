@@ -126,6 +126,8 @@ class StateMachine:
         proposed_switch_state = self._determine_switch_state()
         switch_timer = time.time() # start switch timer
 
+        log.info(f"Proposed switch state: {proposed_switch_state}")
+
         # set switch timer if switch state changed, 5secs -> change to proposed
         while True:
             current_switch_state = self._determine_switch_state()

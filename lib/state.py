@@ -41,6 +41,7 @@ class StateMachine:
         self.manual = manual
         self.button_timers: dict[str, float] = {} # button timers for each button
         self.switch_timer: Union[float, None]  = 0 # switch timers for each switch
+        self.proposed_switch_state = State.IDLE
 
         # add event detection for all relevant GPIO pins
         GPIO.add_event_detect(config.get('service_button_pin'), GPIO.BOTH, self._handle_button_event, 300)
@@ -152,15 +153,16 @@ class StateMachine:
         """Check current state and run appropriate state"""
         print(f"CURRENT STATE: {self.state}")
 
-        proposed_state = self._determine_switch_state()
+        current_switch_state = self._determine_switch_state()
 
         # switch state changed -> start timer
-        if proposed_state != self.state:
+        if current_switch_state != self.state:
             self.switch_timer = time.time()
-            
+            self.proposed_switch_state  = current_switch_state
+
         # x seconds since last change -> change state if proposed state is different
         if self.switch_timer is not None and time.time() - self.switch_timer > config.get('switch_wait_time'):
-            self._change_state(proposed_state)
+            self._change_state(current_switch_state)
             self.switch_timer = None
 
         try: 

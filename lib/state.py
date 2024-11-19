@@ -99,6 +99,13 @@ class StateMachine:
         # Use asyncio.run_coroutine_threadsafe to call _change_state from this thread
         self._change_state(state)
 
+    async def debounce():
+        """debounce wait time"""
+        print("Debounce started")
+        await asyncio.sleep(5)
+        print("Debounce done")
+
+    
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
         log.info(f"Changing state from {self.state} to {new_state}", override=True)
@@ -109,6 +116,8 @@ class StateMachine:
     def _handle_event(self, channel):
         """Handle events from GPIO"""
         new_state = State.IDLE
+
+        debounce()
 
         # detect button presses
         if channel == config.get('service_button_pin'):

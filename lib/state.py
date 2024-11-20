@@ -40,10 +40,10 @@ class StateMachine:
         self.manual = manual
 
         # add event detection for all relevant GPIO pins
-        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, 300)
-        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, 300)
-        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, 300)
+        GPIO.add_event_detect(config.get('service_button_pin'), GPIO.FALLING, self._handle_event, config.get('button_wait_time'))
+        GPIO.add_event_detect(config.get('reboot_button_pin'), GPIO.FALLING, self._handle_event, config.get('button_wait_time'))
+        GPIO.add_event_detect(config.get('wall_switch_pins')[0], GPIO.BOTH, self._handle_event, config.get('switch_wait_time'))
+        GPIO.add_event_detect(config.get('wall_switch_pins')[1], GPIO.BOTH, self._handle_event, config.get('switch_wait_time'))
 
         # reflect initial switch state
         if not GPIO.input(config.get('wall_switch_pins')[0]):
@@ -98,13 +98,6 @@ class StateMachine:
 
         # Use asyncio.run_coroutine_threadsafe to call _change_state from this thread
         self._change_state(state)
-
-    async def debounce():
-        """debounce wait time"""
-        print("Debounce started")
-        await asyncio.sleep(5)
-        print("Debounce done")
-
     
     def _change_state(self, new_state: State):
         """Change state from current state to new state"""
@@ -115,32 +108,72 @@ class StateMachine:
 
     def _handle_event(self, channel):
         """Handle events from GPIO"""
-        new_state = State.IDLE
+        old_state = self.state
+        change_state = False
+        #new_state = State.IDLE
 
-        debounce()
+        print(f"Event handler, channel: {channel}")
 
         # detect button presses
         if channel == config.get('service_button_pin'):
-            new_state = State.SERVICE
+            #print(f"Debouncing Service button {config.get('button_wait_time')/1000} seconds")
+            #time.sleep(config.get('button_wait_time')/1000)
+            if not GPIO.input(channel) == GPIO.HIGH: #double check that service button is still pressed after debounce
+                new_state = State.SERVICE
+                print(f"Was {old_state}. Changing to {new_state}.")
+                change_state = True
+            else:
+                print("Channel not persistent. Ignore input.")
         elif channel == config.get('reboot_button_pin'):
-            new_state = State.REBOOT
+            #print(f"Debouncing Reboot button {config.get('button_wait_time')/1000} seconds")
+            #time.sleep(config.get('button_wait_time')/1000)
+            if not GPIO.input(channel) == GPIO.HIGH: #double check that service button is still pressed after debounce
+                new_state = State.REBOOT
+                print(f"Was {old_state}. Changing to {new_state}.")
+                change_state = True
+            else:
+                print("Channel not persistent. Ignore input.")
 
         # detect switch changes
         if channel in config.get('wall_switch_pins'):
             # detect random and sequence switches
             if channel == config.get('wall_switch_pins')[0]:
-                self.switch_state[0] = not self.switch_state[0]
+                #self.switch_state[0] = not self.switch_state[0]
+                self.switch_state[0] = not GPIO.input(config.get('wall_switch_pins')[0])
             if channel == config.get('wall_switch_pins')[1]:
-                self.switch_state[1] = not self.switch_state[1]
-            # set new state based on switch state
-            if self.switch_state[0] and self.switch_state[1]:
-                new_state = State.IDLE
-            elif self.switch_state[0]:
-                new_state = State.RANDOM
-            elif self.switch_state[1]:
-                new_state = State.SEQUENCE
+                #self.switch_state[1] = not self.switch_state[1]
+                self.switch_state[1] = not GPIO.input(config.get('wall_switch_pins')[1])
             
-        self._change_state(new_state)
+            # set new state based on switch state
+            #if self.switch_state[0] and self.switch_state[1]:
+            #    new_state = State.IDLE
+            #elif self.switch_state[0]:
+            #    new_state = State.RANDOM
+            #elif self.switch_state[1]:
+            #    new_state = State.SEQUENCE
+            
+            #print(f"Debouncing Switch {config.get('switch_wait_time')/1000} seconds")
+            #time.sleep(config.get('switch_wait_time')/1000)
+            
+            #print(f"Wall switch 0 state: {GPIO.input(config.get('wall_switch_pins')[0])}")
+            #print(f"Wall switch 1 state: {GPIO.input(config.get('wall_switch_pins')[1])}")
+            #print(f"Old state = {old_state}. Current state = {self.state}")
+            
+            if not GPIO.input(config.get('wall_switch_pins')[0]) == GPIO.HIGH and old_state != State.RANDOM:
+                new_state = State.RANDOM
+                print(f"Was {old_state}. Changing to {new_state}.")
+                change_state = True
+            elif not GPIO.input(config.get('wall_switch_pins')[1]) == GPIO.HIGH and old_state != State.SEQUENCE:
+                new_state = State.SEQUENCE
+                print(f"Was {old_state}. Changing to {new_state}.")
+                change_state = True
+            else: 
+                new_state = State.IDLE
+                print(f"Was {old_state}. Changing to {new_state}.")
+                change_state = True
+            
+        if change_state:
+            self._change_state(new_state)
 
     def _charger_off(self):
         """Turn off charging"""

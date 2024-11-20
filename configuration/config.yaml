@@ -8,8 +8,8 @@ general:
   up: -1
   down: 1
   modes: [normal, manual, testing, scripts]
-  button_wait_time: 5 # time to wait for button press (seconds)
-  switch_wait_time: 5 # time to wait for switch change (seconds)
+  button_wait_time: 3000 # time to wait for button press (milliseconds)
+  switch_wait_time: 1000 # time to wait for switch change (milliseconds)
 
 # test case specific configuration schema
 testing_mode:

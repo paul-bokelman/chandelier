@@ -110,70 +110,41 @@ class StateMachine:
         """Handle events from GPIO"""
         old_state = self.state
         change_state = False
-        #new_state = State.IDLE
-
         print(f"Event handler, channel: {channel}")
 
         # detect button presses
         if channel == config.get('service_button_pin'):
-            #print(f"Debouncing Service button {config.get('button_wait_time')/1000} seconds")
-            #time.sleep(config.get('button_wait_time')/1000)
             if not GPIO.input(channel) == GPIO.HIGH: #double check that service button is still pressed after debounce
                 new_state = State.SERVICE
-                print(f"Was {old_state}. Changing to {new_state}.")
                 change_state = True
-            else:
-                print("Channel not persistent. Ignore input.")
         elif channel == config.get('reboot_button_pin'):
-            #print(f"Debouncing Reboot button {config.get('button_wait_time')/1000} seconds")
-            #time.sleep(config.get('button_wait_time')/1000)
             if not GPIO.input(channel) == GPIO.HIGH: #double check that service button is still pressed after debounce
                 new_state = State.REBOOT
-                print(f"Was {old_state}. Changing to {new_state}.")
                 change_state = True
-            else:
-                print("Channel not persistent. Ignore input.")
 
         # detect switch changes
         if channel in config.get('wall_switch_pins'):
             # detect random and sequence switches
             if channel == config.get('wall_switch_pins')[0]:
-                #self.switch_state[0] = not self.switch_state[0]
                 self.switch_state[0] = not GPIO.input(config.get('wall_switch_pins')[0])
             if channel == config.get('wall_switch_pins')[1]:
-                #self.switch_state[1] = not self.switch_state[1]
                 self.switch_state[1] = not GPIO.input(config.get('wall_switch_pins')[1])
-            
-            # set new state based on switch state
-            #if self.switch_state[0] and self.switch_state[1]:
-            #    new_state = State.IDLE
-            #elif self.switch_state[0]:
-            #    new_state = State.RANDOM
-            #elif self.switch_state[1]:
-            #    new_state = State.SEQUENCE
-            
-            #print(f"Debouncing Switch {config.get('switch_wait_time')/1000} seconds")
-            #time.sleep(config.get('switch_wait_time')/1000)
-            
-            #print(f"Wall switch 0 state: {GPIO.input(config.get('wall_switch_pins')[0])}")
-            #print(f"Wall switch 1 state: {GPIO.input(config.get('wall_switch_pins')[1])}")
-            #print(f"Old state = {old_state}. Current state = {self.state}")
-            
+            # detect selector switch
             if not GPIO.input(config.get('wall_switch_pins')[0]) == GPIO.HIGH and old_state != State.RANDOM:
                 new_state = State.RANDOM
-                print(f"Was {old_state}. Changing to {new_state}.")
                 change_state = True
             elif not GPIO.input(config.get('wall_switch_pins')[1]) == GPIO.HIGH and old_state != State.SEQUENCE:
                 new_state = State.SEQUENCE
-                print(f"Was {old_state}. Changing to {new_state}.")
                 change_state = True
-            else: 
+            elif old_state != State.IDLE: 
                 new_state = State.IDLE
-                print(f"Was {old_state}. Changing to {new_state}.")
                 change_state = True
             
         if change_state:
+            print(f"Was {old_state}. Changing to {new_state}.")
             self._change_state(new_state)
+        else:
+            print("Channel change not persistent. No state change.")
 
     def _charger_off(self):
         """Turn off charging"""

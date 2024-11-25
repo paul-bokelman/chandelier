@@ -79,4 +79,4 @@ testing:
   sequence_state_duration: 60 # 1 minute
   charge_cycle_time: 10
   available_charging_hours: []
-  skip_find_home: true
+  skip_find_home: false

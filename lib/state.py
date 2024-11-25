@@ -215,7 +215,7 @@ class StateMachine:
                 log.info("CHARGED", override=True)
                 
                 if not returned_after_charging:
-                    await self.mc.move_all_home() # go home and recalibrate all home positions
+                    await self.mc.find_home_positions() # go home and recalibrate all home positions
                     returned_after_charging = True
 
                 if not recovery_attempted:

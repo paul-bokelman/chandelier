@@ -8,8 +8,8 @@ general:
   up: -1
   down: 1
   modes: [normal, manual, testing, scripts]
-  button_wait_time: 5 # time to wait for button press (seconds)
-  switch_wait_time: 5 # time to wait for switch change (seconds)
+  button_wait_time: 3000 # time to wait for button press (milliseconds)
+  switch_wait_time: 1000 # time to wait for switch change (milliseconds)
 
 # test case specific configuration schema
 testing_mode:
@@ -50,6 +50,7 @@ environment_specific_config: &default_env_config
   recovery_counts: 8 # number of counts to move when attempting to recover
   default_allowable_down_cps: 0.4 # falls below this value when moving down -> motor is considered stalled
   default_allowable_up_cps: 0.25 # falls below this value when moving up -> motor is considered stalled
+  acceleration_buffer: 1.7 # delays stall time trigger during the first 2 counts
 
   # calibration
   calibration_counts: 8 # distance to move for calibration (in counts)

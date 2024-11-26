@@ -304,7 +304,7 @@ class Motor:
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
                 if average_cps is not None:
-                    allowable_time = (1 / average_cps) * 1.8 # add 70% buffer (account for acceleration)
+                    allowable_time = (1 / average_cps) * (config.get('acceleration_buffer')) # add X% buffer (account for acceleration)
 
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))

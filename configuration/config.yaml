@@ -25,8 +25,8 @@ sequences:
 # base env configuration schema
 environment_specific_config: &default_env_config
   debug: true # debug mode (suppresses  some logs)
-  max_counts: 20 # max number of counts to move
-  n_motors: 2 # number of motors
+  max_counts: 100 # max number of counts to move
+  n_motors: 16 # number of motors
   suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
   dead_motors: [] # motors that are dead (cannot be recovered)
@@ -48,8 +48,8 @@ environment_specific_config: &default_env_config
   uncalibrated_down_throttle: 0.3 # uncalibrated throttle when moving down
   max_recovery_attempts: 2 # max number of times to attempt to recover a motor before marking as dead
   recovery_counts: 8 # number of counts to move when attempting to recover
-  default_allowable_down_cps: 0.4 # falls below this value when moving down -> motor is considered stalled
-  default_allowable_up_cps: 0.25 # falls below this value when moving up -> motor is considered stalled
+  default_allowable_down_cps: 0.5 # falls below this value when moving down -> motor is considered stalled
+  default_allowable_up_cps: 0.4 # falls below this value when moving up -> motor is considered stalled
   acceleration_buffer: 1.7 # delays stall time trigger during the first 2 counts
 
   # calibration
@@ -79,5 +79,5 @@ testing:
   random_state_duration: 60 # 1 minute
   sequence_state_duration: 60 # 1 minute
   charge_cycle_time: 10
-  available_charging_hours: []
-  skip_find_home: false
+  available_charging_hours: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+  skip_find_home: true

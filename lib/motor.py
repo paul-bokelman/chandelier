@@ -163,6 +163,13 @@ class Motor:
         # use uncalibrated unless throttle is set
         throttle = None if self.throttle_up else config.get('uncalibrated_up_throttle')
 
+        # short move down and check for stall
+        stalled, _ =  await self.move(n_counts=(4), direction=config.get('down'), throttle=throttle, disable_on_stall=False)
+        if stalled:
+            log.error(self._clm("Find Home", message="Stalled on down move - candle stuck"))
+            self.disable("Stalled on down move while finding home")
+            return
+        
         # move up as much as possible and check for stall
         stalled, _ =  await self.move(n_counts=(2 * config.get('max_counts')), direction=config.get('up'), throttle=throttle, disable_on_stall=False)
 

@@ -166,6 +166,9 @@ class MotorController:
     # independently calibrate each motor (skips if already calibrated)
     await asyncio.gather(*[motor.calibrate_independent() for motor in self.get_enabled_motors()])
 
+    for m in self.motors:
+      print(m.status)
+
     log.success("Completed independent calibrations")
     
     # find max cps up and down from group (included previously calibrated) -> used to calibrate relative throttles
@@ -192,8 +195,6 @@ class MotorController:
       }
 
       self.store.update_data(motor.channel, data)
-
-    print(self.get_enabled_motors())
 
     log.info("Calibration data saved")
 

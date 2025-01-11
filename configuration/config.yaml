@@ -29,7 +29,7 @@ environment_specific_config: &default_env_config
   n_motors: 16 # number of motors
   suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
-  dead_motors: [0] # motors that are dead (cannot be recovered)
+  dead_motors: [13] # motors that are dead (cannot be recovered)
 
   # states
   random_state_duration: 1800 # time before switching to idle mode (seconds: 3600 = 1 hour)
@@ -69,7 +69,6 @@ development:
 production:
   <<: *default_env_config
   debug: true
-  dead_motors: [0]
   calibration_file_path: calibrations.json
   suppress_count_logging: true
 testing:

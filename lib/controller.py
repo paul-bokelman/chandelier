@@ -55,7 +55,7 @@ class MotorController:
     if isinstance(positions, float):
       if not (0 <= positions <= 1):
         raise ValueError(f"Position must be between 0 and 1, received {positions}")
-      positions = [positions] * len(self.motors)
+    positions = [positions] * len(self.motors)
 
     # ensure both are lists
     if not isinstance(throttles, list):
@@ -192,6 +192,8 @@ class MotorController:
       }
 
       self.store.update_data(motor.channel, data)
+
+    print(self.get_enabled_motors())
 
     log.info("Calibration data saved")
 

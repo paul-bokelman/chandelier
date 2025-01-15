@@ -215,7 +215,7 @@ class StateMachine:
                 log.info("CHARGED", override=True)
                 
                 if not returned_after_charging:
-                    await self.motor.move(n_counts=(4), direction=config.get('down'), throttle=throttle, disable_on_stall=False) # short move down, ignore stalls
+                    await self.mc.move_all_counts(n_counts=(4), direction=config.get('down')) # short move down, ignore stalls
                     #await mc.move_all_counts(down_counts, directions=config.get('down'))
                     await self.mc.find_home_positions() # go home and reset all home positions
                     returned_after_charging = True

@@ -25,7 +25,7 @@ sequences:
 # base env configuration schema
 environment_specific_config: &default_env_config
   debug: true # debug mode (suppresses  some logs)
-  max_counts: 100 # max number of counts to move
+  max_counts: 20 # max number of counts to move
   n_motors: 16 # number of motors
   suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
@@ -40,7 +40,7 @@ environment_specific_config: &default_env_config
   candles_per_charge_cycle: 2
   charge_cycle_time: 900 # charging time (in seconds: 900 = 15 min)
   available_charging_hours: [0] # Midnight (24hr)
-  charging_buffer_distance: 0.03 # distance (relative to max_counts) to move away from chargers
+  charging_buffer_distance: 0.2 # distance (relative to max_counts) to move away from chargers
 
   # motors
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)

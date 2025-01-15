@@ -215,8 +215,8 @@ class StateMachine:
                 log.info("CHARGED", override=True)
                 
                 if not returned_after_charging:
-                    #await self.move(n_counts=(4), direction=config.get('down'), throttle=throttle, disable_on_stall=False) # short move down, ignore stalls
-                    await asyncio.gather(*[motor.to(config.get('charging_buffer_distance')) for motor in enabled_motors]) # short move down
+                    await self.mc.move(n_counts=(4), direction=config.get('down'), throttle=throttle, disable_on_stall=False) # short move down, ignore stalls
+                    #await mc.move_all_counts(down_counts, directions=config.get('down'))
                     await self.mc.find_home_positions() # go home and reset all home positions
                     returned_after_charging = True
 

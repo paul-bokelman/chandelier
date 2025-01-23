@@ -212,7 +212,7 @@ class StateMachine:
 
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
-                log.info("CHARGED", override=True)
+                log.info(f"CHARGED - Elapsed time: {time.time()-current_cycle_elapsed_time}", override=True)
                 
                 if not returned_after_charging:
                     #await self.mc.move_all_counts(4, directions=config.get('down')) # short move down

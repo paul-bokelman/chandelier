@@ -162,14 +162,6 @@ class Motor:
         
         # use uncalibrated unless throttle is set
         throttle = None if self.throttle_up else config.get('uncalibrated_up_throttle')
-
-        # short move down and check for stall if motor is not calibrated
-        # if self.cps_down is None: 
-        #     stalled, _ =  await self.move(n_counts=(4), direction=config.get('down'), throttle=throttle, disable_on_stall=False)
-        #     if stalled:
-        #         log.error(self._clm("Find Home", message="Stalled on down move - candle stuck"))
-        #         self.disable("Stalled on down move while finding home")
-        #         return
         
         # move up as much as possible and check for stall
         stalled, _ =  await self.move(n_counts=(2 * config.get('max_counts')), direction=config.get('up'), throttle=throttle, disable_on_stall=False)
@@ -312,20 +304,23 @@ class Motor:
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
                 if average_cps is not None:
-                    allowable_time = (1 / average_cps) * (config.get('acceleration_buffer')) # add X% buffer (account for acceleration)
+                    allowable_time = (1 / average_cps) * (config.get('stall_buffer')) # add X% buffer
 
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
+                if (measured_time - allowable_time) < (allowable_time * (config.get('borderline_stall_zone'))):
+                    log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 4), at=round(allowable_time, 4)))
+                else:
+                    log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
 
-                if disable_on_stall:
-                    self.disable("Stalled")
+                    if disable_on_stall:
+                        self.disable("Stalled")
 
-                stalled = True
-                break
+                    stalled = True
+                    break                   
 
             await asyncio.sleep(0.01) # yield control back to event
 

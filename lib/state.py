@@ -242,7 +242,7 @@ class StateMachine:
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
-                log.info("CHARGING", override=True)
+                log.info("CHARGING - Elapsed time: {time.time()-current_cycle_elapsed_time}", override=True)
 
                 # current cycle complete or hasn't started -> start new cycle
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:
@@ -279,7 +279,8 @@ class StateMachine:
                         await asyncio.gather(*[motor.to(config.get('charging_buffer_distance')) for motor in currently_charging_motors])
 
                     # move to next cycle of candles to charge
-                    await asyncio.gather(*[motor.to_home() for motor in motors_to_charge])
+                    #await asyncio.gather(*[motor.to_home() for motor in motors_to_charge]) #moves motors to charge to 0 position
+                    await asyncio.gather(*[motor.find_home() for motor in motors_to_charge]) #tries to find_home for motors to charge to ensure they are fully seated
 
                     current_cycle_elapsed_time = time.time() # reset current cycle elapsed time for next iteration
 

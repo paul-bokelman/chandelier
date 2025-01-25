@@ -242,7 +242,7 @@ class StateMachine:
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
-                log.info("CHARGING - Elapsed time: {time.time()-current_cycle_elapsed_time}", override=True)
+                log.info("CHARGING - Elapsed time: {time.time()-current_cycle_elapsed_time :.1f}s", override=True)
 
                 # current cycle complete or hasn't started -> start new cycle
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:

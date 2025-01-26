@@ -216,7 +216,6 @@ class StateMachine:
                 
                 if not returned_after_charging:
                     #await self.mc.move_all_counts(4, directions=config.get('down')) # short move down
-                    log.info("Running find_home from Idle State", override=True)
                     await self.mc.find_home_positions() # go home and reset all home positions
                     returned_after_charging = True
 

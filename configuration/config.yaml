@@ -50,7 +50,7 @@ environment_specific_config: &default_env_config
   recovery_counts: 8 # number of counts to move when attempting to recover
   default_allowable_down_cps: 0.3 # falls below this value when moving down -> motor is considered stalled
   default_allowable_up_cps: 0.25 # falls below this value when moving up -> motor is considered stalled
-  stall_buffer: 1.2 # %buffer abover the average measured CPS time to calculate the allowable time
+  stall_buffer: 1.25 # %buffer abover the average measured CPS time to calculate the allowable time
   borderline_stall_zone: 0.05 # gray zone where MT > AT, but the motor is still moving, so throw a warning instead of a stall
   acceleration_buffer: 1.7 # delays stall time trigger during the first 2 counts
 

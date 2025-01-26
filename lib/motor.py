@@ -669,6 +669,11 @@ class Motor:
         """Calibrate motors independent variables by finding neutral positions and cps in both directions"""
         log.info(self._clm("Calibrate Independent", message="Calibrating Motor"), override=True)
 
+        #skip if already calibrated
+        if self.lower_neutral is not None and self.upper_neutral is not None and self.cps_down is not None and self.cps_up is not None:
+            log.info(self._clm("Cal Independent", message="Neutral and CPS already calibrated"))
+            return
+        
         # find initial home position if not already found
         if self.counts == -1:
             await self.find_home()

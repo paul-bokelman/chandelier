@@ -212,10 +212,11 @@ class StateMachine:
 
             # state is charged -> increment time since last charge and check if requires charge
             if charge_state == ChargeState.CHARGED:
-                log.info(f"CHARGED - Elapsed time: {time.time()-current_cycle_elapsed_time}", override=True)
+                log.info(f"CHARGED - Elapsed time: {time.time()-current_cycle_elapsed_time :.1f}s", override=True)
                 
                 if not returned_after_charging:
                     #await self.mc.move_all_counts(4, directions=config.get('down')) # short move down
+                    log.info("Running find_home from Idle State", override=True)
                     await self.mc.find_home_positions() # go home and reset all home positions
                     returned_after_charging = True
 
@@ -242,7 +243,7 @@ class StateMachine:
 
             # state is charging -> increment charge time and check if charged, if changed -> set to charged
             if charge_state == ChargeState.CHARGING:
-                log.info("CHARGING - Elapsed time: {time.time()-current_cycle_elapsed_time :.1f}s", override=True)
+                log.info(f"CHARGING - Elapsed time: {time.time()-current_cycle_elapsed_time :.1f}s", override=True)
 
                 # current cycle complete or hasn't started -> start new cycle
                 if time.time() - current_cycle_elapsed_time >= charge_cycle_time or completed_cycles == 0:

@@ -309,18 +309,19 @@ class Motor:
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
 
+            # time between readings close to allowable time -> send warning
+            if (allowable_time-measured_time) < (allowable_time * (config.get('borderline_stall_zone'))):
+                log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((measured_time - allowable_time)/allowable_time,3)))
+
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                if (measured_time - allowable_time) < (allowable_time * (config.get('borderline_stall_zone'))):
-                    log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((measured_time - allowable_time)/allowable_time,3)))
-                else:
-                    log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
+                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
 
-                    if disable_on_stall:
-                        self.disable("Stalled")
+                if disable_on_stall:
+                    self.disable("Stalled")
 
-                    stalled = True
-                    break                   
+                stalled = True
+                break                   
 
             await asyncio.sleep(0.01) # yield control back to event
 

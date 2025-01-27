@@ -314,7 +314,7 @@ class StateMachine:
             # run next iteration or get new generator
             try:
                 positions, throttles = next(current_generator) # get next positions and speeds
-                await self.mc.move_all(positions, throttles)
+                await self.mc.move_all(positions, throttles, config.get('stall_buffer_sequence_mode'))
             except StopIteration:
                 iterations = random.randint(30, 120) # randomize number of iterations
                 current_generator = random.choice([seq.wave, seq.alternating])(iterations) # choose random sequence
@@ -343,7 +343,7 @@ class StateMachine:
 
             # run next iteration
             positions, throttles = seq.random_iteration()
-            await self.mc.move_all(positions, throttles)
+            await self.mc.move_all(positions, throttles, config.get('stall_buffer_random_mode'))
 
     async def service(self):
         """Service state for servicing the chandelier"""

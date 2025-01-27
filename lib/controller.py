@@ -32,7 +32,7 @@ class MotorController:
     """
     await asyncio.gather(*[motor.to_home(throttle) for motor in self.get_enabled_motors()])
 
-  async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None):
+  async def move_all(self, positions: Union[float, list[float]], throttles: Union[None, float, list[float], list[None]] = None, stall_buffer = config.get('stall_buffer_normal')):
     """
     Move all motors to specific positions with specific throttles
 
@@ -80,11 +80,11 @@ class MotorController:
 
     # move each enabled motor to its target position simultaneously
     await asyncio.gather(*[
-      motor.to(position, throttle) for motor, position, throttle in zip(self.get_enabled_motors(), enabled_positions, enabled_throttles)
+      motor.to(position, throttle, stall_buffer) for motor, position, throttle in zip(self.get_enabled_motors(), enabled_positions, enabled_throttles)
     ])
 
 
-  async def move_all_counts(self, counts: Union[int, list[int]], directions: Union[int, list[int]]):
+  async def move_all_counts(self, counts: Union[int, list[int]], directions: Union[int, list[int]], stall_buffer = config.get('stall_buffer_normal')):
     """
     Move all motors to specific counts with calibrated throttles
 
@@ -126,7 +126,7 @@ class MotorController:
 
     # move each enabled motor to its target position simultaneously
     await asyncio.gather(*[
-      motor.move(n_counts, direction) for motor, n_counts, direction in zip(self.get_enabled_motors(), enabled_counts, enabled_directions)
+      motor.move(n_counts, direction, stall_buffer) for motor, n_counts, direction in zip(self.get_enabled_motors(), enabled_counts, enabled_directions)
     ])
 
   async def find_home_positions(self):

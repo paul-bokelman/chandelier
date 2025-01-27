@@ -164,7 +164,7 @@ class Motor:
         throttle = None if self.throttle_up else config.get('uncalibrated_up_throttle')
         
         # move up as much as possible and check for stall
-        stalled, _ =  await self.move(n_counts=(2 * config.get('max_counts')), direction=config.get('up'), throttle=throttle, disable_on_stall=False)
+        stalled, _ =  await self.move(n_counts=(2 * config.get('max_counts')), direction=config.get('up'), throttle=throttle, disable_on_stall=False, stall_buffer = config.get('stall_buffer_home'))
 
         # didn't stall -> failed to find home
         if not stalled:
@@ -238,14 +238,15 @@ class Motor:
             return
 
         # ignore stall detection for home position
-        await self.to(target=0.0, throttle=throttle, disable_on_stall=False)
+        await self.to(target=0.0, throttle=throttle, disable_on_stall=False, stall_buffer=config.get('stall_buffer_normal'))
 
     async def move(
         self, 
         n_counts: int,
         direction: int,
         throttle: Optional[float] = None,
-        disable_on_stall = True
+        disable_on_stall = True,
+        stall_buffer = config.get('stall_buffer_normal')
     ) -> tuple[bool, list[float]]:
         """
         Move the motor a specific number of counts at a specific throttle
@@ -304,7 +305,7 @@ class Motor:
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
                 if average_cps is not None:
-                    allowable_time = (1 / average_cps) * (config.get('stall_buffer')) # add X% buffer
+                    allowable_time = ((1 / average_cps) * stall_buffer) # add X% buffer
 
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
@@ -335,6 +336,7 @@ class Motor:
             target: float, 
             throttle: Optional[float] = None,
             disable_on_stall = True,
+            stall_buffer = config.get('stall_buffer_normal')
     ) -> tuple[bool, list[float]]:
         """
         Move the motor to a specific position scaled between 0 and 1
@@ -358,7 +360,7 @@ class Motor:
         n_counts = abs(n_counts) # use absolute value
 
         log.info(self._clm("To", message=f"({self.counts} -> {target_counts})", throttle=throttle))
-        return await self.move(n_counts, direction, throttle, disable_on_stall) # move to target position
+        return await self.move(n_counts, direction, throttle, disable_on_stall, stall_buffer) # move to target position
 
     async def recover(self):
         """Attempt to recover from a disabled state"""
@@ -384,7 +386,7 @@ class Motor:
         self.recover_attempts += 1 # increment recover attempts
 
         # move down to verify down movement is working
-        up_stall, _ = await self.move(direction=config.get('down'), n_counts=config.get('recovery_counts'))
+        up_stall, _ = await self.move(direction=config.get('down'), n_counts=config.get('recovery_counts'), stall_buffer=config.get('stall_buffer_recovery'))
 
         # stalled on up -> disable motor
         if up_stall:
@@ -392,7 +394,7 @@ class Motor:
             return
 
         # move up to verify up movement is working
-        down_stall, _ = await self.move(direction=config.get('up'), n_counts=config.get('recovery_counts'))
+        down_stall, _ = await self.move(direction=config.get('up'), n_counts=config.get('recovery_counts'), stall_buffer=config.get('stall_buffer_recovery'))
 
         # stalled on down -> disable motor
         if down_stall:

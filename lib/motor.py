@@ -287,7 +287,7 @@ class Motor:
 
             # calculate allowable and measured time based on data
             allowable_time: float = 1 / (config.get('default_allowable_down_cps') if direction == config.get('down') else config.get('default_allowable_up_cps')) # default allowable time (used for 0->2, and n-2->n counts)
-
+            accel_zone = True
             measured_time = time.time() - prev_read_time
 
             # new reading -> update stall information
@@ -306,13 +306,14 @@ class Motor:
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
                 if average_cps is not None:
                     allowable_time = ((1 / average_cps) * stall_buffer) # add X% buffer
+                    accel_zone = False
 
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))
 
             # time between readings close to allowable time -> send warning
             if (allowable_time-measured_time) < (allowable_time * (config.get('borderline_stall_zone'))):
-                log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((allowable_time - measured_time)/allowable_time,3)))
+                log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((allowable_time - measured_time)/allowable_time,3), az=accel_zone))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
@@ -675,6 +676,7 @@ class Motor:
         #skip if already calibrated
         if self.lower_neutral is not None and self.upper_neutral is not None and self.cps_down is not None and self.cps_up is not None:
             log.info(self._clm("Cal Independent", message="Neutral and CPS already calibrated"))
+            await self.mc.move_all_counts(4, directions=config.get('down'), stall_buffer = config.get('stall_buffer_normal')) # short move down
             return
         
         # find initial home position if not already found

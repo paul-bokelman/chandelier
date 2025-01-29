@@ -676,7 +676,7 @@ class Motor:
         #skip if already calibrated
         if self.lower_neutral is not None and self.upper_neutral is not None and self.cps_down is not None and self.cps_up is not None:
             log.info(self._clm("Cal Independent", message="Neutral and CPS already calibrated"))
-            await self.mc.move_all_counts(4, directions=config.get('down'), stall_buffer = config.get('stall_buffer_normal')) # short move down
+            #await self.mc.move_all_counts(4, directions=config.get('down'), stall_buffer = config.get('stall_buffer_normal')) # short move down
             return
         
         # find initial home position if not already found

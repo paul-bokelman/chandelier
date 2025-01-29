@@ -313,11 +313,11 @@ class Motor:
 
             # time between readings close to allowable time -> send warning
             if (allowable_time-measured_time) < (allowable_time * (config.get('borderline_stall_zone'))):
-                log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((allowable_time - measured_time)/allowable_time,3), az=accel_zone))
+                #log.error(self._clm("Move", message="Close to stalling", mt=round(measured_time, 3), at=round(allowable_time, 3), sb=round((allowable_time - measured_time)/allowable_time,3), az=accel_zone))
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4)))
+                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4), az=accel_zone))
 
                 if disable_on_stall:
                     self.disable("Stalled")

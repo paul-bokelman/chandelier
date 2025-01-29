@@ -301,11 +301,12 @@ class Motor:
                 # before last 2 counts -> measure and record average cps
                 if n_counts - count_diff > 2:
                     # calculate average cps based on all previous cps readings, excluding leading
-                    average_cps = sum(cps_readings[2:]) / len(cps_readings[2:])
+                    #average_cps = sum(cps_readings[2:]) / len(cps_readings[2:])
+                    min_cps = min(cps_readings[2:])
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
-                if average_cps is not None:
-                    allowable_time = ((1 / average_cps) * stall_buffer) # add X% buffer
+                if min_cps is not None:
+                    allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
                     accel_zone = False
 
             #/ include this to log cps readings each iteration
@@ -676,7 +677,7 @@ class Motor:
         #skip if already calibrated
         if self.lower_neutral is not None and self.upper_neutral is not None and self.cps_down is not None and self.cps_up is not None:
             log.info(self._clm("Cal Independent", message="Neutral and CPS already calibrated"))
-            #await self.mc.move_all_counts(4, directions=config.get('down'), stall_buffer = config.get('stall_buffer_normal')) # short move down
+            await self.move_all_counts(4, directions=config.get('down'), stall_buffer = config.get('stall_buffer_normal')) # short move down
             return
         
         # find initial home position if not already found

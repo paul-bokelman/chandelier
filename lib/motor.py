@@ -319,7 +319,7 @@ class Motor:
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4), az=accel_zone, cps_vals=cps_readings, cps_min=cps_min, sb=stall_buffer))
+                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4), az=accel_zone, cps_vals=cps_readings, min_cps=min_cps, sb=stall_buffer))
 
                 if disable_on_stall:
                     self.disable("Stalled")

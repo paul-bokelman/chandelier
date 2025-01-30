@@ -80,7 +80,7 @@ class MotorController:
 
     # move each enabled motor to its target position simultaneously
     await asyncio.gather(*[
-      motor.to(position, throttle, stall_buffer) for motor, position, throttle in zip(self.get_enabled_motors(), enabled_positions, enabled_throttles)
+      motor.to(position, throttle, stall_buffer = stall_buffer) for motor, position, throttle in zip(self.get_enabled_motors(), enabled_positions, enabled_throttles)
     ])
 
 

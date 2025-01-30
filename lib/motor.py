@@ -270,6 +270,7 @@ class Motor:
         cps_readings: list[float] = [] # store cps readings for stall detection and average
         start_counts = self.counts # track start position
         average_cps = None # track current average cps
+        min_cps = None # track current minimum cps
 
         await self.set(direction=direction, throttle=throttle) # start motor
 

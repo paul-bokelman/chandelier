@@ -294,7 +294,7 @@ class Motor:
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
                 log.info(self._clm("Move", cps=round(1 / measured_time, 3))) # log cps reading
-                cps_readings.append(1 / measured_time) # add cps reading
+                cps_readings.append(round(1 / measured_time,3)) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 
             # more than 2 reads -> calculate allowable time to be average of previous cps values
@@ -319,7 +319,7 @@ class Motor:
 
             # time between readings exceeds allowable time -> stall detected
             if measured_time > allowable_time:
-                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4), az=accel_zone, cps_vals=round(cps_readings,3), cps_min=cps_min, sb=stall_buffer))
+                log.error(self._clm("Move", message="Stall detected", mt=round(measured_time, 4), at=round(allowable_time, 4), az=accel_zone, cps_vals=cps_readings, cps_min=cps_min, sb=stall_buffer))
 
                 if disable_on_stall:
                     self.disable("Stalled")

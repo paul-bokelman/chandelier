@@ -292,7 +292,7 @@ class Motor:
 
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
-                log.info(self._clm("Move", cps=round(1 / measured_time, 3))) # log cps reading
+                log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(allowable_time / measured_time,2))) # log cps reading and calculated staff buffer 
                 cps_readings.append(round(1 / measured_time,3)) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
 

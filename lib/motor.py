@@ -292,18 +292,24 @@ class Motor:
 
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
-                log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(1 + (measured_time * stall_buffer / allowable_time), 2))) # log cps reading and calculated staff buffer 
                 cps_readings.append(round(1 / measured_time,3)) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
+                if len(cps_readings) > 2:
+                    min_cps = min(cps_readings[2:])
+                    accel_zone = False
+                    if min_cps is not None:
+                        allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
+                log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(measured_time * stall_buffer / allowable_time), 2)) # log cps reading and calculated staff buffer 
+                
 
             # more than 2 reads -> calculate allowable time to be minimum of previous cps values excluding the first 2 for acceleration
-            if len(cps_readings) > 2:
-                min_cps = min(cps_readings[2:])
+            #if len(cps_readings) > 2:
+            #    min_cps = min(cps_readings[2:])
 
                 # average cps is present -> calculate allowable time based on average cps (otherwise use default)
-                if min_cps is not None:
-                    allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
-                    accel_zone = False
+            #    if min_cps is not None:
+            #        allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
+            #        accel_zone = False
 
             #/ include this to log cps readings each iteration
             # log.info(self._clm("Move", allowable=round(1 / allowable_time, 3), measured=round(1 / measured_time, 3)))

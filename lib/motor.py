@@ -299,7 +299,7 @@ class Motor:
                     accel_zone = False
                     if min_cps is not None:
                         allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
-                log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(measured_time * stall_buffer / allowable_time), 2)) # log cps reading and calculated staff buffer 
+                log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(measured_time * stall_buffer / allowable_time, 2))) # log cps reading and calculated staff buffer 
                 
 
             # more than 2 reads -> calculate allowable time to be minimum of previous cps values excluding the first 2 for acceleration

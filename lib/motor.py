@@ -288,17 +288,17 @@ class Motor:
             # calculate allowable and measured time based on data
             allowable_time: float = 1 / (config.get('default_allowable_down_cps') if direction == config.get('down') else config.get('default_allowable_up_cps')) # default allowable time (used for 0->2, and n-2->n counts)
             accel_zone = True
+            if len(cps_readings) > 2:
+                min_cps = min(cps_readings[2:])
+                accel_zone = False
+                if min_cps is not None:
+                    allowable_time = (1 / min_cps) * stall_buffer # calculate allowable time based on minimum cps * stall buffer
             measured_time = time.time() - prev_read_time
 
             # new reading -> update stall information
             if self.last_read_time is not None and (prev_read_time != self.last_read_time):
                 cps_readings.append(round(1 / measured_time,3)) # add cps reading
                 prev_read_time = self.last_read_time # update previous read time
-                if len(cps_readings) > 2:
-                    min_cps = min(cps_readings[2:])
-                    accel_zone = False
-                    if min_cps is not None:
-                        allowable_time = ((1 / min_cps) * stall_buffer) # add X% buffer
                 log.info(self._clm("Move", cps=round(1 / measured_time, 3), csb=round(measured_time * stall_buffer / allowable_time, 2))) # log cps reading and calculated staff buffer 
                 
 

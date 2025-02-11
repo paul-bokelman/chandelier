@@ -25,7 +25,7 @@ sequences:
 # base env configuration schema
 environment_specific_config: &default_env_config
   debug: true # debug mode (suppresses  some logs)
-  max_counts: 50 # max number of counts to move
+  max_counts: 64 # max number of counts to move
   n_motors: 16 # number of motors
   suppress_count_logging: false # suppresses count logging to console
   disabled_motors: [] # motors to disable at start (can be recovered later)
@@ -38,9 +38,9 @@ environment_specific_config: &default_env_config
 
   # charging
   candles_per_charge_cycle: 2
-  charge_cycle_time: 90 # charging time (in seconds: 900 = 15 min)
-  available_charging_hours: [0] # Midnight (24hr)
-  charging_buffer_distance: 0.1 # distance (relative to max_counts) to move away from chargers (this number * max_counts should be an int >= 4)
+  charge_cycle_time: 900 # charging time (in seconds: 900 = 15 min)
+  available_charging_hours: [0] # 24hr (0 = Midnight)
+  charging_buffer_distance: 0.0625 # distance (relative to max_counts) to move away from chargers (this number * max_counts should be an int >= 4)
 
   # motors
   throttle_offset: 0.04 # offset from neutral throttle in both directions (defines base speed)
@@ -50,7 +50,7 @@ environment_specific_config: &default_env_config
   recovery_counts: 8 # number of counts to move when attempting to recover
   default_allowable_down_cps: 0.3  # falls below this value when moving down -> motor is considered stalled
   default_allowable_up_cps: 0.25 # falls below this value when moving up -> motor is considered stalled
-  stall_buffer_normal: 3.0 # %buffer above the average measured CPS time to calculate the allowable time for normal moves
+  stall_buffer_normal: 1.6 # %buffer above the average measured CPS time to calculate the allowable time for normal moves
   stall_buffer_home: 1.35 # %buffer above the average measured CPS time to calculate the allowable time for home moves
   stall_buffer_random_mode: 1.6 # %buffer above the average measured CPS time to calculate the allowable time for random mode moves
   stall_buffer_sequence_mode: 1.6 # %buffer above the average measured CPS time to calculate the allowable time for sequence mode moves
